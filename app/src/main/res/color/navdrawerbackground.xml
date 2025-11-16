@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:tools="http://schemas.android.com/tools" xmlns:android="http://schemas.android.com/apk/res/android">
+    <color android:name="navDrawerBackground" tools:ignore="ExtraText">#FFFFFF</color>     <!-- Drawer background -->
+    <color android:name="navItemSelected">#FFFFFF</color>         <!-- Selected blue -->
+    <color android:name="navItemUnselected">#FFFFFF</color>       <!-- Text/icon gray -->
+    <color android:name="navItemSelectedBackground">#FFFFFF</color> <!-- Light blue bg -->
+
+</selector>

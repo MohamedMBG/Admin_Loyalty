@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- 🎨 Brand / Primary Colors -->
+    <color name="colorPrimary">#1976D2</color>           <!-- Deep blue (buttons, icons, highlights) -->
+    <color name="colorOnPrimary">#FFFFFF</color>         <!-- Text/icons on primary -->
+    <color name="colorPrimaryContainer">#E3F2FD</color>  <!-- Light blue background for cards/chips -->
+
+    <!-- 🎨 Secondary / Accent Colors -->
+    <color name="colorSecondary">#FF6B35</color>         <!-- Warm orange accent -->
+    <color name="colorOnSecondary">#FFFFFF</color>       <!-- Text/icons on orange -->
+    <color name="colorSecondaryContainer">#FFE9E1</color>
+
+    <!-- 🎨 Backgrounds & Surfaces -->
+    <color name="colorBackground">#F5F5F5</color>        <!-- App background (light gray) -->
+    <color name="colorSurface">#FFFFFF</color>           <!-- Cards, Navigation Drawer, AppBar -->
+    <color name="colorOnSurface">#212121</color>         <!-- Default dark text -->
+    <color name="colorOutline">#E0E0E0</color>           <!-- Borders, dividers -->
+
+    <!-- 🧭 Navigation Drawer -->
+    <color name="navDrawerBackground">@color/colorSurface</color>  <!-- White drawer -->
+    <color name="navItemSelected">#1976D2</color>                 <!-- Blue selected text/icon -->
+    <color name="navItemUnselected">#444444</color>               <!-- Dark gray unselected -->
+    <color name="navItemSelectedBackground">#E3F2FD</color>       <!-- Light blue highlight -->
+
+    <!-- ✅ States / Alerts -->
+    <color name="colorSuccess">#4CAF50</color>         <!-- Green success -->
+    <color name="colorWarning">#FFC107</color>         <!-- Amber warning -->
+    <color name="colorError">#F44336</color>           <!-- Red error -->
+    <color name="colorInfo">#0288D1</color>            <!-- Info blue -->
+
+    <!-- ⚪️ Neutrals -->
+    <color name="colorTextPrimary">#212121</color>
+    <color name="colorTextSecondary">#757575</color>
+    <color name="colorDisabled">#BDBDBD</color>
+    <color name="light_grey">#EBEBEB</color>
+
+    <!-- 🟢 Commonly Used UI Colors -->
+    <color name="cardBackground">@color/colorSurface</color>
+    <color name="dividerColor">@color/colorOutline</color>
+    <color name="chipBackground">@color/colorPrimaryContainer</color>
+</resources>

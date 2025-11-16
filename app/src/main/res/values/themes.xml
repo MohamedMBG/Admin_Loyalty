@@ -1,0 +1,22 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.AdminLoyalty" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">@android:color/darker_gray</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">@android:color/darker_gray</item>
+        <item name="colorOnSecondary">@color/black</item>
+        <!-- Status bar, navigation bar, background, etc. -->
+        <item name="android:statusBarColor">@android:color/darker_gray</item>
+    </style>
+
+    <style name="Theme.AdminLoyalty" parent="Base.Theme.AdminLoyalty" />
+    <style name="AppBarBottomCorners">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeBottomLeft">24dp</item>
+        <item name="cornerSizeBottomRight">24dp</item>
+        <item name="cornerSizeTopLeft">0dp</item>
+        <item name="cornerSizeTopRight">0dp</item>
+    </style>
+</resources>
