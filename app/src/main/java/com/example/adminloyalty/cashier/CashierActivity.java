@@ -1,11 +1,13 @@
 package com.example.adminloyalty.cashier;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -45,6 +47,7 @@ public class CashierActivity extends AppCompatActivity {
     private ProgressBar progressIssuing;
     private TextInputEditText etReceipt, etAmount;
     private MaterialButton btnGenerate, btnConfirm, btnCancel, btnRefresh;
+    private Button btn_redeeming;
 
     // Firebase
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -79,6 +82,8 @@ public class CashierActivity extends AppCompatActivity {
     private void bindViews() {
         root = findViewById(android.R.id.content);
 
+        btn_redeeming = findViewById(R.id.btn_redeeming);
+
         cardConfirm      = findViewById(R.id.card_confirm);
         cardQr           = findViewById(R.id.card_qr);
         tvConfirmTitle   = findViewById(R.id.tvConfirmTitle);
@@ -103,6 +108,10 @@ public class CashierActivity extends AppCompatActivity {
         btnConfirm.setOnClickListener(v -> createVoucherAndShow());
         btnCancel.setOnClickListener(v -> cancelActive());
         btnRefresh.setOnClickListener(v -> openConfirm());
+        btn_redeeming.setOnClickListener(v -> {
+            Intent intent = new Intent(CashierActivity.this, RedeemingActivity.class);
+            startActivity(intent);
+        });
     }
 
     // -------------------- Flow --------------------

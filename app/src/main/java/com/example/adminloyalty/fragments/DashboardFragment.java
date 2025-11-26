@@ -386,7 +386,6 @@ public class DashboardFragment extends Fragment {
     }
 
     /** Visualize ALL earn_codes by createdAt: lines for Redeemed/Pending/Canceled + Success% on right axis. */
-    /** Visualize ALL earn_codes by createdAt: Total Scans (area) + Success % (right axis). */
     private void loadQrScansChart() {
         if (chartQr == null) return;
 

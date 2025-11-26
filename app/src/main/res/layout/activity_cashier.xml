@@ -7,54 +7,21 @@
     android:layout_height="match_parent"
     android:id="@+id/cashier_main"
     android:background="@color/white"
-    android:padding="5dp">
-
-
-
-
-    <!-- Enhanced Header Section -->
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/header_card"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:backgroundTint="#F8F9FA"
-        app:cardCornerRadius="16dp"
-        app:cardElevation="0dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:strokeWidth="0dp">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="20dp">
-
-            <com.google.android.material.textview.MaterialTextView
-                android:id="@+id/title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:letterSpacing="0.005"
-                android:text="QR Generating"
-                android:textColor="#1A1A1A"
-                android:textSize="26sp"
-                android:textStyle="bold" />
-
-        </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
+    android:padding="3dp">
 
     <!-- Input Section Card -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/input_card"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_margin="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginStart="5dp"
+        android:layout_marginEnd="5dp"
         app:cardCornerRadius="20dp"
         app:cardElevation="2dp"
         app:strokeWidth="0dp"
         android:backgroundTint="@color/white"
-        app:layout_constraintTop_toBottomOf="@id/header_card"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
@@ -62,7 +29,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:padding="5dp">
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/til_receipt"
@@ -117,20 +84,45 @@
                     android:paddingVertical="16dp"/>
             </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_generate"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="60dp"
-                android:layout_marginTop="20dp"
-                android:text="Generate QR Code"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                app:icon="@android:drawable/ic_menu_view"
-                android:backgroundTint="@color/colorSuccess"
-                app:iconGravity="textStart"
-                app:iconPadding="12dp"
-                app:cornerRadius="14dp"
-                android:elevation="0dp"/>
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="20dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_generate"
+                    android:layout_width="0dp"
+                    android:layout_height="60dp"
+                    android:layout_weight="1"
+                    android:text="Generate QR"
+                    android:textSize="16sp"
+                    app:icon="@android:drawable/ic_menu_view"
+                    android:backgroundTint="@color/colorSuccess"
+                    app:iconGravity="textStart"
+                    app:iconPadding="5dp"
+                    app:cornerRadius="14dp"
+                    android:elevation="0dp"/>
+
+                <Space
+                    android:layout_width="12dp"
+                    android:layout_height="0dp"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_redeeming"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="0dp"
+                    android:layout_height="60dp"
+                    android:layout_weight="1"
+                    android:backgroundTint="@color/light_grey"
+                    android:text="Redeeming"
+                    android:textSize="16sp"
+                    app:icon="@android:drawable/ic_menu_gallery"
+                    app:iconGravity="textStart"
+                    app:iconPadding="12dp"
+                    app:cornerRadius="14dp"
+                    android:elevation="0dp"/>
+            </LinearLayout>
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
@@ -348,4 +340,6 @@
             </LinearLayout>
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>

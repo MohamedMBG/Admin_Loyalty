@@ -21,7 +21,6 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -208,12 +207,6 @@ public class InboxFragment extends Fragment {
                 return filters;
             }
 
-            // Example filter placeholders:
-            // filters.put("platform", "android");     // add UI control later if needed
-            // filters.put("role", "client");          // add UI control later if needed
-            // filters.put("minPoints", 100);          // if you add points pickers
-            // filters.put("maxPoints", 1000);
-
             // Age filters (only effective if you store age on devices)
             if (sliderAge != null && sliderAge.getValues() != null && sliderAge.getValues().size() >= 2) {
                 int min = Math.round(sliderAge.getValues().get(0));
@@ -221,11 +214,6 @@ public class InboxFragment extends Fragment {
                 filters.put("minAge", min);
                 filters.put("maxAge", max);
             }
-
-            // Topics example (if you add a topics UI):
-            // JSONArray topics = new JSONArray();
-            // topics.put("promo");
-            // filters.put("topics", topics);
 
         } catch (JSONException ignored) {}
         return filters;

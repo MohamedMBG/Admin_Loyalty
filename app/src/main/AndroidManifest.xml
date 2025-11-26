@@ -16,6 +16,9 @@
         android:theme="@style/Theme.AdminLoyalty"
         tools:targetApi="31">
         <activity
+            android:name=".cashier.RedeemingActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="false" />
         <activity
