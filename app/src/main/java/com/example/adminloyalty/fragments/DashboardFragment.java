@@ -1,686 +1,710 @@
 package com.example.adminloyalty.fragments;
 
-import android.graphics.Color;
-import android.graphics.Typeface;
 import android.os.Bundle;
-import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ProgressBar;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 
 import com.example.adminloyalty.R;
-import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.components.Description;
-import com.github.mikephil.charting.components.Legend;
-import com.github.mikephil.charting.components.XAxis;
-import com.github.mikephil.charting.components.YAxis;
-import com.github.mikephil.charting.data.Entry;
-import com.github.mikephil.charting.data.LineData;
-import com.github.mikephil.charting.data.LineDataSet;
-import com.github.mikephil.charting.formatter.ValueFormatter;
-import com.google.android.material.button.MaterialButton;
+import com.example.adminloyalty.cashier.RedeemingActivity;
+import com.google.android.material.chip.ChipGroup;
 import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.AggregateQuerySnapshot;
 import com.google.firebase.firestore.AggregateSource;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 public class DashboardFragment extends Fragment {
 
-    // Period selection
+    // --- Period Enum for Logic ---
     private enum Period { TODAY, WEEK, MONTH }
     private Period currentPeriod = Period.TODAY;
 
-    // Views (IDs match your XML)
-    private MaterialButton btnToday, btnWeek, btnMonth;
-    private TextView tvTotalUsers, tvNewSignups;
-    private TextView tvRedemptionRate, tvCaption;
-    private ProgressBar progressRedemption;
+    // --- UI Views ---
+    private ChipGroup chipGroupPeriod;
+    private TextView tvRevenueValue, tvRevenueDelta;
+    private TextView tvRewardCostValue;
+    private TextView tvVisitsValue;
+    private TextView tvNewClientsValue;
+    private TextView tvPointsValue;
+    private TextView tvGiftsValue;
+    private CardView cardAlert , allScansCard, btnRedemptions;
+    private TextView tvAlertMessage;
 
-    // NEW: QR scans
-    private LineChart chartQr;
-    private TextView tvTotalScans;       // R.id.tv_total_scans
-
-    // Optional deltas
-    private TextView tvPercentUsers;     // R.id.percent_users
-    private TextView tvPercentNewUsers;  // R.id.percent_new_users
-
-    // System health views
-    private View dbDot;
-    private TextView tvDbStatus;
+    // Chart Views
+    private View[] chartBars;
+    private TextView[] chartValues;
+    private TextView[] chartLabels;
 
     // Firestore
     private FirebaseFirestore db;
 
+    // Keep last period range to compute revenue delta
+    private Timestamp lastStartTs;
+    private Timestamp lastEndTs;
 
-    private static final String COLL_EARN_CODES = "earn_codes";
-    private static final String F_CREATED_AT    = "createdAt";
-    private static final String F_STATUS        = "status";
+    private LinearLayout layoutCashierList;
 
 
-    @Nullable @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
+
         View v = inflater.inflate(R.layout.fragment_dashboard, container, false);
 
-        db = FirebaseFirestore.getInstance(); // init FIRST
+        db = FirebaseFirestore.getInstance();
 
         bindViews(v);
-        setupQrChart();
-        setupButtons();
+        setupListeners();
 
-        applyPeriod(Period.TODAY);  // initial load
-        pingDatabase();             // set DB health tile
+        // Initial Data Load
+        applyPeriod(Period.TODAY);
 
         return v;
     }
 
-    private void bindViews(@NonNull View v) {
-        // Time buttons
-        btnToday = v.findViewById(R.id.btn_today);
-        btnWeek  = v.findViewById(R.id.btn_this_week);
-        btnMonth = v.findViewById(R.id.btn_this_month);
+    // -------------------------------------------------------------------------
+    // BINDING
+    // -------------------------------------------------------------------------
+    private void bindViews(View v) {
+        chipGroupPeriod = v.findViewById(R.id.chipGroupPeriod);
 
-        // KPIs
-        tvTotalUsers = v.findViewById(R.id.tv_active_users);
-        tvNewSignups = v.findViewById(R.id.tv_new_signups);
+        // Metric Cards
+        tvRevenueValue = v.findViewById(R.id.tvRevenueValue);
+        tvRevenueDelta = v.findViewById(R.id.tvRevenueDelta);
+        tvRewardCostValue = v.findViewById(R.id.tvRewardCostValue);
+        tvVisitsValue = v.findViewById(R.id.tvVisitsValue);
+        tvNewClientsValue = v.findViewById(R.id.tvNewClientsValue);
+        tvPointsValue = v.findViewById(R.id.tvPointsValue);
+        tvGiftsValue = v.findViewById(R.id.tvGiftsValue);
+        allScansCard = v.findViewById(R.id.btnActionScans);
+        btnRedemptions = v.findViewById(R.id.btnActionRedemptions);
 
-        // Points
-        tvRedemptionRate  = v.findViewById(R.id.tv_redemption_rate);
-        tvCaption         = v.findViewById(R.id.text1);
-        progressRedemption = v.findViewById(R.id.progress_redemption);
+        // Alert Panel
+        cardAlert = v.findViewById(R.id.cardAlert);
+        tvAlertMessage = v.findViewById(R.id.tvAlertMessage);
 
-        // QR chart + total scans
-        chartQr      = v.findViewById(R.id.chart_qr_scans);
-        tvTotalScans = v.findViewById(R.id.tv_total_scans);
-
-        // System Health
-        dbDot = v.findViewById(R.id.view_db_dot);
-        tvDbStatus = v.findViewById(R.id.tv_db_status);
-
-        // Deltas (if you want to display them)
-        tvPercentUsers    = v.findViewById(R.id.percent_users);
-        tvPercentNewUsers = v.findViewById(R.id.percent_new_users);
-    }
-
-    private void setupButtons() {
-        View.OnClickListener l = view -> {
-            int id = view.getId();
-            if (id == R.id.btn_today)      applyPeriod(Period.TODAY);
-            else if (id == R.id.btn_this_week)  applyPeriod(Period.WEEK);
-            else if (id == R.id.btn_this_month) applyPeriod(Period.MONTH);
+        // Chart Views
+        chartBars = new View[]{
+                v.findViewById(R.id.viewChartBar1), v.findViewById(R.id.viewChartBar2),
+                v.findViewById(R.id.viewChartBar3), v.findViewById(R.id.viewChartBar4),
+                v.findViewById(R.id.viewChartBar5), v.findViewById(R.id.viewChartBar6),
+                v.findViewById(R.id.viewChartBar7)
         };
-        btnToday.setOnClickListener(l);
-        btnWeek.setOnClickListener(l);
-        btnMonth.setOnClickListener(l);
+        chartValues = new TextView[]{
+                v.findViewById(R.id.tvChartVal1), v.findViewById(R.id.tvChartVal2),
+                v.findViewById(R.id.tvChartVal3), v.findViewById(R.id.tvChartVal4),
+                v.findViewById(R.id.tvChartVal5), v.findViewById(R.id.tvChartVal6),
+                v.findViewById(R.id.tvChartVal7)
+        };
+        chartLabels = new TextView[]{
+                v.findViewById(R.id.tvLabel1), v.findViewById(R.id.tvLabel2),
+                v.findViewById(R.id.tvLabel3), v.findViewById(R.id.tvLabel4),
+                v.findViewById(R.id.tvLabel5), v.findViewById(R.id.tvLabel6),
+                v.findViewById(R.id.tvLabel7)
+        };
+
+        layoutCashierList = v.findViewById(R.id.layoutCashierList);
+
+
+        // Export Button (quick action)
+        View btnExport = v.findViewById(R.id.btnActionExport);
+        if (btnExport != null) {
+            btnExport.setOnClickListener(view ->
+                    Toast.makeText(getContext(), "Exporting CSV...", Toast.LENGTH_SHORT).show()
+            );
+        }
+
+        btnRedemptions.setOnClickListener(view ->{
+                // we will open the RedemptionLogsFragment here
+                Fragment newFragment  = new RewadLogsFragment();
+                requireActivity()
+                        .getSupportFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.fragment_container, newFragment)
+                        .addToBackStack(null)
+                        .commit();
+        });
+
+        allScansCard.setOnClickListener(view ->{
+                // we will open the ScanLogsFragment here
+                Fragment newFragment  = new ScanLogsFragment();
+                requireActivity()
+                        .getSupportFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.fragment_container, newFragment)
+                        .addToBackStack(null)
+                        .commit();
+        });
     }
 
-    private void applyPeriod(Period p) {
-        currentPeriod = p;
-        stylePeriodButtons();
-        loadKPIs();            // total users + signups in period
-        loadPointsEconomy();   // reads /stats/global
-        loadQrScansChart();    // << NEW: scans by hour/day
-    }
-
-    private void stylePeriodButtons() {
-        MaterialButton[] arr = new MaterialButton[]{btnToday, btnWeek, btnMonth};
-        for (MaterialButton b : arr) {
-            boolean selected =
-                    (b.getId() == R.id.btn_today && currentPeriod == Period.TODAY) ||
-                            (b.getId() == R.id.btn_this_week && currentPeriod == Period.WEEK) ||
-                            (b.getId() == R.id.btn_this_month && currentPeriod == Period.MONTH);
-
-            b.setTextColor(getResources().getColor(
-                    selected ? android.R.color.black : android.R.color.darker_gray,
-                    requireContext().getTheme()
-            ));
-            // keep your light gray when selected, transparent otherwise
-            b.setBackgroundTintList(getResources().getColorStateList(
-                    selected ?  R.color.light_grey /* define #F5F5F5 in colors */ : android.R.color.transparent,
-                    requireContext().getTheme()
-            ));
-            b.setTypeface(null, selected ? Typeface.BOLD : Typeface.NORMAL);
+    private void setupListeners() {
+        if (chipGroupPeriod != null) {
+            chipGroupPeriod.setOnCheckedChangeListener((group, checkedId) -> {
+                if (checkedId == R.id.chipToday) {
+                    applyPeriod(Period.TODAY);
+                } else if (checkedId == R.id.chipWeek) {
+                    applyPeriod(Period.WEEK);
+                } else if (checkedId == R.id.chipMonth) {
+                    applyPeriod(Period.MONTH);
+                }
+            });
         }
     }
 
-    /** holder of [start, end] for the current period. */
-    private static class TRange {
-        final Timestamp start;
-        final Timestamp end;
-        TRange(Timestamp s, Timestamp e) { start = s; end = e; }
+
+
+    // -------------------------------------------------------------------------
+    // PERIOD + LOAD
+    // -------------------------------------------------------------------------
+    private void applyPeriod(Period period) {
+        currentPeriod = period;
+
+        // 1. Calculate Date Range
+        Date[] dateRange = getDateRange(period);
+        lastStartTs = new Timestamp(dateRange[0]);
+        lastEndTs = new Timestamp(dateRange[1]);
+
+        // Reset some UI while loading
+        if (tvRevenueValue != null) tvRevenueValue.setText("--");
+        if (tvRevenueDelta != null) tvRevenueDelta.setText("--%");
+        if (tvRewardCostValue != null) tvRewardCostValue.setText("--");
+        if (tvVisitsValue != null) tvVisitsValue.setText("--");
+        if (tvNewClientsValue != null) tvNewClientsValue.setText("--");
+        if (tvPointsValue != null) tvPointsValue.setText("--");
+        if (tvGiftsValue != null) tvGiftsValue.setText("--");
+        if (cardAlert != null) cardAlert.setVisibility(View.GONE);
+
+        // 2. Load Data
+        loadFinancialsAndVisits(lastStartTs, lastEndTs);
+        loadRewardCosts(lastStartTs, lastEndTs);
+        loadNewClients(lastStartTs, lastEndTs);
+
+        // 3. Alerts (independent of selected period)
+        checkSuspiciousActivity();
+
+        // 4. Cashier List (independent of selected period)
+        loadCashierPerformance(lastStartTs, lastEndTs);
+
     }
 
-    private TRange currentRange() {
-        Calendar start = Calendar.getInstance();
-        Calendar end   = Calendar.getInstance();
+    // -------------------------------------------------------------------------
+    // MAIN DATA LOADING
+    // -------------------------------------------------------------------------
 
-        start.set(Calendar.MILLISECOND, 0);
-        end.set(Calendar.MILLISECOND, 0);
+    /**
+     * Loads Revenue, Points, Visits and populates the Traffic Chart
+     * from "earn_codes".
+     *
+     * Requires a composite index on:
+     *   status + redeemedAt
+     */
+    private void loadFinancialsAndVisits(Timestamp start, Timestamp end) {
+        db.collection("earn_codes")
+                .whereEqualTo("status", "redeemed")
+                .whereGreaterThanOrEqualTo("redeemedAt", start)
+                .whereLessThanOrEqualTo("redeemedAt", end)
+                .get()
+                .addOnSuccessListener(snapshots -> {
+                    if (!isAdded()) return;
 
-        switch (currentPeriod) {
-            case TODAY:
-                start.set(Calendar.HOUR_OF_DAY, 0);
-                start.set(Calendar.MINUTE, 0);
-                start.set(Calendar.SECOND, 0);
+                    double totalRevenue = 0;
+                    long totalPoints = 0;
 
-                end.set(Calendar.HOUR_OF_DAY, 23);
-                end.set(Calendar.MINUTE, 59);
-                end.set(Calendar.SECOND, 59);
-                break;
+                    // For Visits Logic (unique client per day)
+                    Set<String> uniqueVisits = new HashSet<>();
+                    SimpleDateFormat visitKeyFormat = new SimpleDateFormat("yyyyMMdd", Locale.US);
 
-            case WEEK:
-                start.set(Calendar.HOUR_OF_DAY, 0);
-                start.set(Calendar.MINUTE, 0);
-                start.set(Calendar.SECOND, 0);
-                start.set(Calendar.DAY_OF_WEEK, start.getFirstDayOfWeek()); // usually Monday
-                Calendar tmp = (Calendar) start.clone();
-                tmp.add(Calendar.DAY_OF_YEAR, 7);
-                tmp.add(Calendar.SECOND, -1);
-                end = tmp;
-                break;
+                    // For Chart Logic
+                    int[] chartData = new int[7];
+                    Arrays.fill(chartData, 0);
 
-            case MONTH:
-                start.set(Calendar.DAY_OF_MONTH, 1);
-                start.set(Calendar.HOUR_OF_DAY, 0);
-                start.set(Calendar.MINUTE, 0);
-                start.set(Calendar.SECOND, 0);
-                Calendar tmp2 = (Calendar) start.clone();
-                tmp2.add(Calendar.MONTH, 1);
-                tmp2.add(Calendar.SECOND, -1);
-                end = tmp2;
-                break;
-        }
-        return new TRange(new Timestamp(start.getTime()), new Timestamp(end.getTime()));
-    }
+                    for (DocumentSnapshot doc : snapshots) {
+                        // 1. Revenue
+                        Double amt = doc.getDouble("amountMAD");
+                        if (amt != null) totalRevenue += amt;
 
-    /** Returns [start,end] timestamps for the previous period of the same length. */
-    private TRange previousRange(TRange cur) {
-        long durMs = cur.end.toDate().getTime() - cur.start.toDate().getTime() + 1000; // inclusive buffer
-        long prevEndMs   = cur.start.toDate().getTime() - 1000;
-        long prevStartMs = prevEndMs - durMs + 1000;
-        return new TRange(new Timestamp(new java.util.Date(prevStartMs)),
-                new Timestamp(new java.util.Date(prevEndMs)));
-    }
+                        // 2. Points
+                        Long pts = doc.getLong("points");
+                        if (pts != null) totalPoints += pts;
 
-    /** Loads Total Users (all docs in /users) + New Signups within current period. */
-    private void loadKPIs() {
-        TRange current = currentRange();
-        TRange previous = previousRange(current);
+                        // 3. Unique Visits + Chart data
+                        Timestamp ts = doc.getTimestamp("redeemedAt");
+                        String uid = doc.getString("redeemedByUid");
 
-        // 1) Total users (all time)
-        db.collection("users").count()
-                .get(AggregateSource.SERVER)
-                .addOnSuccessListener(totalSnap -> {
-                    long totalNow = totalSnap.getCount();
-                    tvTotalUsers.setText(String.valueOf(totalNow));
+                        if (ts != null && uid != null) {
+                            String key = uid + "_" + visitKeyFormat.format(ts.toDate());
+                            uniqueVisits.add(key);
 
-                    db.collection("users")
-                            .whereLessThanOrEqualTo("createdAt", previous.end)
-                            .count()
-                            .get(AggregateSource.SERVER)
-                            .addOnSuccessListener(prevSnap -> {
-                                long totalPrev = prevSnap.getCount();
-                                double pctUsers = pctChange(totalNow, totalPrev);
-                                setDelta(tvPercentUsers, pctUsers);
-                            })
-                            .addOnFailureListener(e -> setDelta(tvPercentUsers, Double.NaN));
+                            // 4. Populate Chart Buckets
+                            processChartData(ts, chartData);
+                        }
+                    }
+
+                    // Update UI
+                    if (tvRevenueValue != null)
+                        tvRevenueValue.setText(String.format(Locale.US, "%.0f", totalRevenue));
+
+                    if (tvPointsValue != null) {
+                        if (totalPoints > 1000) {
+                            tvPointsValue.setText(String.format(Locale.US, "%.1fk", totalPoints / 1000.0));
+                        } else {
+                            tvPointsValue.setText(String.valueOf(totalPoints));
+                        }
+                    }
+
+                    if (tvVisitsValue != null)
+                        tvVisitsValue.setText(String.valueOf(uniqueVisits.size()));
+
+                    // Update Chart Visuals
+                    updateChartUI(chartData);
+
+                    // Revenue delta vs previous period
+                    loadRevenueDeltaForPreviousPeriod(start, end, totalRevenue);
+
                 })
-                .addOnFailureListener(e -> tvTotalUsers.setText("—"));
-
-        // 2) New signups in current period
-        db.collection("users")
-                .whereGreaterThanOrEqualTo("createdAt", current.start)
-                .whereLessThanOrEqualTo("createdAt", current.end)
-                .count()
-                .get(AggregateSource.SERVER)
-                .addOnSuccessListener(curSnap -> {
-                    long newCur = curSnap.getCount();
-                    tvNewSignups.setText(String.valueOf(newCur));
-
-                    db.collection("users")
-                            .whereGreaterThanOrEqualTo("createdAt", previous.start)
-                            .whereLessThanOrEqualTo("createdAt", previous.end)
-                            .count()
-                            .get(AggregateSource.SERVER)
-                            .addOnSuccessListener(prevSnap -> {
-                                long newPrev = prevSnap.getCount();
-                                double pctNew = pctChange(newCur, newPrev);
-                                setDelta(tvPercentNewUsers, pctNew);
-                            })
-                            .addOnFailureListener(e -> setDelta(tvPercentNewUsers, Double.NaN));
-                })
-                .addOnFailureListener(e -> tvNewSignups.setText("—"));
-    }
-
-    /** Reads /stats/global and fills Redemption progress. */
-    private void loadPointsEconomy() {
-        db.collection("stats").document("global").get()
-                .addOnSuccessListener(this::applyStatsDoc)
                 .addOnFailureListener(e -> {
-                    progressRedemption.setProgress(0);
-                    tvRedemptionRate.setText("0%");
-                    if (tvCaption != null) tvCaption.setText("0 of 0 pts redeemed");
+                    Log.e("Dashboard", "Error loading financials", e);
+                    if (!isAdded()) return;
+                    Toast.makeText(getContext(),
+                            "Error loading data (maybe index missing). Check Logcat.",
+                            Toast.LENGTH_LONG).show();
                 });
     }
 
-    private void applyStatsDoc(DocumentSnapshot doc) {
-        long total = safeLong(doc.get("totalPoints"));
-        long redeemed = safeLong(doc.get("redeemedPoints"));
-        int pct = (total > 0) ? Math.min(100, (int) Math.round((redeemed * 100.0) / total)) : 0;
+    private void loadRewardCosts(Timestamp start, Timestamp end) {
+        // Assumes 'redeem_codes' for burnt points / gifts
+        db.collection("redeem_codes")
+                .whereGreaterThanOrEqualTo("createdAt", start)
+                .whereLessThanOrEqualTo("createdAt", end)
+                .get()
+                .addOnSuccessListener(snapshots -> {
+                    if (!isAdded()) return;
 
-        progressRedemption.setMax(100);
-        progressRedemption.setProgress(pct);
-        tvRedemptionRate.setText(pct + "%");
+                    double totalCost = 0;
+                    int count = 0;
+                    for (DocumentSnapshot doc : snapshots) {
+                        Double cost = doc.getDouble("costMAD"); // adapt to your schema if needed
+                        if (cost != null) totalCost += cost;
+                        count++;
+                    }
+                    if (tvRewardCostValue != null)
+                        tvRewardCostValue.setText(String.format(Locale.US, "%.0f", totalCost));
+                    if (tvGiftsValue != null)
+                        tvGiftsValue.setText(String.valueOf(count));
+                })
+                .addOnFailureListener(e -> {
+                    if (!isAdded()) return;
+                    Log.e("Dashboard", "Error loading reward costs", e);
+                });
+    }
 
-        if (tvCaption != null) {
-            tvCaption.setText(formatPts(redeemed) + " of " + formatPts(total) + " pts redeemed");
+    private void loadNewClients(Timestamp start, Timestamp end) {
+        db.collection("users")
+                .whereGreaterThanOrEqualTo("createdAt", start)
+                .whereLessThanOrEqualTo("createdAt", end)
+                .count()
+                .get(AggregateSource.SERVER)
+                .addOnSuccessListener((AggregateQuerySnapshot snap) -> {
+                    if (!isAdded()) return;
+                    if (tvNewClientsValue != null)
+                        tvNewClientsValue.setText(String.valueOf(snap.getCount()));
+                })
+                .addOnFailureListener(e -> {
+                    if (!isAdded()) return;
+                    Log.e("Dashboard", "Error loading new clients", e);
+                });
+    }
+
+    // -------------------------------------------------------------------------
+    // CHART LOGIC
+    // -------------------------------------------------------------------------
+
+    /**
+     * Buckets a timestamp into the correct index [0-6] for the chart array.
+     */
+    private void processChartData(Timestamp ts, int[] data) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(ts.toDate());
+        int index = -1;
+
+        if (currentPeriod == Period.TODAY) {
+            // Bucket by 2-hour slots starting from 8am
+            int hour = cal.get(Calendar.HOUR_OF_DAY);
+            if (hour >= 8) {
+                index = (hour - 8) / 2;
+                if (index > 6) index = 6;
+            }
+        } else if (currentPeriod == Period.WEEK) {
+            // Bucket by Day of Week (Mon=0 ... Sun=6)
+            int day = cal.get(Calendar.DAY_OF_WEEK); // Sun=1
+            index = (day == Calendar.SUNDAY) ? 6 : (day - Calendar.MONDAY);
+        } else {
+            // Month: Bucket by 5-day chunks of month
+            int dayOfMonth = cal.get(Calendar.DAY_OF_MONTH);
+            index = dayOfMonth / 5; // 1-5 -> 0, 6-10 -> 1, ...
+            if (index > 6) index = 6;
+        }
+
+        if (index >= 0 && index < 7) {
+            data[index]++;
         }
     }
 
-    private long safeLong(Object v) {
-        if (v instanceof Number) return ((Number) v).longValue();
-        try {
-            String s = String.valueOf(v);
-            return TextUtils.isEmpty(s) ? 0 : Long.parseLong(s);
-        } catch (Exception ignore) { return 0; }
+    private void updateChartUI(int[] values) {
+        if (!isAdded()) return;
+        if (chartBars == null || chartBars[0] == null) return;
+
+        // 1. Find Max for scaling
+        int max = 1;
+        for (int v : values) if (v > max) max = v;
+
+        // 2. Define Labels based on Period
+        String[] labels;
+        if (currentPeriod == Period.TODAY) {
+            labels = new String[]{"8", "10", "12", "14", "16", "18", "20+"};
+        } else if (currentPeriod == Period.WEEK) {
+            labels = new String[]{"M", "T", "W", "T", "F", "S", "S"};
+        } else {
+            labels = new String[]{"J1-5", "J6-10", "J11-15", "J16-20", "J21-25", "J26-30", "J31+"};
+        }
+
+        // 3. Render
+        float density = getResources().getDisplayMetrics().density;
+
+        for (int i = 0; i < 7; i++) {
+            // Set Text Value
+            if (chartValues[i] != null)
+                chartValues[i].setText(String.valueOf(values[i]));
+
+            // Set Label
+            if (chartLabels[i] != null)
+                chartLabels[i].setText(labels[i]);
+
+            // Set Height
+            if (chartBars[i] != null) {
+                float percentage = (float) values[i] / max;
+                int heightDp = (int) (110 * percentage); // Max height 110dp
+                if (heightDp < 5) heightDp = 5; // Min visibility
+
+                ViewGroup.LayoutParams params = chartBars[i].getLayoutParams();
+                params.height = (int) (heightDp * density + 0.5f);
+                chartBars[i].setLayoutParams(params);
+            }
+        }
     }
 
-    private String formatPts(long n) { return String.format("%,d", n); }
+    // -------------------------------------------------------------------------
+    // REVENUE DELTA VS PREVIOUS PERIOD
+    // -------------------------------------------------------------------------
+    private void loadRevenueDeltaForPreviousPeriod(Timestamp start, Timestamp end, double currentRevenue) {
+        if (tvRevenueDelta == null) return;
 
-    /* -------------------------------------------
-       QR SCANS LINE CHART
-       ------------------------------------------- */
+        Date startDate = start.toDate();
+        Date endDate = end.toDate();
+        long durationMs = endDate.getTime() - startDate.getTime();
 
-    private void setupQrChart() {
-        chartQr.setDrawGridBackground(false);
-        chartQr.setScaleEnabled(false);
-        chartQr.setDoubleTapToZoomEnabled(false);
+        // Previous period: same length just before current start
+        Date prevEndDate = startDate;
+        Date prevStartDate = new Date(prevEndDate.getTime() - durationMs);
 
-        XAxis x = chartQr.getXAxis();
-        x.setPosition(XAxis.XAxisPosition.BOTTOM);
-        x.setDrawGridLines(false);
+        Timestamp prevStart = new Timestamp(prevStartDate);
+        Timestamp prevEnd = new Timestamp(prevEndDate);
 
-        chartQr.getAxisLeft().setDrawGridLines(true);
-        chartQr.getAxisLeft().setAxisMinimum(0f);
-
-        chartQr.getAxisRight().setEnabled(true);      // ← enable
-        chartQr.getAxisRight().setAxisMinimum(0f);
-        chartQr.getAxisRight().setAxisMaximum(100f);
-
-        Description d = new Description(); d.setText("");
-        chartQr.setDescription(d);
-    }
-
-
-    /** Query earn_codes scanned in current period, bucket and draw. */
-    /** Query earn_codes where status == "redeemed" in current period, bucket and draw. */
-
-
-    //this is a chart UI helper
-    private void styleQrChart(LineChart chart) {
-        chart.setViewPortOffsets(32f, 24f, 24f, 40f);
-        chart.setExtraOffsets(0f, 8f, 0f, 16f);
-
-        chart.setDrawGridBackground(false);
-        chart.setDrawBorders(false);
-        chart.setTouchEnabled(true);
-        chart.setDragEnabled(true);
-        chart.setScaleEnabled(false);
-        chart.setPinchZoom(false);
-        chart.setDoubleTapToZoomEnabled(false);
-        chart.setHighlightPerTapEnabled(true);
-        chart.getDescription().setEnabled(false);
-
-        // Legend small at top-left
-        Legend legend = chart.getLegend();
-        legend.setEnabled(true);
-        legend.setVerticalAlignment(Legend.LegendVerticalAlignment.TOP);
-        legend.setHorizontalAlignment(Legend.LegendHorizontalAlignment.LEFT);
-        legend.setOrientation(Legend.LegendOrientation.HORIZONTAL);
-        legend.setDrawInside(false);
-        legend.setTextSize(11f);
-        legend.setForm(Legend.LegendForm.LINE);
-        legend.setXEntrySpace(12f);
-
-        // X axis – only labels, no lines
-        XAxis x = chart.getXAxis();
-        x.setPosition(XAxis.XAxisPosition.BOTTOM);
-        x.setDrawAxisLine(false);
-        x.setDrawGridLines(false);
-        x.setGranularity(1f);
-        x.setGranularityEnabled(true);
-        x.setTextSize(11f);
-        x.setTextColor(Color.parseColor("#6B7280"));
-        x.setYOffset(4f);
-
-        // Left Y axis – soft dashed grid
-        YAxis left = chart.getAxisLeft();
-        left.setAxisMinimum(0f);
-        left.setDrawAxisLine(false);
-        left.setDrawGridLines(true);
-        left.enableGridDashedLine(10f, 10f, 0f);
-        left.setGridColor(Color.parseColor("#E5E7EB"));
-        left.setTextColor(Color.parseColor("#94A3B8"));
-        left.setTextSize(11f);
-
-        // Right Y axis – success %
-        YAxis right = chart.getAxisRight();
-        right.setEnabled(true);
-        right.setAxisMinimum(0f);
-        right.setAxisMaximum(100f);
-        right.setDrawAxisLine(false);
-        right.setDrawGridLines(false);
-        right.setTextColor(Color.parseColor("#94A3B8"));
-        right.setTextSize(11f);
-        right.setXOffset(-4f);
-    }
-
-    /** Visualize ALL earn_codes by createdAt: lines for Redeemed/Pending/Canceled + Success% on right axis. */
-    private void loadQrScansChart() {
-        if (chartQr == null) return;
-
-        // Base style
-        styleQrChart(chartQr);
-
-        chartQr.setNoDataText("No chart data available.");
-        chartQr.setNoDataTextColor(
-                getResources().getColor(android.R.color.holo_orange_dark, requireContext().getTheme())
-        );
-
-        final TRange range = currentRange();
-
-        db.collection(COLL_EARN_CODES)
-                .whereGreaterThanOrEqualTo(F_CREATED_AT, range.start)
-                .whereLessThanOrEqualTo(F_CREATED_AT, range.end)
+        db.collection("earn_codes")
+                .whereEqualTo("status", "redeemed")
+                .whereGreaterThanOrEqualTo("redeemedAt", prevStart)
+                .whereLessThanOrEqualTo("redeemedAt", prevEnd)
                 .get()
                 .addOnSuccessListener(snap -> {
-                    Calendar cal = Calendar.getInstance();
+                    if (!isAdded()) return;
 
-                    // ========== Buckets & labels ==========
-                    final int bucketCount;
-                    final String[] labels;
-                    if (currentPeriod == Period.TODAY) {
-                        bucketCount = 24;
-                        labels = new String[bucketCount];
-                        for (int i = 0; i < bucketCount; i++) {
-                            labels[i] = (i % 12 == 0 ? "12" : String.valueOf(i % 12)) + (i < 12 ? "AM" : "PM");
-                        }
-                    } else if (currentPeriod == Period.WEEK) {
-                        bucketCount = 7;
-                        labels = new String[]{"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
+                    double previousRevenue = 0.0;
+                    for (DocumentSnapshot doc : snap) {
+                        Double amt = doc.getDouble("amountMAD");
+                        if (amt != null) previousRevenue += amt;
+                    }
+
+                    if (previousRevenue <= 0) {
+                        tvRevenueDelta.setText("--%");
                     } else {
-                        cal.setTime(range.start.toDate());
-                        cal.set(Calendar.DAY_OF_MONTH, 1);
-                        bucketCount = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
-                        labels = new String[bucketCount];
-                        for (int i = 0; i < bucketCount; i++) labels[i] = String.valueOf(i + 1);
+                        double delta = ((currentRevenue - previousRevenue) / previousRevenue) * 100.0;
+                        tvRevenueDelta.setText(String.format(Locale.US, "%.1f%%", delta));
                     }
+                })
+                .addOnFailureListener(e -> {
+                    if (!isAdded()) return;
+                    Log.e("Dashboard", "Error loading revenue delta", e);
+                    tvRevenueDelta.setText("--%");
+                });
+    }
 
-                    int[] totalBucket    = new int[bucketCount];
-                    int[] redeemedBucket = new int[bucketCount];
-                    int[] pendingBucket  = new int[bucketCount];
-                    int[] canceledBucket = new int[bucketCount];
+    // -------------------------------------------------------------------------
+    // ALERTS
+    // -------------------------------------------------------------------------
+    private void checkSuspiciousActivity() {
+        // Example rule: > 50 scans in the last hour
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.HOUR_OF_DAY, -1);
+        Timestamp oneHourAgo = new Timestamp(cal.getTime());
 
-                    int totalAll = 0;
-                    int redeemedAll = 0;
+        db.collection("earn_codes")
+                .whereGreaterThanOrEqualTo("createdAt", oneHourAgo) // adapt field if needed
+                .get()
+                .addOnSuccessListener(snap -> {
+                    if (!isAdded()) return;
 
-                    for (DocumentSnapshot doc : snap.getDocuments()) {
-                        Timestamp ts = doc.getTimestamp(F_CREATED_AT);
-                        if (ts == null) continue;
-                        cal.setTime(ts.toDate());
-
-                        int idx;
-                        if (currentPeriod == Period.TODAY) {
-                            idx = cal.get(Calendar.HOUR_OF_DAY);
-                        } else if (currentPeriod == Period.WEEK) {
-                            int dow = cal.get(Calendar.DAY_OF_WEEK); // Sun=1..Sat=7
-                            idx = (dow == Calendar.SUNDAY) ? 6 : (dow - Calendar.MONDAY); // 0..6 Mon..Sun
-                        } else {
-                            idx = cal.get(Calendar.DAY_OF_MONTH) - 1; // 0-based
+                    int count = snap.size();
+                    if (count > 50) { // Threshold
+                        if (cardAlert != null && tvAlertMessage != null) {
+                            cardAlert.setVisibility(View.VISIBLE);
+                            tvAlertMessage.setText(
+                                    "Warning: High traffic (" + count + " scans) in last hour."
+                            );
                         }
-                        if (idx < 0 || idx >= bucketCount) continue;
+                    } else {
+                        if (cardAlert != null) cardAlert.setVisibility(View.GONE);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    if (!isAdded()) return;
+                    Log.e("Dashboard", "Error checking suspicious activity", e);
+                });
+    }
 
-                        totalBucket[idx]++;
-                        totalAll++;
+    // -------------------------------------------------------------------------
+    // DATE UTILS
+    // -------------------------------------------------------------------------
+    private Date[] getDateRange(Period period) {
+        Calendar start = Calendar.getInstance();
+        Calendar end = Calendar.getInstance();
 
-                        String status = doc.getString(F_STATUS);
-                        if ("redeemed".equalsIgnoreCase(status)) {
-                            redeemedBucket[idx]++;
-                            redeemedAll++;
-                        } else if ("pending".equalsIgnoreCase(status)) {
-                            pendingBucket[idx]++;
-                        } else if ("canceled".equalsIgnoreCase(status)
-                                || "cancelled".equalsIgnoreCase(status)) {
-                            canceledBucket[idx]++;
+        // End is end of today
+        end.set(Calendar.HOUR_OF_DAY, 23);
+        end.set(Calendar.MINUTE, 59);
+        end.set(Calendar.SECOND, 59);
+        end.set(Calendar.MILLISECOND, 999);
+
+        // Base start = today 00:00
+        start.set(Calendar.HOUR_OF_DAY, 0);
+        start.set(Calendar.MINUTE, 0);
+        start.set(Calendar.SECOND, 0);
+        start.set(Calendar.MILLISECOND, 0);
+
+        if (period == Period.WEEK) {
+            // Monday of current week
+            start.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);
+        } else if (period == Period.MONTH) {
+            // 1st day of current month
+            start.set(Calendar.DAY_OF_MONTH, 1);
+        }
+
+        return new Date[]{start.getTime(), end.getTime()};
+    }
+
+    private void loadCashierPerformance(Timestamp start, Timestamp end) {
+        if (layoutCashierList == null) return;
+        if (!isAdded()) return;
+
+        // Map<cashierName, CashierStats>
+        Map<String, CashierStats> statsMap = new HashMap<>();
+
+        // 1) D'abord les SCANS (earn_codes)
+        db.collection("earn_codes")
+                .whereGreaterThanOrEqualTo("createdAt", start)
+                .whereLessThanOrEqualTo("createdAt", end)
+                .get()
+                .addOnSuccessListener(snapEarn -> {
+
+                    for (DocumentSnapshot doc : snapEarn) {
+                        // 🔁 Adapte ces champs à ton schéma
+                        String cashierName = doc.getString("cashierName");
+                        if (cashierName == null) {
+                            cashierName = doc.getString("createdByName");
                         }
-                    }
-
-                    // ========== Top counters ==========
-                    if (tvTotalScans != null) {
-                        tvTotalScans.setText(
-                                String.format(Locale.getDefault(), "%,d", totalAll)
-                        );
-                    }
-
-                    TextView tvSuccessRate = getView() != null
-                            ? getView().findViewById(R.id.tv_success_rate)
-                            : null;
-                    if (tvSuccessRate != null) {
-                        int successNow = (totalAll == 0)
-                                ? 0
-                                : (int) Math.round((redeemedAll * 100.0) / totalAll);
-                        tvSuccessRate.setText(successNow + "%");
-                        tvSuccessRate.setTextColor(
-                                getResources().getColor(android.R.color.holo_green_dark, requireContext().getTheme())
-                        );
-                    }
-
-                    TextView tvPeak = getView() != null
-                            ? getView().findViewById(R.id.tv_peak_hour)
-                            : null;
-                    if (tvPeak != null) {
-                        int maxIdx = -1, maxVal = -1;
-                        for (int i = 0; i < bucketCount; i++) {
-                            if (totalBucket[i] > maxVal) {
-                                maxVal = totalBucket[i];
-                                maxIdx = i;
-                            }
+                        if (cashierName == null || cashierName.trim().isEmpty()) {
+                            cashierName = "Unknown";
                         }
-                        if (maxIdx >= 0) tvPeak.setText(labels[maxIdx]);
-                    }
 
-                    TextView tvAvg = getView() != null
-                            ? getView().findViewById(R.id.tv_avg_hour)
-                            : null;
-                    if (tvAvg != null) {
-                        double avg = (bucketCount == 0) ? 0 : (totalAll * 1.0) / bucketCount;
-                        tvAvg.setText(String.valueOf((int) Math.round(avg)));
-                    }
-
-                    // ========== No data: clear chart ==========
-                    if (totalAll == 0) {
-                        chartQr.clear();
-                        chartQr.invalidate();
-                        TextView delta = getView() != null
-                                ? getView().findViewById(R.id.tv_scans_delta)
-                                : null;
-                        if (delta != null) delta.setText("—");
-                        return;
-                    }
-
-                    // ========== Build entries (simple) ==========
-                    List<Entry> eTotal   = new ArrayList<>(bucketCount);
-                    List<Entry> eSuccess = new ArrayList<>(bucketCount);
-
-                    for (int i = 0; i < bucketCount; i++) {
-                        eTotal.add(new Entry(i, totalBucket[i]));
-
-                        float pct = totalBucket[i] == 0
-                                ? 0f
-                                : (redeemedBucket[i] * 100f / totalBucket[i]);
-                        eSuccess.add(new Entry(i, pct));
-                    }
-
-                    // ========== Modern datasets ==========
-
-                    // Total scans – blue area
-                    LineDataSet dsTotal = new LineDataSet(eTotal, "Total scans");
-                    dsTotal.setAxisDependency(YAxis.AxisDependency.LEFT);
-                    dsTotal.setMode(LineDataSet.Mode.CUBIC_BEZIER);
-                    dsTotal.setCubicIntensity(0.2f);
-                    dsTotal.setLineWidth(2.4f);
-                    dsTotal.setDrawCircles(false);
-                    dsTotal.setDrawValues(false);
-
-                    int blue = Color.parseColor("#2563EB");
-                    dsTotal.setColor(blue);
-                    dsTotal.setHighLightColor(Color.parseColor("#1D4ED8"));
-                    dsTotal.setDrawHorizontalHighlightIndicator(false);
-
-                    dsTotal.setDrawFilled(true);
-                    dsTotal.setFillAlpha(90);
-                    dsTotal.setFillColor(Color.parseColor("#BF2563EB")); // blue with alpha
-
-                    // Success % – thin teal line
-                    LineDataSet dsSuccess = new LineDataSet(eSuccess, "Success %");
-                    dsSuccess.setAxisDependency(YAxis.AxisDependency.RIGHT);
-                    dsSuccess.setMode(LineDataSet.Mode.CUBIC_BEZIER);
-                    dsSuccess.setCubicIntensity(0.2f);
-                    dsSuccess.setLineWidth(2.0f);
-                    dsSuccess.setDrawCircles(false);
-                    dsSuccess.setDrawValues(false);
-                    dsSuccess.setColor(Color.parseColor("#14B8A6"));
-
-                    LineData lineData = new LineData(dsTotal, dsSuccess);
-                    chartQr.setData(lineData);
-
-                    // ========== Axes / labels formatting ==========
-
-                    XAxis x = chartQr.getXAxis();
-                    x.setLabelCount(Math.min(labels.length, 6), true);
-                    x.setValueFormatter(new ValueFormatter() {
-                        @Override
-                        public String getFormattedValue(float value) {
-                            int i = Math.round(value);
-                            return (i < 0 || i >= labels.length) ? "" : labels[i];
+                        CashierStats cs = statsMap.get(cashierName);
+                        if (cs == null) {
+                            cs = new CashierStats(cashierName);
+                            statsMap.put(cashierName, cs);
                         }
-                    });
+                        cs.scans++;
+                    }
 
-                    chartQr.getAxisRight().setValueFormatter(new ValueFormatter() {
-                        @Override
-                        public String getFormattedValue(float value) {
-                            return ((int) value) + "%";
-                        }
-                    });
+                    // 2) Ensuite les REDEEMS (redeem_codes)
+                    db.collection("redeem_codes")
+                            .whereGreaterThanOrEqualTo("createdAt", start)
+                            .whereLessThanOrEqualTo("createdAt", end)
+                            .get()
+                            .addOnSuccessListener(snapRedeem -> {
+                                for (DocumentSnapshot doc : snapRedeem) {
+                                    // 🔁 Adapte ces champs à ton schéma
+                                    String cashierName = doc.getString("cashierName");
+                                    if (cashierName == null) {
+                                        cashierName = doc.getString("processedByName");
+                                    }
+                                    if (cashierName == null || cashierName.trim().isEmpty()) {
+                                        cashierName = "Unknown";
+                                    }
 
-                    chartQr.animateY(600);
-                    chartQr.invalidate();
-
-                    // ========== Delta vs previous period (same logic) ==========
-                    TRange prev = previousRange(range);
-                    int finalTotalAll = totalAll;
-                    db.collection(COLL_EARN_CODES)
-                            .whereGreaterThanOrEqualTo(F_CREATED_AT, prev.start)
-                            .whereLessThanOrEqualTo(F_CREATED_AT, prev.end)
-                            .count()
-                            .get(AggregateSource.SERVER)
-                            .addOnSuccessListener(prevSnap -> {
-                                long prevCnt = prevSnap.getCount();
-                                double pct = (prevCnt == 0)
-                                        ? (finalTotalAll == 0 ? 0.0 : 100.0)
-                                        : ((finalTotalAll - prevCnt) * 100.0) / prevCnt;
-
-                                TextView delta = getView() != null
-                                        ? getView().findViewById(R.id.tv_scans_delta)
-                                        : null;
-                                if (delta != null) {
-                                    String arrow = pct > 0.0001
-                                            ? "↑"
-                                            : (pct < -0.0001 ? "↓" : "•");
-                                    double abs = Math.abs(pct);
-                                    delta.setText(String.format(
-                                            Locale.getDefault(),
-                                            "%s %.1f%%", arrow, abs
-                                    ));
-
-                                    int color = pct > 0.0001
-                                            ? android.R.color.holo_green_dark
-                                            : (pct < -0.0001 ? android.R.color.holo_red_dark
-                                            : android.R.color.darker_gray);
-                                    delta.setTextColor(
-                                            getResources().getColor(color, requireContext().getTheme())
-                                    );
+                                    CashierStats cs = statsMap.get(cashierName);
+                                    if (cs == null) {
+                                        cs = new CashierStats(cashierName);
+                                        statsMap.put(cashierName, cs);
+                                    }
+                                    cs.redeems++;
                                 }
+
+                                // 3) On met à jour l’UI
+                                if (!isAdded()) return;
+                                renderCashierRows(statsMap);
+
                             })
                             .addOnFailureListener(e -> {
-                                TextView delta = getView() != null
-                                        ? getView().findViewById(R.id.tv_scans_delta)
-                                        : null;
-                                if (delta != null) delta.setText("—");
+                                if (!isAdded()) return;
+                                Log.e("Dashboard", "Error loading cashier redeems", e);
+                                renderCashierRows(statsMap); // quand même afficher les scans
                             });
 
                 })
                 .addOnFailureListener(e -> {
-                    if (tvTotalScans != null) tvTotalScans.setText("—");
-                    chartQr.clear();
-                    chartQr.invalidate();
+                    if (!isAdded()) return;
+                    Log.e("Dashboard", "Error loading cashier scans", e);
+                    // On vide la liste pour montrer que rien n'a été chargé
+                    renderCashierRows(new HashMap<>());
                 });
     }
 
+    private void renderCashierRows(Map<String, CashierStats> statsMap) {
+        if (layoutCashierList == null) return;
+        if (!isAdded()) return;
 
-    /* -------------------------------------------
-       DB HEALTH + helpers
-       ------------------------------------------- */
+        // Garder la première ligne (header) et supprimer les anciennes lignes dynamiques
+        int childCount = layoutCashierList.getChildCount();
+        if (childCount > 1) {
+            layoutCashierList.removeViews(1, childCount - 1);
+        }
 
-    /** Read-only health check: a tiny GET to /users (limit 1). */
-    private void pingDatabase() {
-        db.collection("users").limit(1).get()
-                .addOnSuccessListener(snap -> setDbHealth(true))
-                .addOnFailureListener(e -> setDbHealth(false));
-    }
-
-    private void setDbHealth(boolean ok) {
-        if (dbDot == null || tvDbStatus == null) return;
-        dbDot.setBackgroundResource(ok ? R.drawable.circle_green : R.drawable.circle_red);
-        tvDbStatus.setText(ok ? "Online" : "Error");
-        tvDbStatus.setTextColor(getResources().getColor(
-                ok ? android.R.color.holo_green_dark : android.R.color.holo_red_dark,
-                requireContext().getTheme()
-        ));
-    }
-
-    /** Pretty “↑ 5.2% / ↓ 1.1% / —” with colors. */
-    private void setDelta(TextView tv, double pct) {
-        if (tv == null) return;
-        if (Double.isNaN(pct)) {
-            tv.setText("—");
-            tv.setTextColor(getResources().getColor(android.R.color.darker_gray, requireContext().getTheme()));
+        if (statsMap.isEmpty()) {
+            // Optionnel : afficher une petite ligne "No data"
+            TextView tv = new TextView(getContext());
+            tv.setText("No data for this period");
+            tv.setTextSize(12);
+            tv.setTextColor(getResources().getColor(android.R.color.darker_gray));
+            tv.setPadding(24, 16, 24, 16);
+            layoutCashierList.addView(tv);
             return;
         }
-        String arrow = pct > 0.0001 ? "↑" : (pct < -0.0001 ? "↓" : "•");
-        double abs = Math.abs(pct);
-        tv.setText(String.format(Locale.getDefault(), "%s %.1f%%", arrow, abs));
-        int color = pct > 0.0001
-                ? getResources().getColor(android.R.color.holo_green_dark, requireContext().getTheme())
-                : (pct < -0.0001
-                ? getResources().getColor(android.R.color.holo_red_dark, requireContext().getTheme())
-                : getResources().getColor(android.R.color.darker_gray, requireContext().getTheme()));
-        tv.setTextColor(color);
+
+        // Convertir la map en liste pour trier
+        List<CashierStats> list = new ArrayList<>(statsMap.values());
+
+        // Trier par total (scans + redeems) décroissant
+        Collections.sort(list, new Comparator<CashierStats>() {
+            @Override
+            public int compare(CashierStats o1, CashierStats o2) {
+                int total1 = o1.scans + o1.redeems;
+                int total2 = o2.scans + o2.redeems;
+                return Integer.compare(total2, total1);
+            }
+        });
+
+        int paddingHorizontal = (int) (16 * getResources().getDisplayMetrics().density);
+        int paddingVertical = (int) (10 * getResources().getDisplayMetrics().density);
+
+        for (CashierStats cs : list) {
+            LinearLayout row = new LinearLayout(getContext());
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setLayoutParams(new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            ));
+            row.setPadding(paddingHorizontal, paddingVertical, paddingHorizontal, paddingVertical);
+
+            // Colonne 1 : Nom du caissier (weight 2)
+            TextView tvName = new TextView(getContext());
+            LinearLayout.LayoutParams lpName = new LinearLayout.LayoutParams(0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT, 2f);
+            tvName.setLayoutParams(lpName);
+            tvName.setText(cs.name);
+            tvName.setTextSize(13);
+            tvName.setTextColor(getResources().getColor(android.R.color.primary_text_light));
+            row.addView(tvName);
+
+            // Colonne 2 : Scans (weight 1, centré)
+            TextView tvScans = new TextView(getContext());
+            LinearLayout.LayoutParams lpScans = new LinearLayout.LayoutParams(0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+            tvScans.setLayoutParams(lpScans);
+            tvScans.setText(String.valueOf(cs.scans));
+            tvScans.setTextSize(13);
+            tvScans.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+            tvScans.setTextColor(getResources().getColor(android.R.color.primary_text_light));
+            row.addView(tvScans);
+
+            // Colonne 3 : Redeems (weight 1, aligné à droite)
+            TextView tvRedeems = new TextView(getContext());
+            LinearLayout.LayoutParams lpRedeems = new LinearLayout.LayoutParams(0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+            tvRedeems.setLayoutParams(lpRedeems);
+            tvRedeems.setText(String.valueOf(cs.redeems));
+            tvRedeems.setTextSize(13);
+            tvRedeems.setTextAlignment(View.TEXT_ALIGNMENT_VIEW_END);
+            tvRedeems.setTextColor(getResources().getColor(android.R.color.primary_text_light));
+            row.addView(tvRedeems);
+
+            // Ligne séparatrice légère (optionnel)
+            View divider = new View(getContext());
+            LinearLayout.LayoutParams lpDivider = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    (int) (0.5f * getResources().getDisplayMetrics().density)
+            );
+            divider.setLayoutParams(lpDivider);
+            divider.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
+
+            layoutCashierList.addView(row);
+            layoutCashierList.addView(divider);
+        }
     }
 
-    /** Safe percent change: (now - prev) / max(prev,1) * 100. If both zero, returns 0. */
-    private double pctChange(long now, long prev) {
-        if (prev == 0L) return (now == 0L) ? 0.0 : 100.0;
-        return ((now - prev) * 100.0) / prev;
+
+
+    private static class CashierStats {
+        String name;
+        int scans;
+        int redeems;
+
+        CashierStats(String name) {
+            this.name = name;
+        }
     }
+
 }

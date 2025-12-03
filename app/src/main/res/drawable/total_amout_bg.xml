@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <!--
+        Improved "Glassmorphism" Gradient:
+        - Linear type for smooth flow (45 or 135 degrees).
+        - White with varying opacity (Alpha) creates depth.
+        - Start: 40% White | Center: 10% White | End: 5% White
+    -->
+    <gradient
+        android:angle="135"
+        android:startColor="#66BCBCBC"
+        android:centerColor="#1AFFFFFF"
+        android:endColor="#0DFFFFFF"
+        android:type="linear" />
+
+    <corners android:radius="50dp" />
+
+    <!-- Crisp semi-transparent white border to define the edge -->
+    <stroke
+        android:width="1dp"
+        android:color="#330D2145" />
+
+</shape>

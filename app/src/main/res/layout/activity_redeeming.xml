@@ -1,105 +1,130 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- activity_redemption.xml -->
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/cashier_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F8F9FA">
+    android:background="?android:attr/colorBackground">
 
+    <!-- 1. MAIN CONTENT (Header is now inside ScrollView) -->
     <ScrollView
         android:id="@+id/scrollView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:clipToPadding="false"
         android:fillViewport="true"
-        app:layout_constraintBottom_toTopOf="@+id/bottomBar"
-        app:layout_constraintTop_toTopOf="parent">
+        android:paddingBottom="100dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0">
 
-        <LinearLayout
+        <!-- Inner Container -->
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="10dp">
+            android:layout_height="wrap_content">
 
-            <!-- Search Section -->
+            <!-- HEADER BACKGROUND (Scrolls with content) -->
+            <View
+                android:id="@+id/viewHeaderBg"
+                android:layout_width="match_parent"
+                android:layout_height="180dp"
+                android:background="@drawable/bg_header_gradient"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <!-- SCREEN TITLE -->
             <TextView
+                android:id="@+id/tvScreenTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_margin="5dp"
-                android:layout_marginBottom="8dp"
-                android:letterSpacing="0.05"
-                android:text="Customer Search"
-                android:textColor="#6B7280"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:layout_marginStart="24dp"
+                android:layout_marginTop="30dp"
+                android:text="Redeem Points"
+                android:textColor="#FFFFFF"
+                android:textSize="26sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
-            <com.google.android.material.card.MaterialCardView
+            <TextView
+                android:id="@+id/tvScreenSubtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Select rewards for customer"
+                android:textColor="#E0E7FF"
+                android:textSize="15sp"
+                app:layout_constraintStart_toStartOf="@id/tvScreenTitle"
+                app:layout_constraintTop_toBottomOf="@id/tvScreenTitle" />
+
+            <!-- CONTENT CONTAINER -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
-                android:backgroundTint="#FFFFFF"
-                app:strokeColor="#E5E7EB"
-                android:layout_margin="5dp"
-                app:strokeWidth="1dp">
+                android:orientation="vertical"
+                android:padding="10dp"
+                app:layout_constraintTop_toBottomOf="@id/tvScreenSubtitle">
 
-                <LinearLayout
+                <!-- Search Bar -->
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="4dp">
-
-                    <ImageView
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:contentDescription="Search"
-                        android:padding="8dp"
-                        android:src="@android:drawable/ic_menu_search"
-                        app:tint="#9CA3AF" />
-
-                    <EditText
-                        android:id="@+id/searchClient"
-                        android:layout_width="0dp"
-                        android:layout_height="48dp"
-                        android:layout_weight="1"
-                        android:background="@null"
-                        android:hint="Enter customer name or ID"
-                        android:inputType="text"
-                        android:paddingStart="8dp"
-                        android:paddingEnd="16dp"
-                        android:textColor="#1F2937"
-                        android:textColorHint="#9CA3AF"
-                        android:textSize="16sp" />
-
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Client Info Card -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/clientCard"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                android:visibility="gone"
-                android:backgroundTint="#FFFFFF"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="4dp"
-                app:strokeWidth="0dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:layout_marginTop="6dp"
+                    android:layout_marginBottom="20dp"
+                    app:cardBackgroundColor="?attr/colorSurface"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="6dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="#3B82F6"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="6dp">
+
+                        <ImageView
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:contentDescription="Search"
+                            android:padding="12dp"
+                            android:src="@android:drawable/ic_menu_search"
+                            app:tint="?android:attr/textColorSecondary" />
+
+                        <EditText
+                            android:id="@+id/searchClient"
+                            android:layout_width="0dp"
+                            android:layout_height="48dp"
+                            android:layout_weight="1"
+                            android:background="@null"
+                            android:hint="Scan ID or search name..."
+                            android:inputType="text"
+                            android:paddingEnd="16dp"
+                            android:textColor="?android:attr/textColorPrimary"
+                            android:textColorHint="?android:attr/textColorSecondary"
+                            android:textSize="16sp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- CUSTOMER PROFILE & OFFERS -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/clientCard"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="10dp"
+                    android:visibility="gone"
+                    app:cardBackgroundColor="?attr/colorSurface"
+                    app:cardCornerRadius="24dp"
+                    app:cardElevation="4dp"
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
                         android:orientation="vertical"
                         android:padding="20dp">
 
+                        <!-- Profile Header -->
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -117,859 +142,806 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="John Doe"
-                                    android:textColor="#FFFFFF"
-                                    android:textSize="22sp"
+                                    android:textColor="?android:attr/textColorPrimary"
+                                    android:textSize="20sp"
                                     android:textStyle="bold" />
 
                                 <TextView
                                     android:id="@+id/clientId"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:layout_marginTop="4dp"
-                                    android:text="ID: C12345"
-                                    android:textColor="#E0E7FF"
+                                    android:alpha="0.8"
+                                    android:text="ID: C12345 • Gold Tier"
+                                    android:textColor="?android:attr/textColorSecondary"
                                     android:textSize="13sp" />
-
                             </LinearLayout>
 
-                            <ImageView
-                                android:layout_width="48dp"
-                                android:layout_height="48dp"
-                                android:alpha="0.6"
-                                android:contentDescription="Customer"
-                                android:src="@android:drawable/ic_menu_my_calendar"
-                                app:tint="#FFFFFF" />
-
-                        </LinearLayout>
-
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="1dp"
-                            android:layout_marginTop="16dp"
-                            android:layout_marginBottom="16dp"
-                            android:background="#60A5FA" />
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:gravity="center"
-                            android:orientation="horizontal">
-
+                            <!-- Big Points Display -->
                             <LinearLayout
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:gravity="center"
+                                android:gravity="end"
                                 android:orientation="vertical">
 
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:letterSpacing="0.1"
-                                    android:text="Available Points"
-                                    android:textColor="#E0E7FF"
-                                    android:textSize="12sp"
+                                    android:alpha="0.8"
+                                    android:text="BALANCE"
+                                    android:textColor="?android:attr/textColorSecondary"
+                                    android:textSize="10sp"
                                     android:textStyle="bold" />
 
                                 <TextView
                                     android:id="@+id/clientPoints"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:layout_marginTop="4dp"
-                                    android:text="150"
-                                    android:textColor="#FFFFFF"
-                                    android:textSize="36sp"
+                                    android:text="2,150"
+                                    android:textColor="#4F46E5"
+                                    android:textSize="24sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+                        </LinearLayout>
+
+                        <!-- Offers Scroller -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginTop="16dp"
+                            android:layout_marginBottom="12dp"
+                            android:background="?android:attr/listDivider" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:letterSpacing="0.05"
+                                android:text="ACTIVE PERKS"
+                                android:textColor="?android:attr/textColorSecondary"
+                                android:textSize="11sp"
+                                android:textStyle="bold" />
+
+                            <!-- Offer Badge 1 -->
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:background="@drawable/offer_badge_bg"
+                                android:backgroundTint="#F3F4F6"
+                                android:gravity="center_vertical|end"
+                                android:orientation="horizontal"
+                                android:paddingHorizontal="10dp"
+                                android:paddingVertical="6dp">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginEnd="6dp"
+                                    android:text="🎁" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Free Birthday Cake"
+                                    android:textColor="?android:attr/textColorPrimary"
+                                    android:textSize="12sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+                        </LinearLayout>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- CATALOG LABEL -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginBottom="12dp"
+                    android:layout_marginTop="10dp"
+                    android:text="Menu Categories"
+                    android:textColor="?android:attr/textColorPrimary"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <!-- === CATEGORY 1: HOT COFFEE === -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    app:cardBackgroundColor="?attr/colorSurface"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <!-- Header -->
+                        <LinearLayout
+                            android:id="@+id/headerHotCoffee"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:padding="16dp">
+
+                            <androidx.cardview.widget.CardView
+                                android:layout_width="56dp"
+                                android:layout_height="56dp"
+                                app:cardBackgroundColor="#FFF7ED"
+                                app:cardCornerRadius="20dp"
+                                app:cardElevation="0dp">
+                                <ImageView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:padding="4dp"
+                                    android:scaleType="centerCrop"
+                                    android:src="@drawable/hot_drinks" />
+                            </androidx.cardview.widget.CardView>
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="16dp"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Hot Coffee"
+                                    android:textColor="?android:attr/textColorPrimary"
+                                    android:textSize="16sp"
                                     android:textStyle="bold" />
 
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="2dp"
+                                    android:text="6 items"
+                                    android:textColor="?android:attr/textColorSecondary"
+                                    android:textSize="13sp" />
+                            </LinearLayout>
+                        </LinearLayout>
+
+                        <!-- Items List (Inlined for Simplicity) -->
+                        <LinearLayout
+                            android:id="@+id/itemsHotCoffee"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?attr/selectableItemBackground"
+                            android:orientation="vertical"
+                            android:visibility="gone">
+
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?android:attr/listDivider"/>
+
+                            <!-- Espresso -->
+                            <LinearLayout
+                                android:id="@+id/btnEspresso"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:background="?attr/selectableItemBackground"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal"
+                                android:paddingHorizontal="20dp"
+                                android:paddingVertical="14dp">
+                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Espresso" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="150 pts" android:textColor="#D97706" android:textStyle="bold" />
+                            </LinearLayout>
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
+
+                            <!-- Cappuccino -->
+                            <LinearLayout
+                                android:id="@+id/btnCappuccino"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:background="?attr/selectableItemBackground"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal"
+                                android:paddingHorizontal="20dp"
+                                android:paddingVertical="14dp">
+                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Cappuccino" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="200 pts" android:textColor="#D97706" android:textStyle="bold" />
+                            </LinearLayout>
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
+
+                            <!-- Latte -->
+                            <LinearLayout
+                                android:id="@+id/btnLatte"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:background="?attr/selectableItemBackground"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal"
+                                android:paddingHorizontal="20dp"
+                                android:paddingVertical="14dp">
+                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Latte" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="200 pts" android:textColor="#D97706" android:textStyle="bold" />
+                            </LinearLayout>
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
+
+                            <!-- Americano -->
+                            <LinearLayout
+                                android:id="@+id/btnAmericano"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:background="?attr/selectableItemBackground"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal"
+                                android:paddingHorizontal="20dp"
+                                android:paddingVertical="14dp">
+                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Americano" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="180 pts" android:textColor="#D97706" android:textStyle="bold" />
+                            </LinearLayout>
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
+
+                            <!-- Mocha -->
+                            <LinearLayout
+                                android:id="@+id/btnMocha"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:background="?attr/selectableItemBackground"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal"
+                                android:paddingHorizontal="20dp"
+                                android:paddingVertical="14dp">
+                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Mocha" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="220 pts" android:textColor="#D97706" android:textStyle="bold" />
+                            </LinearLayout>
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
+
+                            <!-- Macchiato -->
+                            <LinearLayout
+                                android:id="@+id/btnMacchiato"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:background="?attr/selectableItemBackground"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal"
+                                android:paddingHorizontal="20dp"
+                                android:paddingVertical="14dp">
+                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Macchiato" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="190 pts" android:textColor="#D97706" android:textStyle="bold" />
                             </LinearLayout>
 
                         </LinearLayout>
-
                     </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
 
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Categories Section -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                android:layout_margin="5dp"
-                android:letterSpacing="0.05"
-                android:text="Select Category"
-                android:textColor="#6B7280"
-                android:textSize="14sp"
-                android:textStyle="bold" />
-
-            <!-- ========== HOT COFFEE Category (collapsed by default) ========== -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="5dp"
-                android:backgroundTint="#FFFFFF"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
-                app:strokeColor="#E5E7EB"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
+                <!-- === CATEGORY 2: ICED COFFEE === -->
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:layout_marginBottom="12dp"
+                    app:cardBackgroundColor="?attr/colorSurface"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp">
 
                     <LinearLayout
-                        android:id="@+id/headerHotCoffee"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="#FFFFFF"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:padding="20dp">
+                        android:orientation="vertical">
 
-                        <ImageView
-                            android:layout_width="48dp"
-                            android:layout_height="48dp"
-                            android:src="@drawable/hot_drinks"/>
-
+                        <!-- Header -->
                         <LinearLayout
-                            android:layout_width="0dp"
+                            android:id="@+id/headerIcedCoffee"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="16dp"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
+                            android:background="?attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:padding="16dp">
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Hot Coffee"
-                                android:textColor="#1F2937"
-                                android:textSize="17sp"
-                                android:textStyle="bold" />
+                            <androidx.cardview.widget.CardView
+                                android:layout_width="56dp"
+                                android:layout_height="56dp"
+                                app:cardBackgroundColor="#F0F9FF"
+                                app:cardCornerRadius="20dp"
+                                app:cardElevation="0dp">
+                                <ImageView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:scaleType="centerCrop"
+                                    android:src="@drawable/iced_coffee" />
+                            </androidx.cardview.widget.CardView>
 
-                            <TextView
-                                android:layout_width="wrap_content"
+                            <LinearLayout
+                                android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="6 items available"
-                                android:textColor="#6B7280"
-                                android:textSize="13sp" />
+                                android:layout_marginStart="16dp"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Iced Coffee"
+                                    android:textColor="?android:attr/textColorPrimary"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="2dp"
+                                    android:text="6 items"
+                                    android:textColor="?android:attr/textColorSecondary"
+                                    android:textSize="13sp" />
+                            </LinearLayout>
+                        </LinearLayout>
+
+                        <!-- Items List -->
+                        <LinearLayout
+                            android:id="@+id/itemsIcedCoffee"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?attr/selectableItemBackground"
+                            android:orientation="vertical"
+                            android:visibility="gone">
+
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?android:attr/listDivider"/>
+
+                            <LinearLayout android:id="@+id/btnIcedAmericano" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
+                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Iced Americano" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="180 pts" android:textColor="#D97706" android:textStyle="bold" />
+                            </LinearLayout>
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
+
+                            <LinearLayout android:id="@+id/btnIcedLatte" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
+                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Iced Latte" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="220 pts" android:textColor="#D97706" android:textStyle="bold" />
+                            </LinearLayout>
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
+
+                            <LinearLayout android:id="@+id/btnIcedMocha" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
+                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Iced Mocha" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="240 pts" android:textColor="#D97706" android:textStyle="bold" />
+                            </LinearLayout>
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
+
+                            <LinearLayout android:id="@+id/btnColdBrew" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
+                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Cold Brew" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="250 pts" android:textColor="#D97706" android:textStyle="bold" />
+                            </LinearLayout>
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
+
+                            <LinearLayout android:id="@+id/btnIcedCaramelMacchiato" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
+                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Iced Caramel Macchiato" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="260 pts" android:textColor="#D97706" android:textStyle="bold" />
+                            </LinearLayout>
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
+
+                            <LinearLayout android:id="@+id/btnIcedShakenEspresso" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
+                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Iced Shaken Espresso" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="230 pts" android:textColor="#D97706" android:textStyle="bold" />
+                            </LinearLayout>
 
                         </LinearLayout>
                     </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
 
-                    <View
-                        android:id="@+id/dividerHotCoffee"
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:background="#F3F4F6"
-                        android:visibility="gone" />
-
-                    <LinearLayout
-                        android:id="@+id/itemsHotCoffee"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="12dp"
-                        android:visibility="gone">
-
-                        <Button
-                            android:id="@+id/btnEspresso"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="56dp"
-                            android:background="?attr/selectableItemBackground"
-                            android:gravity="start|center_vertical"
-                            android:paddingStart="16dp"
-                            android:paddingEnd="16dp"
-                            android:text="Espresso"
-                            android:textColor="#1F2937"
-                            android:textSize="15sp" />
-
-                        <Button
-                            android:id="@+id/btnAmericano"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="56dp"
-                            android:background="?attr/selectableItemBackground"
-                            android:gravity="start|center_vertical"
-                            android:paddingStart="16dp"
-                            android:paddingEnd="16dp"
-                            android:text="Americano"
-                            android:textColor="#1F2937"
-                            android:textSize="15sp" />
-
-                        <Button
-                            android:id="@+id/btnCappuccino"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="56dp"
-                            android:background="?attr/selectableItemBackground"
-                            android:gravity="start|center_vertical"
-                            android:paddingStart="16dp"
-                            android:paddingEnd="16dp"
-                            android:text="Cappuccino"
-                            android:textColor="#1F2937"
-                            android:textSize="15sp" />
-
-                        <Button
-                            android:id="@+id/btnLatte"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="56dp"
-                            android:background="?attr/selectableItemBackground"
-                            android:gravity="start|center_vertical"
-                            android:paddingStart="16dp"
-                            android:paddingEnd="16dp"
-                            android:text="Latte"
-                            android:textColor="#1F2937"
-                            android:textSize="15sp" />
-
-                        <Button
-                            android:id="@+id/btnMocha"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="56dp"
-                            android:background="?attr/selectableItemBackground"
-                            android:gravity="start|center_vertical"
-                            android:paddingStart="16dp"
-                            android:paddingEnd="16dp"
-                            android:text="Mocha"
-                            android:textColor="#1F2937"
-                            android:textSize="15sp" />
-
-                        <Button
-                            android:id="@+id/btnMacchiato"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="56dp"
-                            android:background="?attr/selectableItemBackground"
-                            android:gravity="start|center_vertical"
-                            android:paddingStart="16dp"
-                            android:paddingEnd="16dp"
-                            android:text="Macchiato"
-                            android:textColor="#1F2937"
-                            android:textSize="15sp" />
-
-                    </LinearLayout>
-
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- ========== ICED COFFEE Category ========== -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="5dp"
-                android:backgroundTint="#FFFFFF"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
-                app:strokeColor="#E5E7EB"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
+                <!-- === CATEGORY 3: TEA === -->
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:layout_marginBottom="12dp"
+                    app:cardBackgroundColor="?attr/colorSurface"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp">
 
                     <LinearLayout
-                        android:id="@+id/headerIcedCoffee"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="#FFFFFF"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:padding="20dp">
+                        android:orientation="vertical">
 
-                        <ImageView
-                            android:layout_width="50dp"
-                            android:layout_height="50dp"
-                            android:src="@drawable/iced_coffee"/>
-
+                        <!-- Header -->
                         <LinearLayout
-                            android:layout_width="0dp"
+                            android:id="@+id/headerTea"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="16dp"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
+                            android:background="?attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:padding="16dp">
 
-                            <TextView
-                                android:layout_width="wrap_content"
+                            <androidx.cardview.widget.CardView
+                                android:layout_width="56dp"
+                                android:layout_height="56dp"
+                                app:cardBackgroundColor="#ECFDF5"
+                                app:cardCornerRadius="20dp"
+                                app:cardElevation="0dp">
+                                <ImageView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:scaleType="centerCrop"
+                                    android:src="@drawable/tea_icon" />
+                            </androidx.cardview.widget.CardView>
+
+                            <LinearLayout
+                                android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:text="Iced Coffee"
-                                android:textColor="#1F2937"
-                                android:textSize="17sp"
-                                android:textStyle="bold" />
+                                android:layout_marginStart="16dp"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="4 items available"
-                                android:textColor="#6B7280"
-                                android:textSize="13sp" />
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Tea"
+                                    android:textColor="?android:attr/textColorPrimary"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold" />
 
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="2dp"
+                                    android:text="6 items"
+                                    android:textColor="?android:attr/textColorSecondary"
+                                    android:textSize="13sp" />
+                            </LinearLayout>
                         </LinearLayout>
 
+                        <!-- Items List -->
+                        <LinearLayout
+                            android:id="@+id/itemsTea"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?attr/selectableItemBackground"
+                            android:orientation="vertical"
+                            android:visibility="gone">
+
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?android:attr/listDivider"/>
+
+                            <LinearLayout android:id="@+id/btnGreenTea" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
+                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Green Tea" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="150 pts" android:textColor="#D97706" android:textStyle="bold" />
+                            </LinearLayout>
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
+
+                            <LinearLayout android:id="@+id/btnBlackTea" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
+                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Black Tea" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="150 pts" android:textColor="#D97706" android:textStyle="bold" />
+                            </LinearLayout>
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
+
+                            <LinearLayout android:id="@+id/btnChamomile" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
+                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Chamomile Tea" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="160 pts" android:textColor="#D97706" android:textStyle="bold" />
+                            </LinearLayout>
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
+
+                            <LinearLayout android:id="@+id/btnMatchaLatte" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
+                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Matcha Latte" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="250 pts" android:textColor="#D97706" android:textStyle="bold" />
+                            </LinearLayout>
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
+
+                            <LinearLayout android:id="@+id/btnChaiLatte" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
+                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Chai Latte" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="240 pts" android:textColor="#D97706" android:textStyle="bold" />
+                            </LinearLayout>
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
+
+                            <LinearLayout android:id="@+id/btnEarlGrey" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
+                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Earl Grey" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="150 pts" android:textColor="#D97706" android:textStyle="bold" />
+                            </LinearLayout>
+
+                        </LinearLayout>
                     </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
 
-                    <View
-                        android:id="@+id/dividerIcedCoffee"
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:background="#F3F4F6"
-                        android:visibility="gone" />
-
-                    <LinearLayout
-                        android:id="@+id/itemsIcedCoffee"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="12dp"
-                        android:visibility="gone">
-
-                        <Button
-                            android:id="@+id/btnIcedAmericano"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="56dp"
-                            android:background="?attr/selectableItemBackground"
-                            android:gravity="start|center_vertical"
-                            android:paddingStart="16dp"
-                            android:paddingEnd="16dp"
-                            android:text="Iced Americano"
-                            android:textColor="#1F2937"
-                            android:textSize="15sp" />
-
-                        <Button
-                            android:id="@+id/btnIcedLatte"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="56dp"
-                            android:background="?attr/selectableItemBackground"
-                            android:gravity="start|center_vertical"
-                            android:paddingStart="16dp"
-                            android:paddingEnd="16dp"
-                            android:text="Iced Latte"
-                            android:textColor="#1F2937"
-                            android:textSize="15sp" />
-
-                        <Button
-                            android:id="@+id/btnIcedMocha"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="56dp"
-                            android:background="?attr/selectableItemBackground"
-                            android:gravity="start|center_vertical"
-                            android:paddingStart="16dp"
-                            android:paddingEnd="16dp"
-                            android:text="Iced Mocha"
-                            android:textColor="#1F2937"
-                            android:textSize="15sp" />
-
-                        <Button
-                            android:id="@+id/btnColdBrew"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="56dp"
-                            android:background="?attr/selectableItemBackground"
-                            android:gravity="start|center_vertical"
-                            android:paddingStart="16dp"
-                            android:paddingEnd="16dp"
-                            android:text="Cold Brew"
-                            android:textColor="#1F2937"
-                            android:textSize="15sp" />
-
-                    </LinearLayout>
-
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- ========== TEA Category ========== -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="5dp"
-                android:backgroundTint="#FFFFFF"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
-                app:strokeColor="#E5E7EB"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
+                <!-- === CATEGORY 4: FRAPPUCCINO === -->
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:layout_marginBottom="12dp"
+                    app:cardBackgroundColor="?attr/colorSurface"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp">
 
                     <LinearLayout
-                        android:id="@+id/headerTea"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="#FFFFFF"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:padding="20dp">
+                        android:orientation="vertical">
 
-                        <ImageView
-                            android:layout_width="50dp"
-                            android:layout_height="50dp"
-                            android:src="@drawable/tea_icon"/>
-
+                        <!-- Header -->
                         <LinearLayout
-                            android:layout_width="0dp"
+                            android:id="@+id/headerFrappuccino"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="16dp"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
+                            android:background="?attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:padding="16dp">
 
-                            <TextView
-                                android:layout_width="wrap_content"
+                            <androidx.cardview.widget.CardView
+                                android:layout_width="56dp"
+                                android:layout_height="56dp"
+                                app:cardBackgroundColor="#FAF5FF"
+                                app:cardCornerRadius="20dp"
+                                app:cardElevation="0dp">
+                                <ImageView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:scaleType="centerCrop"
+                                    android:src="@drawable/frappocino" />
+                            </androidx.cardview.widget.CardView>
+
+                            <LinearLayout
+                                android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:text="Tea"
-                                android:textColor="#1F2937"
-                                android:textSize="17sp"
-                                android:textStyle="bold" />
+                                android:layout_marginStart="16dp"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="5 items available"
-                                android:textColor="#6B7280"
-                                android:textSize="13sp" />
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Frappuccino"
+                                    android:textColor="?android:attr/textColorPrimary"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold" />
 
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="2dp"
+                                    android:text="6 items"
+                                    android:textColor="?android:attr/textColorSecondary"
+                                    android:textSize="13sp" />
+                            </LinearLayout>
                         </LinearLayout>
 
+                        <!-- Items List -->
+                        <LinearLayout
+                            android:id="@+id/itemsFrappuccino"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?attr/selectableItemBackground"
+                            android:orientation="vertical"
+                            android:visibility="gone">
+
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?android:attr/listDivider"/>
+
+                            <LinearLayout android:id="@+id/btnCoffeeFrappuccino" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
+                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Coffee Frappuccino" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="280 pts" android:textColor="#D97706" android:textStyle="bold" />
+                            </LinearLayout>
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
+
+                            <LinearLayout android:id="@+id/btnCaramelFrappuccino" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
+                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Caramel Frappuccino" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="300 pts" android:textColor="#D97706" android:textStyle="bold" />
+                            </LinearLayout>
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
+
+                            <LinearLayout android:id="@+id/btnMochaFrappuccino" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
+                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Mocha Frappuccino" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="300 pts" android:textColor="#D97706" android:textStyle="bold" />
+                            </LinearLayout>
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
+
+                            <LinearLayout android:id="@+id/btnVanillaFrappuccino" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
+                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Vanilla Frappuccino" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="280 pts" android:textColor="#D97706" android:textStyle="bold" />
+                            </LinearLayout>
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
+
+                            <LinearLayout android:id="@+id/btnJavaChipFrappuccino" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
+                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Java Chip Frappuccino" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="320 pts" android:textColor="#D97706" android:textStyle="bold" />
+                            </LinearLayout>
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
+
+                            <LinearLayout android:id="@+id/btnStrawberryFrappuccino" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
+                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Strawberry Frappuccino" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="320 pts" android:textColor="#D97706" android:textStyle="bold" />
+                            </LinearLayout>
+
+                        </LinearLayout>
                     </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
 
-                    <View
-                        android:id="@+id/dividerTea"
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:background="#F3F4F6"
-                        android:visibility="gone" />
-
-                    <LinearLayout
-                        android:id="@+id/itemsTea"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="12dp"
-                        android:visibility="gone">
-
-                        <Button
-                            android:id="@+id/btnGreenTea"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="56dp"
-                            android:background="?attr/selectableItemBackground"
-                            android:gravity="start|center_vertical"
-                            android:paddingStart="16dp"
-                            android:paddingEnd="16dp"
-                            android:text="Green Tea"
-                            android:textColor="#1F2937"
-                            android:textSize="15sp" />
-
-                        <Button
-                            android:id="@+id/btnBlackTea"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="56dp"
-                            android:background="?attr/selectableItemBackground"
-                            android:gravity="start|center_vertical"
-                            android:paddingStart="16dp"
-                            android:paddingEnd="16dp"
-                            android:text="Black Tea"
-                            android:textColor="#1F2937"
-                            android:textSize="15sp" />
-
-                        <Button
-                            android:id="@+id/btnChamomile"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="56dp"
-                            android:background="?attr/selectableItemBackground"
-                            android:gravity="start|center_vertical"
-                            android:paddingStart="16dp"
-                            android:paddingEnd="16dp"
-                            android:text="Chamomile Tea"
-                            android:textColor="#1F2937"
-                            android:textSize="15sp" />
-
-                        <Button
-                            android:id="@+id/btnMatchaLatte"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="56dp"
-                            android:background="?attr/selectableItemBackground"
-                            android:gravity="start|center_vertical"
-                            android:paddingStart="16dp"
-                            android:paddingEnd="16dp"
-                            android:text="Matcha Latte"
-                            android:textColor="#1F2937"
-                            android:textSize="15sp" />
-
-                        <Button
-                            android:id="@+id/btnChaiLatte"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="56dp"
-                            android:background="?attr/selectableItemBackground"
-                            android:gravity="start|center_vertical"
-                            android:paddingStart="16dp"
-                            android:paddingEnd="16dp"
-                            android:text="Chai Latte"
-                            android:textColor="#1F2937"
-                            android:textSize="15sp" />
-
-                    </LinearLayout>
-
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- ========== FRAPPUCCINO Category ========== -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="5dp"
-                android:backgroundTint="#FFFFFF"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
-                app:strokeColor="#E5E7EB"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
+                <!-- === CATEGORY 5: PASTRIES === -->
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    app:cardBackgroundColor="?attr/colorSurface"
+                    android:layout_marginBottom="100dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp">
 
                     <LinearLayout
-                        android:id="@+id/headerFrappuccino"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="#FFFFFF"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:padding="20dp">
+                        android:orientation="vertical">
 
-                        <ImageView
-                            android:layout_width="50dp"
-                            android:layout_height="50dp"
-                            android:src="@drawable/frappocino"/>
-
+                        <!-- Header -->
                         <LinearLayout
-                            android:layout_width="0dp"
+                            android:id="@+id/headerPastries"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="16dp"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
+                            android:background="?attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:padding="16dp">
 
-                            <TextView
-                                android:layout_width="wrap_content"
+                            <androidx.cardview.widget.CardView
+                                android:layout_width="56dp"
+                                android:layout_height="56dp"
+                                app:cardBackgroundColor="#FDF2F8"
+                                app:cardCornerRadius="20dp"
+                                app:cardElevation="0dp">
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:gravity="center"
+                                    android:text="🥐"
+                                    android:textSize="28sp" />
+                            </androidx.cardview.widget.CardView>
+
+                            <LinearLayout
+                                android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:text="Frappuccino"
-                                android:textColor="#1F2937"
-                                android:textSize="17sp"
-                                android:textStyle="bold" />
+                                android:layout_marginStart="16dp"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="4 items available"
-                                android:textColor="#6B7280"
-                                android:textSize="13sp" />
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Pastries &amp; Snacks"
+                                    android:textColor="?android:attr/textColorPrimary"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold" />
 
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="2dp"
+                                    android:text="6 items"
+                                    android:textColor="?android:attr/textColorSecondary"
+                                    android:textSize="13sp" />
+                            </LinearLayout>
                         </LinearLayout>
 
-                    </LinearLayout>
-
-                    <View
-                        android:id="@+id/dividerFrappuccino"
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:background="#F3F4F6"
-                        android:visibility="gone" />
-
-                    <LinearLayout
-                        android:id="@+id/itemsFrappuccino"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="12dp"
-                        android:visibility="gone">
-
-                        <Button
-                            android:id="@+id/btnCoffeeFrappuccino"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="56dp"
-                            android:background="?attr/selectableItemBackground"
-                            android:gravity="start|center_vertical"
-                            android:paddingStart="16dp"
-                            android:paddingEnd="16dp"
-                            android:text="Coffee Frappuccino"
-                            android:textColor="#1F2937"
-                            android:textSize="15sp" />
-
-                        <Button
-                            android:id="@+id/btnCaramelFrappuccino"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="56dp"
-                            android:background="?attr/selectableItemBackground"
-                            android:gravity="start|center_vertical"
-                            android:paddingStart="16dp"
-                            android:paddingEnd="16dp"
-                            android:text="Caramel Frappuccino"
-                            android:textColor="#1F2937"
-                            android:textSize="15sp" />
-
-                        <Button
-                            android:id="@+id/btnMochaFrappuccino"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="56dp"
-                            android:background="?attr/selectableItemBackground"
-                            android:gravity="start|center_vertical"
-                            android:paddingStart="16dp"
-                            android:paddingEnd="16dp"
-                            android:text="Mocha Frappuccino"
-                            android:textColor="#1F2937"
-                            android:textSize="15sp" />
-
-                        <Button
-                            android:id="@+id/btnVanillaFrappuccino"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="56dp"
-                            android:background="?attr/selectableItemBackground"
-                            android:gravity="start|center_vertical"
-                            android:paddingStart="16dp"
-                            android:paddingEnd="16dp"
-                            android:text="Vanilla Frappuccino"
-                            android:textColor="#1F2937"
-                            android:textSize="15sp" />
-
-                    </LinearLayout>
-
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- ========== PASTRIES Category (typical coffee shop family) ========== -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="5dp"
-                android:backgroundTint="#FFFFFF"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
-                app:strokeColor="#E5E7EB"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-
-                    <LinearLayout
-                        android:id="@+id/headerPastries"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:background="#FFFFFF"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:padding="20dp">
-
-                        <TextView
-                            android:layout_width="48dp"
-                            android:layout_height="48dp"
-                            android:background="@android:color/white"
-                            android:gravity="center"
-                            android:text="🥐"
-                            android:textSize="28sp" />
-
+                        <!-- Items List -->
                         <LinearLayout
-                            android:layout_width="0dp"
+                            android:id="@+id/itemsPastries"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="16dp"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
+                            android:background="?attr/selectableItemBackground"
+                            android:orientation="vertical"
+                            android:visibility="gone">
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Pastries"
-                                android:textColor="#1F2937"
-                                android:textSize="17sp"
-                                android:textStyle="bold" />
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?android:attr/listDivider"/>
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="5 items available"
-                                android:textColor="#6B7280"
-                                android:textSize="13sp" />
+                            <LinearLayout android:id="@+id/btnCroissant" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
+                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Butter Croissant" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="120 pts" android:textColor="#D97706" android:textStyle="bold" />
+                            </LinearLayout>
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
+
+                            <LinearLayout android:id="@+id/btnChocolateCroissant" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
+                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Choco Croissant" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="140 pts" android:textColor="#D97706" android:textStyle="bold" />
+                            </LinearLayout>
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
+
+                            <LinearLayout android:id="@+id/btnMuffin" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
+                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Blueberry Muffin" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="150 pts" android:textColor="#D97706" android:textStyle="bold" />
+                            </LinearLayout>
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
+
+                            <LinearLayout android:id="@+id/btnCakeSlice" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
+                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Cake Slice" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="180 pts" android:textColor="#D97706" android:textStyle="bold" />
+                            </LinearLayout>
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
+
+                            <LinearLayout android:id="@+id/btnCookie" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
+                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Choco Chip Cookie" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="100 pts" android:textColor="#D97706" android:textStyle="bold" />
+                            </LinearLayout>
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
+
+                            <LinearLayout android:id="@+id/btnBrownie" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
+                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Fudge Brownie" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="160 pts" android:textColor="#D97706" android:textStyle="bold" />
+                            </LinearLayout>
 
                         </LinearLayout>
-
                     </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
 
-                    <View
-                        android:id="@+id/dividerPastries"
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:background="#F3F4F6"
-                        android:visibility="gone" />
-
-                    <LinearLayout
-                        android:id="@+id/itemsPastries"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="12dp"
-                        android:visibility="gone">
-
-                        <Button
-                            android:id="@+id/btnCroissant"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="56dp"
-                            android:background="?attr/selectableItemBackground"
-                            android:gravity="start|center_vertical"
-                            android:paddingStart="16dp"
-                            android:paddingEnd="16dp"
-                            android:text="Butter Croissant"
-                            android:textColor="#1F2937"
-                            android:textSize="15sp" />
-
-                        <Button
-                            android:id="@+id/btnChocolateCroissant"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="56dp"
-                            android:background="?attr/selectableItemBackground"
-                            android:gravity="start|center_vertical"
-                            android:paddingStart="16dp"
-                            android:paddingEnd="16dp"
-                            android:text="Chocolate Croissant"
-                            android:textColor="#1F2937"
-                            android:textSize="15sp" />
-
-                        <Button
-                            android:id="@+id/btnMuffin"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="56dp"
-                            android:background="?attr/selectableItemBackground"
-                            android:gravity="start|center_vertical"
-                            android:paddingStart="16dp"
-                            android:paddingEnd="16dp"
-                            android:text="Muffin"
-                            android:textColor="#1F2937"
-                            android:textSize="15sp" />
-
-                        <Button
-                            android:id="@+id/btnCakeSlice"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="56dp"
-                            android:background="?attr/selectableItemBackground"
-                            android:gravity="start|center_vertical"
-                            android:paddingStart="16dp"
-                            android:paddingEnd="16dp"
-                            android:text="Cake Slice"
-                            android:textColor="#1F2937"
-                            android:textSize="15sp" />
-
-                        <Button
-                            android:id="@+id/btnCookie"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="56dp"
-                            android:background="?attr/selectableItemBackground"
-                            android:gravity="start|center_vertical"
-                            android:paddingStart="16dp"
-                            android:paddingEnd="16dp"
-                            android:text="Cookie"
-                            android:textColor="#1F2937"
-                            android:textSize="15sp" />
-
-                    </LinearLayout>
-
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Small bottom spacer so last card is not hidden behind bottom bar -->
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="32dp" />
-
-        </LinearLayout>
-
+            </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>
 
-    <!-- Bottom bar: what cashier selected + redeem -->
-    <LinearLayout
+    <!-- 4. BOTTOM BAR -->
+    <com.google.android.material.card.MaterialCardView
         android:id="@+id/bottomBar"
         android:layout_width="match_parent"
-        android:layout_height="72dp"
-        android:background="#FFFFFF"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="12dp"
-        android:elevation="8dp"
-        android:gravity="center_vertical"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        app:cardBackgroundColor="?attr/colorSurface"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="16dp"
+        app:layout_constraintBottom_toBottomOf="parent">
 
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/tvSelectedItem"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="No item selected"
-                android:textSize="14sp"
-                android:textColor="#1F2937"
-                android:textStyle="bold"
-                android:maxLines="1"
-                android:ellipsize="end" />
-
-            <TextView
-                android:id="@+id/tvRequiredPoints"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Required points: -"
-                android:textSize="12sp"
-                android:textColor="#6B7280"
-                android:layout_marginTop="2dp" />
-
-        </LinearLayout>
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnRedeem"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Redeem"
-            android:minWidth="0dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
             android:paddingHorizontal="24dp"
-            android:paddingVertical="10dp"
-            android:backgroundTint="#3B82F6"
-            android:textColor="#FFFFFF"
-            style="@style/Widget.MaterialComponents.Button"
-            app:cornerRadius="999dp" />
+            android:paddingVertical="16dp">
 
-    </LinearLayout>
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvSelectedItem"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="No item selected"
+                    android:textColor="?android:attr/textColorPrimary"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
+
+                <TextView
+                    android:id="@+id/tvRequiredPoints"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Tap an item to select"
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnRedeem"
+                android:layout_width="wrap_content"
+                android:layout_height="52dp"
+                android:backgroundTint="#4340A0"
+                android:paddingHorizontal="28dp"
+                android:text="Redeem"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                app:cornerRadius="16dp"
+                app:elevation="4dp"
+                app:icon="@android:drawable/ic_menu_send"
+                app:iconGravity="textEnd"
+                app:iconTint="#FFFFFF" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

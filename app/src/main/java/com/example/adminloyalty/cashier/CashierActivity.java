@@ -7,7 +7,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.view.View;
-import android.widget.Button;
+import android.widget.Button; // Can remove this if switching to MaterialButton below
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -46,8 +46,9 @@ public class CashierActivity extends AppCompatActivity {
     private ImageView imgQr;
     private ProgressBar progressIssuing;
     private TextInputEditText etReceipt, etAmount;
-    private MaterialButton btnGenerate, btnConfirm, btnCancel, btnRefresh;
-    private Button btn_redeeming;
+
+    // Changed btn_redeeming to MaterialButton to match XML type
+    private MaterialButton btnGenerate, btnConfirm, btnCancel, btnRefresh, btn_redeeming;
 
     // Firebase
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -82,6 +83,7 @@ public class CashierActivity extends AppCompatActivity {
     private void bindViews() {
         root = findViewById(android.R.id.content);
 
+        // Updated to MaterialButton
         btn_redeeming = findViewById(R.id.btn_redeeming);
 
         cardConfirm      = findViewById(R.id.card_confirm);
@@ -108,6 +110,8 @@ public class CashierActivity extends AppCompatActivity {
         btnConfirm.setOnClickListener(v -> createVoucherAndShow());
         btnCancel.setOnClickListener(v -> cancelActive());
         btnRefresh.setOnClickListener(v -> openConfirm());
+
+        // Navigation to Redeeming Screen
         btn_redeeming.setOnClickListener(v -> {
             Intent intent = new Intent(CashierActivity.this, RedeemingActivity.class);
             startActivity(intent);
@@ -277,7 +281,7 @@ public class CashierActivity extends AppCompatActivity {
                     bmp.setPixel(x, y, matrix.get(x, y) ? Color.BLACK : Color.WHITE);
                 }
             }
-
+            imgQr.setVisibility(View.VISIBLE);
             imgQr.setAlpha(1f);
             imgQr.setImageBitmap(bmp);
             tvQrMeta.setText("Show this QR to the customer to scan");
@@ -316,6 +320,7 @@ public class CashierActivity extends AppCompatActivity {
     }
 
     private void resetUi() {
+        imgQr.setVisibility(View.INVISIBLE);
         imgQr.setImageBitmap(null);
         imgQr.setAlpha(1f);
         tvQrMeta.setText("Generate a QR to begin");

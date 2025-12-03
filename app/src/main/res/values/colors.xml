@@ -41,4 +41,10 @@
     <color name="cardBackground">@color/colorSurface</color>
     <color name="dividerColor">@color/colorOutline</color>
     <color name="chipBackground">@color/colorPrimaryContainer</color>
+
+    <!-- Light mode: very light grey (not pure white) -->
+    <color name="statusBarLight">#FAFAFA</color>
+
+    <!-- Dark mode: almost black, like Instagram -->
+    <color name="statusBarDark">#121212</color>
 </resources>

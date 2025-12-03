@@ -3,59 +3,104 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/cashier_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/cashier_main"
-    android:background="@color/white"
-    android:padding="3dp">
+    android:background="?android:attr/colorBackground">
 
-    <!-- Input Section Card -->
+    <!-- 1. BRAND HEADER -->
+    <View
+        android:id="@+id/viewHeaderBg"
+        android:layout_width="match_parent"
+        android:layout_height="180dp"
+        android:background="@drawable/bg_header_gradient"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tvAppTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="40dp"
+        android:text="Cashier Terminal"
+        android:textColor="#FFFFFF"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tvAppSubtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Issue Points &amp; Process Payments"
+        android:textColor="#E0E7FF"
+        android:textSize="14sp"
+        app:layout_constraintStart_toStartOf="@id/tvAppTitle"
+        app:layout_constraintTop_toBottomOf="@id/tvAppTitle" />
+
+    <!-- Status Badge -->
+    <com.google.android.material.chip.Chip
+        android:id="@+id/chip_status_top"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="24dp"
+        android:text="Online"
+        android:textColor="#FFFFFF"
+        app:chipBackgroundColor="#30FFFFFF"
+        app:chipIcon="@android:drawable/presence_online"
+        app:chipIconTint="#10B981"
+        app:chipStrokeWidth="0dp"
+        app:layout_constraintBottom_toBottomOf="@id/tvAppSubtitle"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/tvAppTitle" />
+
+    <!-- 2. INPUT SECTION -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/input_card"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:layout_marginStart="5dp"
-        android:layout_marginEnd="5dp"
-        app:cardCornerRadius="20dp"
-        app:cardElevation="2dp"
-        app:strokeWidth="0dp"
-        android:backgroundTint="@color/white"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        android:layout_marginHorizontal="5dp"
+        android:layout_marginTop="24dp"
+        app:cardBackgroundColor="?attr/colorSurface"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="8dp"
+        app:contentPadding="20dp"
+        app:layout_constraintTop_toBottomOf="@id/tvAppSubtitle">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="5dp">
+            android:orientation="vertical">
 
+            <!-- Receipt Input -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/til_receipt"
                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Receipt Number"
-                app:boxCornerRadiusTopStart="12dp"
-                app:boxCornerRadiusTopEnd="12dp"
-                app:boxCornerRadiusBottomStart="12dp"
+                app:boxBackgroundColor="?android:attr/colorBackground"
                 app:boxCornerRadiusBottomEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxStrokeColor="#4F46E5"
+                app:hintTextColor="#4F46E5"
                 app:startIconDrawable="@android:drawable/ic_menu_sort_by_size"
-                app:startIconTint="#6B7280"
-                app:hintTextColor="#6B7280">
+                app:startIconTint="?android:attr/textColorSecondary">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/et_receipt"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:paddingStart="45dp"
                     android:inputType="text"
-                    android:textSize="16sp"
+                    android:paddingStart="45dp"
                     android:maxLines="1"
-                    android:paddingVertical="16dp"/>
+                    android:textColor="?android:attr/textColorPrimary" />
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- Amount Input -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/til_amount"
                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
@@ -63,198 +108,205 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:hint="Total Amount"
-                app:boxCornerRadiusTopStart="12dp"
-                app:boxCornerRadiusTopEnd="12dp"
-                app:boxCornerRadiusBottomStart="12dp"
+                app:boxBackgroundColor="?android:attr/colorBackground"
                 app:boxCornerRadiusBottomEnd="12dp"
-                app:prefixText="MAD "
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxStrokeColor="#4F46E5"
+                app:hintTextColor="#4F46E5"
+                app:prefixText="AED "
+                app:prefixTextColor="?android:attr/textColorPrimary"
                 app:startIconDrawable="@android:drawable/ic_menu_info_details"
-                app:startIconTint="#6B7280"
-                app:hintTextColor="#6B7280">
+                app:startIconTint="?android:attr/textColorSecondary">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/et_amount"
                     android:layout_width="match_parent"
-                    android:paddingStart="40dp"
                     android:layout_height="wrap_content"
                     android:inputType="numberDecimal"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
                     android:maxLines="1"
-                    android:paddingVertical="16dp"/>
+                    android:paddingStart="45dp"
+                    android:textColor="?android:attr/textColorPrimary"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- Action Buttons -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="20dp">
+                android:layout_marginTop="20dp"
+                android:orientation="horizontal">
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_generate"
                     android:layout_width="0dp"
-                    android:layout_height="60dp"
+                    android:layout_height="56dp"
                     android:layout_weight="1"
+                    android:backgroundTint="#4F46E5"
                     android:text="Generate QR"
-                    android:textSize="16sp"
+                    android:textColor="#FFFFFF"
+                    app:cornerRadius="16dp"
                     app:icon="@android:drawable/ic_menu_view"
-                    android:backgroundTint="@color/colorSuccess"
-                    app:iconGravity="textStart"
-                    app:iconPadding="5dp"
-                    app:cornerRadius="14dp"
-                    android:elevation="0dp"/>
+                    app:iconTint="#FFFFFF" />
 
                 <Space
                     android:layout_width="12dp"
-                    android:layout_height="0dp"/>
+                    android:layout_height="wrap_content" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_redeeming"
                     style="@style/Widget.Material3.Button.TonalButton"
                     android:layout_width="0dp"
-                    android:layout_height="60dp"
+                    android:layout_height="56dp"
                     android:layout_weight="1"
-                    android:backgroundTint="@color/light_grey"
-                    android:text="Redeeming"
-                    android:textSize="16sp"
+                    android:backgroundTint="?android:attr/colorBackground"
+                    android:text="Redeem"
+                    android:textColor="?android:attr/textColorPrimary"
+                    app:cornerRadius="16dp"
                     app:icon="@android:drawable/ic_menu_gallery"
-                    app:iconGravity="textStart"
-                    app:iconPadding="12dp"
-                    app:cornerRadius="14dp"
-                    android:elevation="0dp"/>
+                    app:iconTint="?android:attr/textColorSecondary" />
             </LinearLayout>
+
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- QR Display Card -->
+    <!-- 3. QR DISPLAY AREA -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/card_qr"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_margin="10dp"
-        android:layout_marginBottom="8dp"
+        android:layout_marginHorizontal="5dp"
+        android:layout_marginBottom="16dp"
+        android:layout_marginTop="16dp"
+        app:cardBackgroundColor="?attr/colorSurface"
         app:cardCornerRadius="24dp"
         app:cardElevation="4dp"
-        app:strokeWidth="0dp"
-        android:backgroundTint="@color/white"
-        app:layout_constraintTop_toBottomOf="@id/input_card"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/status_row">
+        app:layout_constraintBottom_toTopOf="@id/status_row"
+        app:layout_constraintTop_toBottomOf="@id/input_card">
 
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:padding="32dp"
-            android:gravity="center"
-            android:orientation="vertical">
+            android:layout_height="match_parent">
 
-            <com.google.android.material.card.MaterialCardView
+            <!-- Placeholder / Meta Text -->
+            <LinearLayout
+                android:id="@+id/qr_placeholder"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="2dp"
-                app:strokeColor="#E5E7EB">
+                android:gravity="center"
+                android:orientation="vertical"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
 
                 <ImageView
-                    android:id="@+id/img_qr"
-                    android:layout_width="200dp"
-                    android:layout_height="200dp"
-                    android:contentDescription="QR code"
-                    android:padding="16dp"
-                    android:background="@color/white"
-                    android:scaleType="fitCenter"/>
-            </com.google.android.material.card.MaterialCardView>
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:alpha="0.3"
+                    android:src="@android:drawable/ic_menu_camera"
+                    app:tint="?android:attr/textColorSecondary" />
 
-            <TextView
-                android:id="@+id/tv_qr_meta"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Scan QR code to pay"
-                android:textSize="15sp"
-                android:textColor="#6B7280"
-                android:textStyle="bold"
-                android:gravity="center"
-                android:layout_marginTop="20dp"/>
+                <!-- ADDED ID HERE: tv_qr_meta -->
+                <TextView
+                    android:id="@+id/tv_qr_meta"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="Waiting for Input"
+                    android:gravity="center"
+                    android:textColor="?android:attr/textColorSecondary" />
+            </LinearLayout>
+
+            <!-- Actual QR Image -->
+            <!-- Changed visibility to visible so setImageBitmap works immediately
+                 (Java code handles alpha/content) -->
+            <ImageView
+                android:id="@+id/img_qr"
+                android:layout_width="220dp"
+                android:layout_height="220dp"
+                android:background="#FFFFFF"
+                android:padding="16dp"
+                android:scaleType="fitCenter"
+                android:visibility="invisible"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
             <ProgressBar
                 android:id="@+id/progress_issuing"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:visibility="gone"
-                android:indeterminate="true"
-                android:layout_marginTop="16dp"/>
-        </LinearLayout>
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- Status Row -->
+    <!-- 4. BOTTOM STATUS BAR -->
     <LinearLayout
         android:id="@+id/status_row"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_margin="10dp"
-        android:paddingVertical="8dp"
-        android:layout_marginBottom="8dp"
-        app:layout_constraintBottom_toTopOf="@id/card_confirm"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        android:orientation="horizontal"
+        android:layout_marginHorizontal="5dp"
+        android:paddingBottom="24dp"
+        app:layout_constraintBottom_toTopOf="@id/card_confirm">
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chip_timer"
-            style="@style/Widget.Material3.Chip.Assist.Elevated"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="00:00"
-            android:textStyle="bold"
-            app:chipIcon="@android:drawable/ic_lock_idle_alarm"
-            app:chipIconVisible="true"
-            app:chipBackgroundColor="#F3F4F6"/>
+            android:text="Session: 00:00"
+            android:textColor="?android:attr/textColorSecondary"
+            app:chipBackgroundColor="?android:attr/colorBackground"
+            app:chipIcon="@android:drawable/ic_lock_idle_alarm" />
 
         <Space
             android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_weight="1"/>
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
 
-        <com.google.android.material.textview.MaterialTextView
+        <!-- ADDED ID HERE: tv_status -->
+        <TextView
             android:id="@+id/tv_status"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="● Ready"
-            android:textSize="14sp"
-            android:textStyle="bold"
+            android:text="Ready"
+            android:layout_marginEnd="12dp"
             android:textColor="#10B981"
-            android:layout_marginEnd="12dp"/>
+            android:textStyle="bold" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_refresh"
-            style="@style/Widget.Material3.Button.TonalButton"
+            style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="wrap_content"
-            android:layout_height="40dp"
-            android:text="Refresh"
-            android:backgroundTint="@color/white"
-            android:textSize="13sp"
-            android:minWidth="0dp"
-            app:icon="@android:drawable/ic_popup_sync"
-            app:iconGravity="textStart"
-            app:cornerRadius="10dp"/>
+            android:layout_height="wrap_content"
+            android:text="Reset"
+            android:textColor="#EF4444"
+            app:icon="@android:drawable/ic_menu_revert"
+            app:iconTint="#EF4444" />
     </LinearLayout>
 
-    <!-- Confirmation Card -->
+    <!-- 5. CONFIRMATION POPUP -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/card_confirm"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_margin="16dp"
         android:visibility="gone"
-        android:backgroundTint="@color/white"
+        app:cardBackgroundColor="#ECFDF5"
         app:cardCornerRadius="20dp"
-        app:cardElevation="8dp"
-        app:strokeWidth="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:cardElevation="16dp"
+        app:layout_constraintBottom_toBottomOf="parent">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -265,52 +317,52 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:padding="6dp"
+                    android:src="@android:drawable/checkbox_on_background"
+                    app:tint="#059669" />
 
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
                     android:layout_weight="1"
                     android:orientation="vertical">
 
-                    <com.google.android.material.textview.MaterialTextView
+                    <TextView
                         android:id="@+id/tvConfirmTitle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="✓ Payment Received"
-                        android:textStyle="bold"
-                        android:textSize="19sp"
-                        android:textColor="#1A1A1A"/>
+                        android:text="Payment Detected"
+                        android:textColor="#065F46"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
 
-                    <com.google.android.material.textview.MaterialTextView
+                    <TextView
                         android:id="@+id/tv_confirm_details"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Receipt #— · MAD —"
-                        android:layout_marginTop="6dp"
-                        android:textSize="14sp"
-                        android:textColor="#6B7280"/>
+                        android:text="RCP-8839 • 125.00 AED"
+                        android:textColor="#047857" />
                 </LinearLayout>
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chip_confirm_timer"
-                    style="@style/Widget.Material3.Chip.Assist.Elevated"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="10s"
-                    android:textStyle="bold"
-                    app:chipIcon="@android:drawable/ic_lock_idle_alarm"
-                    app:chipIconVisible="true"
-                    app:chipBackgroundColor="#FEF3C7"/>
+                    android:text="10s" />
             </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
                 android:layout_marginTop="20dp"
-                android:gravity="center">
+                android:orientation="horizontal">
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_cancel"
@@ -318,28 +370,22 @@
                     android:layout_width="0dp"
                     android:layout_height="56dp"
                     android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
                     android:text="Cancel"
-                    android:textSize="15sp"
-                    android:textStyle="bold"
-                    app:cornerRadius="12dp"
-                    app:strokeWidth="2dp"/>
-
-                <Space android:layout_width="16dp" android:layout_height="0dp"/>
+                    android:textColor="#065F46"
+                    app:strokeColor="#065F46" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_confirm"
                     android:layout_width="0dp"
                     android:layout_height="56dp"
                     android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:backgroundTint="#059669"
                     android:text="Confirm"
-                    android:textSize="15sp"
-                    android:textStyle="bold"
-                    app:icon="@android:drawable/ic_menu_send"
-                    app:iconGravity="textEnd"
-                    app:cornerRadius="12dp"/>
+                    android:textColor="#FFFFFF" />
             </LinearLayout>
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>
