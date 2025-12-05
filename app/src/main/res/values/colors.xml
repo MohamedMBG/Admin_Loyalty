@@ -47,4 +47,10 @@
 
     <!-- Dark mode: almost black, like Instagram -->
     <color name="statusBarDark">#121212</color>
+
+    <color name="purple_700">#7C3AED</color>
+    <color name="green_500">#10B981</color>
+    <color name="blue_500">#3B82F6</color>
+    <color name="yellow_500">#F59E0B</color>
+    <color name="gray_500">#6B7280</color>
 </resources>

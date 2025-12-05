@@ -1,8 +1,14 @@
 package com.example.adminloyalty.fragments;
 
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +24,8 @@ import androidx.fragment.app.Fragment;
 
 import com.example.adminloyalty.R;
 import com.example.adminloyalty.authetification.LoginActivity;
+import com.example.adminloyalty.utils.CashierRowBuilder;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.ChipGroup;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
@@ -128,7 +136,7 @@ public class DashboardFragment extends Fragment {
         tvGiftsValue = v.findViewById(R.id.tvGiftsValue);
         allScansCard = v.findViewById(R.id.btnActionScans);
         btnRedemptions = v.findViewById(R.id.btnActionRedemptions);
-        createCashierCard = v.findViewById(R.id.btnActionCashiers);
+        createCashierCard = v.findViewById(R.id.btnActionClients);
         btnLogout = v.findViewById(R.id.btnLogout);
         btnLogout.setOnClickListener(view -> performLogout());
 
@@ -662,107 +670,98 @@ public class DashboardFragment extends Fragment {
                 });
     }
 
+
     private void renderCashierRows(Map<String, CashierStats> statsMap) {
-        if (layoutCashierList == null) return;
-        if (!isAdded()) return;
+        if (layoutCashierList == null || !isAdded()) return;
 
-        // Clear previous dynamic rows but keep header (index 0)
-        int childCount = layoutCashierList.getChildCount();
-        if (childCount > 1) {
-            layoutCashierList.removeViews(1, childCount - 1);
+
+        // Convert map to sorted list
+        List<CashierStats> sortedCashiers = getSortedCashiers(statsMap);
+
+        // Render cashier rows
+        CashierRowBuilder.renderCashierRows(layoutCashierList, sortedCashiers, getContext(), 5);
+
+        // Handle empty state
+        handleEmptyState(sortedCashiers.isEmpty());
+
+        // Show view all button if needed
+        handleViewAllButton(sortedCashiers.size() > 5);
+    }
+
+
+    private int calculateTotalTransactions(Map<String, CashierStats> statsMap) {
+        int total = 0;
+        for (CashierStats stats : statsMap.values()) {
+            total += stats.scans + stats.redeems;
         }
+        return total;
+    }
 
-        if (statsMap.isEmpty()) {
-            TextView tv = new TextView(getContext());
-            tv.setText("No data for this period");
-            tv.setTextSize(12);
-            tv.setTextColor(getResources().getColor(android.R.color.darker_gray));
-            tv.setPadding(24, 16, 24, 16);
-            layoutCashierList.addView(tv);
-            return;
-        }
-
+    private List<CashierStats> getSortedCashiers(Map<String, CashierStats> statsMap) {
         List<CashierStats> list = new ArrayList<>(statsMap.values());
 
-        // Sort by total activity (scans + redeems) DESC
-        Collections.sort(list, (o1, o2) -> {
-            int total1 = o1.scans + o1.redeems;
-            int total2 = o2.scans + o2.redeems;
+        // Sort by total activity DESC
+        Collections.sort(list, (c1, c2) -> {
+            int total1 = c1.scans + c1.redeems;
+            int total2 = c2.scans + c2.redeems;
             return Integer.compare(total2, total1);
         });
 
-        int paddingHorizontal = (int) (16 * getResources().getDisplayMetrics().density);
-        int paddingVertical = (int) (10 * getResources().getDisplayMetrics().density);
+        return list;
+    }
 
-        for (CashierStats cs : list) {
-            LinearLayout row = new LinearLayout(getContext());
-            row.setOrientation(LinearLayout.HORIZONTAL);
-            row.setLayoutParams(new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-            ));
-            row.setPadding(paddingHorizontal, paddingVertical, paddingHorizontal, paddingVertical);
+    private void handleEmptyState(boolean isEmpty) {
+        View layoutEmptyState = getView() != null ?
+                getView().findViewById(R.id.layoutEmptyState) : null;
 
-            // NAME
-            TextView tvName = new TextView(getContext());
-            LinearLayout.LayoutParams lpName = new LinearLayout.LayoutParams(
-                    0,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    2f
-            );
-            tvName.setLayoutParams(lpName);
-            tvName.setText(cs.name);
-            tvName.setTextSize(13);
-            tvName.setTextColor(getResources().getColor(android.R.color.primary_text_light));
-            row.addView(tvName);
-
-            // SCANS
-            TextView tvScans = new TextView(getContext());
-            LinearLayout.LayoutParams lpScans = new LinearLayout.LayoutParams(
-                    0,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    1f
-            );
-            tvScans.setLayoutParams(lpScans);
-            tvScans.setText(String.valueOf(cs.scans));
-            tvScans.setTextSize(13);
-            tvScans.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-            tvScans.setTextColor(getResources().getColor(android.R.color.primary_text_light));
-            row.addView(tvScans);
-
-            // REDEEMS
-            TextView tvRedeems = new TextView(getContext());
-            LinearLayout.LayoutParams lpRedeems = new LinearLayout.LayoutParams(
-                    0,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    1f
-            );
-            tvRedeems.setLayoutParams(lpRedeems);
-            tvRedeems.setText(String.valueOf(cs.redeems));
-            tvRedeems.setTextSize(13);
-            tvRedeems.setTextAlignment(View.TEXT_ALIGNMENT_VIEW_END);
-            tvRedeems.setTextColor(getResources().getColor(android.R.color.primary_text_light));
-            row.addView(tvRedeems);
-
-            // Divider
-            View divider = new View(getContext());
-            LinearLayout.LayoutParams lpDivider = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    (int) (0.5f * getResources().getDisplayMetrics().density)
-            );
-            divider.setLayoutParams(lpDivider);
-            divider.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
-
-            layoutCashierList.addView(row);
-            layoutCashierList.addView(divider);
+        if (layoutEmptyState != null) {
+            layoutEmptyState.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
         }
     }
 
-    private static class CashierStats {
-        String id;
-        String name;
-        int scans;
-        int redeems;
+    private void handleViewAllButton(boolean showButton) {
+        MaterialButton btnViewAll = getView() != null ?
+                getView().findViewById(R.id.btnViewAllCashiers) : null;
+
+        if (btnViewAll != null) {
+            btnViewAll.setVisibility(showButton ? View.VISIBLE : View.GONE);
+            if (showButton) {
+                btnViewAll.setOnClickListener(v -> showAllCashiers());
+            }
+        }
+    }
+
+    private void showAllCashiers() {
+        // Implement navigation to full cashier list
+        Toast.makeText(getContext(), "Showing full staff list", Toast.LENGTH_SHORT).show();
+    }
+
+    private int dpToPx(int dp) {
+        return (int) (dp * getResources().getDisplayMetrics().density);
+    }
+
+    private String getInitials(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            return "??";
+        }
+
+        String[] parts = name.trim().split("\\s+");
+        StringBuilder initials = new StringBuilder();
+
+        for (int i = 0; i < Math.min(parts.length, 2); i++) {
+            if (!parts[i].isEmpty()) {
+                initials.append(parts[i].charAt(0));
+            }
+        }
+
+        return initials.toString().toUpperCase();
+    }
+
+    public static class CashierStats {
+        public String id;
+        public String name;
+        public int scans;
+        public int redeems;
 
         CashierStats(String id, String name) {
             this.id = id;
