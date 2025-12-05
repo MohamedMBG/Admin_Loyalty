@@ -1,10 +1,12 @@
 package com.example.adminloyalty.fragments;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -15,9 +17,10 @@ import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 
 import com.example.adminloyalty.R;
-import com.example.adminloyalty.cashier.RedeemingActivity;
+import com.example.adminloyalty.authetification.LoginActivity;
 import com.google.android.material.chip.ChipGroup;
 import com.google.firebase.Timestamp;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.AggregateQuerySnapshot;
 import com.google.firebase.firestore.AggregateSource;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -39,6 +42,13 @@ import java.util.Set;
 
 public class DashboardFragment extends Fragment {
 
+    private static final String TAG = "Dashboard";
+
+    // 🔧 SET THESE TO MATCH YOUR SCHEMA 🔧
+    private static final String FIELD_EARN_DATE = "createdAt";     // or "redeemedAt"
+    private static final String FIELD_REDEEM_DATE = "createdAt";   // or "redeemedAt"
+    private static final String FIELD_USER_CREATED = "createdAt";  // users createdAt
+
     // --- Period Enum for Logic ---
     private enum Period { TODAY, WEEK, MONTH }
     private Period currentPeriod = Period.TODAY;
@@ -51,8 +61,9 @@ public class DashboardFragment extends Fragment {
     private TextView tvNewClientsValue;
     private TextView tvPointsValue;
     private TextView tvGiftsValue;
-    private CardView cardAlert , allScansCard, btnRedemptions;
+    private CardView cardAlert, allScansCard, btnRedemptions, createCashierCard;
     private TextView tvAlertMessage;
+    private ImageView btnLogout;
 
     // Chart Views
     private View[] chartBars;
@@ -67,7 +78,6 @@ public class DashboardFragment extends Fragment {
     private Timestamp lastEndTs;
 
     private LinearLayout layoutCashierList;
-
 
     @Nullable
     @Override
@@ -87,7 +97,21 @@ public class DashboardFragment extends Fragment {
 
         return v;
     }
+    private void performLogout() {
+        // 1. Sign out from Firebase
+        FirebaseAuth.getInstance().signOut();
 
+        // 2. Redirect to Login Activity and clear back stack
+        // Assuming your login class is named LoginActivity
+        Intent intent = new Intent(getActivity(), LoginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+
+        // 3. Close current fragment/activity if needed
+        if (getActivity() != null) {
+            getActivity().finish();
+        }
+    }
     // -------------------------------------------------------------------------
     // BINDING
     // -------------------------------------------------------------------------
@@ -104,6 +128,9 @@ public class DashboardFragment extends Fragment {
         tvGiftsValue = v.findViewById(R.id.tvGiftsValue);
         allScansCard = v.findViewById(R.id.btnActionScans);
         btnRedemptions = v.findViewById(R.id.btnActionRedemptions);
+        createCashierCard = v.findViewById(R.id.btnActionCashiers);
+        btnLogout = v.findViewById(R.id.btnLogout);
+        btnLogout.setOnClickListener(view -> performLogout());
 
         // Alert Panel
         cardAlert = v.findViewById(R.id.cardAlert);
@@ -131,7 +158,6 @@ public class DashboardFragment extends Fragment {
 
         layoutCashierList = v.findViewById(R.id.layoutCashierList);
 
-
         // Export Button (quick action)
         View btnExport = v.findViewById(R.id.btnActionExport);
         if (btnExport != null) {
@@ -140,27 +166,36 @@ public class DashboardFragment extends Fragment {
             );
         }
 
-        btnRedemptions.setOnClickListener(view ->{
-                // we will open the RedemptionLogsFragment here
-                Fragment newFragment  = new RewadLogsFragment();
-                requireActivity()
-                        .getSupportFragmentManager()
-                        .beginTransaction()
-                        .replace(R.id.fragment_container, newFragment)
-                        .addToBackStack(null)
-                        .commit();
+        btnRedemptions.setOnClickListener(view -> {
+            Fragment newFragment = new RewadLogsFragment();
+            requireActivity()
+                    .getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, newFragment)
+                    .addToBackStack(null)
+                    .commit();
         });
 
-        allScansCard.setOnClickListener(view ->{
-                // we will open the ScanLogsFragment here
-                Fragment newFragment  = new ScanLogsFragment();
-                requireActivity()
-                        .getSupportFragmentManager()
-                        .beginTransaction()
-                        .replace(R.id.fragment_container, newFragment)
-                        .addToBackStack(null)
-                        .commit();
+        allScansCard.setOnClickListener(view -> {
+            Fragment newFragment = new ScanLogsFragment();
+            requireActivity()
+                    .getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, newFragment)
+                    .addToBackStack(null)
+                    .commit();
         });
+
+        createCashierCard.setOnClickListener(view -> {
+            Fragment newFragment = new CreateCashierFragment();
+            requireActivity()
+                    .getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, newFragment)
+                    .addToBackStack(null)
+                    .commit();
+        });
+
     }
 
     private void setupListeners() {
@@ -177,18 +212,20 @@ public class DashboardFragment extends Fragment {
         }
     }
 
-
-
     // -------------------------------------------------------------------------
     // PERIOD + LOAD
     // -------------------------------------------------------------------------
     private void applyPeriod(Period period) {
         currentPeriod = period;
 
-        // 1. Calculate Date Range
+        // 1. Calculate Date Range (half-open: [start, end))
         Date[] dateRange = getDateRange(period);
         lastStartTs = new Timestamp(dateRange[0]);
         lastEndTs = new Timestamp(dateRange[1]);
+
+        Log.d(TAG, "applyPeriod " + period +
+                " start=" + lastStartTs.toDate() +
+                " end=" + lastEndTs.toDate());
 
         // Reset some UI while loading
         if (tvRevenueValue != null) tvRevenueValue.setText("--");
@@ -205,68 +242,60 @@ public class DashboardFragment extends Fragment {
         loadRewardCosts(lastStartTs, lastEndTs);
         loadNewClients(lastStartTs, lastEndTs);
 
-        // 3. Alerts (independent of selected period)
+        // 3. Alerts
         checkSuspiciousActivity();
 
-        // 4. Cashier List (independent of selected period)
+        // 4. Cashier List
         loadCashierPerformance(lastStartTs, lastEndTs);
-
     }
 
     // -------------------------------------------------------------------------
     // MAIN DATA LOADING
     // -------------------------------------------------------------------------
 
-    /**
-     * Loads Revenue, Points, Visits and populates the Traffic Chart
-     * from "earn_codes".
-     *
-     * Requires a composite index on:
-     *   status + redeemedAt
-     */
     private void loadFinancialsAndVisits(Timestamp start, Timestamp end) {
         db.collection("earn_codes")
+                // ⚠️ REMOVE THIS if you don't use "status" or values are not "redeemed"
                 .whereEqualTo("status", "redeemed")
-                .whereGreaterThanOrEqualTo("redeemedAt", start)
-                .whereLessThanOrEqualTo("redeemedAt", end)
+                .whereGreaterThanOrEqualTo(FIELD_EARN_DATE, start)
+                .whereLessThan(FIELD_EARN_DATE, end)
                 .get()
                 .addOnSuccessListener(snapshots -> {
                     if (!isAdded()) return;
 
+                    Log.d(TAG, "earn_codes (filtered) size = " + snapshots.size());
+
+                    if (snapshots.isEmpty()) {
+                        // DEBUG: show a few ALL-TIME docs so you see what dates you really have
+                        debugLogSomeEarnCodes();
+                    }
+
                     double totalRevenue = 0;
                     long totalPoints = 0;
 
-                    // For Visits Logic (unique client per day)
                     Set<String> uniqueVisits = new HashSet<>();
                     SimpleDateFormat visitKeyFormat = new SimpleDateFormat("yyyyMMdd", Locale.US);
 
-                    // For Chart Logic
                     int[] chartData = new int[7];
                     Arrays.fill(chartData, 0);
 
                     for (DocumentSnapshot doc : snapshots) {
-                        // 1. Revenue
                         Double amt = doc.getDouble("amountMAD");
                         if (amt != null) totalRevenue += amt;
 
-                        // 2. Points
                         Long pts = doc.getLong("points");
                         if (pts != null) totalPoints += pts;
 
-                        // 3. Unique Visits + Chart data
-                        Timestamp ts = doc.getTimestamp("redeemedAt");
-                        String uid = doc.getString("redeemedByUid");
+                        Timestamp ts = doc.getTimestamp(FIELD_EARN_DATE);
+                        String uid = doc.getString("redeemedByUid"); // or "userId" etc.
 
                         if (ts != null && uid != null) {
                             String key = uid + "_" + visitKeyFormat.format(ts.toDate());
                             uniqueVisits.add(key);
-
-                            // 4. Populate Chart Buckets
                             processChartData(ts, chartData);
                         }
                     }
 
-                    // Update UI
                     if (tvRevenueValue != null)
                         tvRevenueValue.setText(String.format(Locale.US, "%.0f", totalRevenue));
 
@@ -281,63 +310,88 @@ public class DashboardFragment extends Fragment {
                     if (tvVisitsValue != null)
                         tvVisitsValue.setText(String.valueOf(uniqueVisits.size()));
 
-                    // Update Chart Visuals
                     updateChartUI(chartData);
 
-                    // Revenue delta vs previous period
                     loadRevenueDeltaForPreviousPeriod(start, end, totalRevenue);
 
                 })
                 .addOnFailureListener(e -> {
-                    Log.e("Dashboard", "Error loading financials", e);
+                    Log.e(TAG, "Error loading financials", e);
                     if (!isAdded()) return;
                     Toast.makeText(getContext(),
-                            "Error loading data (maybe index missing). Check Logcat.",
+                            "Error loading data (check Logcat).",
                             Toast.LENGTH_LONG).show();
                 });
     }
 
+    /**
+     * DEBUG helper: log a few earn_codes without date filter so you can see actual dates & fields.
+     */
+    private void debugLogSomeEarnCodes() {
+        db.collection("earn_codes")
+                .limit(5)
+                .get()
+                .addOnSuccessListener(snap -> {
+                    Log.d(TAG, "DEBUG ALL-TIME earn_codes size=" + snap.size());
+                    for (DocumentSnapshot doc : snap) {
+                        Timestamp tCreated = doc.getTimestamp("createdAt");
+                        Timestamp tRedeemed = doc.getTimestamp("redeemedAt");
+                        String status = doc.getString("status");
+                        Double amt = doc.getDouble("amountMAD");
+
+                        Log.d(TAG, "DOC " + doc.getId() +
+                                " status=" + status +
+                                " createdAt=" + (tCreated == null ? "null" : tCreated.toDate()) +
+                                " redeemedAt=" + (tRedeemed == null ? "null" : tRedeemed.toDate()) +
+                                " amountMAD=" + amt);
+                    }
+                })
+                .addOnFailureListener(e -> Log.e(TAG, "debugLogSomeEarnCodes error", e));
+    }
+
     private void loadRewardCosts(Timestamp start, Timestamp end) {
-        // Assumes 'redeem_codes' for burnt points / gifts
         db.collection("redeem_codes")
-                .whereGreaterThanOrEqualTo("createdAt", start)
-                .whereLessThanOrEqualTo("createdAt", end)
+                .whereGreaterThanOrEqualTo(FIELD_REDEEM_DATE, start)
+                .whereLessThan(FIELD_REDEEM_DATE, end)
                 .get()
                 .addOnSuccessListener(snapshots -> {
                     if (!isAdded()) return;
 
+                    Log.d(TAG, "redeem_codes (filtered) size = " + snapshots.size());
+
                     double totalCost = 0;
                     int count = 0;
                     for (DocumentSnapshot doc : snapshots) {
-                        Double cost = doc.getDouble("costMAD"); // adapt to your schema if needed
+                        Double cost = doc.getDouble("costPoints");
                         if (cost != null) totalCost += cost;
                         count++;
                     }
                     if (tvRewardCostValue != null)
-                        tvRewardCostValue.setText(String.format(Locale.US, "%.0f", totalCost));
+                        tvRewardCostValue.setText(String.format(Locale.US, "%.0f", totalCost*0.5));
                     if (tvGiftsValue != null)
                         tvGiftsValue.setText(String.valueOf(count));
                 })
                 .addOnFailureListener(e -> {
                     if (!isAdded()) return;
-                    Log.e("Dashboard", "Error loading reward costs", e);
+                    Log.e(TAG, "Error loading reward costs", e);
                 });
     }
 
     private void loadNewClients(Timestamp start, Timestamp end) {
         db.collection("users")
-                .whereGreaterThanOrEqualTo("createdAt", start)
-                .whereLessThanOrEqualTo("createdAt", end)
+                .whereGreaterThanOrEqualTo(FIELD_USER_CREATED, start)
+                .whereLessThan(FIELD_USER_CREATED, end)
                 .count()
                 .get(AggregateSource.SERVER)
                 .addOnSuccessListener((AggregateQuerySnapshot snap) -> {
                     if (!isAdded()) return;
+                    Log.d(TAG, "new clients count (filtered) = " + snap.getCount());
                     if (tvNewClientsValue != null)
                         tvNewClientsValue.setText(String.valueOf(snap.getCount()));
                 })
                 .addOnFailureListener(e -> {
                     if (!isAdded()) return;
-                    Log.e("Dashboard", "Error loading new clients", e);
+                    Log.e(TAG, "Error loading new clients", e);
                 });
     }
 
@@ -345,29 +399,23 @@ public class DashboardFragment extends Fragment {
     // CHART LOGIC
     // -------------------------------------------------------------------------
 
-    /**
-     * Buckets a timestamp into the correct index [0-6] for the chart array.
-     */
     private void processChartData(Timestamp ts, int[] data) {
         Calendar cal = Calendar.getInstance();
         cal.setTime(ts.toDate());
         int index = -1;
 
         if (currentPeriod == Period.TODAY) {
-            // Bucket by 2-hour slots starting from 8am
             int hour = cal.get(Calendar.HOUR_OF_DAY);
             if (hour >= 8) {
                 index = (hour - 8) / 2;
                 if (index > 6) index = 6;
             }
         } else if (currentPeriod == Period.WEEK) {
-            // Bucket by Day of Week (Mon=0 ... Sun=6)
             int day = cal.get(Calendar.DAY_OF_WEEK); // Sun=1
             index = (day == Calendar.SUNDAY) ? 6 : (day - Calendar.MONDAY);
         } else {
-            // Month: Bucket by 5-day chunks of month
             int dayOfMonth = cal.get(Calendar.DAY_OF_MONTH);
-            index = dayOfMonth / 5; // 1-5 -> 0, 6-10 -> 1, ...
+            index = dayOfMonth / 5;
             if (index > 6) index = 6;
         }
 
@@ -380,11 +428,9 @@ public class DashboardFragment extends Fragment {
         if (!isAdded()) return;
         if (chartBars == null || chartBars[0] == null) return;
 
-        // 1. Find Max for scaling
         int max = 1;
         for (int v : values) if (v > max) max = v;
 
-        // 2. Define Labels based on Period
         String[] labels;
         if (currentPeriod == Period.TODAY) {
             labels = new String[]{"8", "10", "12", "14", "16", "18", "20+"};
@@ -394,23 +440,19 @@ public class DashboardFragment extends Fragment {
             labels = new String[]{"J1-5", "J6-10", "J11-15", "J16-20", "J21-25", "J26-30", "J31+"};
         }
 
-        // 3. Render
         float density = getResources().getDisplayMetrics().density;
 
         for (int i = 0; i < 7; i++) {
-            // Set Text Value
             if (chartValues[i] != null)
                 chartValues[i].setText(String.valueOf(values[i]));
 
-            // Set Label
             if (chartLabels[i] != null)
                 chartLabels[i].setText(labels[i]);
 
-            // Set Height
             if (chartBars[i] != null) {
                 float percentage = (float) values[i] / max;
-                int heightDp = (int) (110 * percentage); // Max height 110dp
-                if (heightDp < 5) heightDp = 5; // Min visibility
+                int heightDp = (int) (110 * percentage);
+                if (heightDp < 5) heightDp = 5;
 
                 ViewGroup.LayoutParams params = chartBars[i].getLayoutParams();
                 params.height = (int) (heightDp * density + 0.5f);
@@ -429,7 +471,6 @@ public class DashboardFragment extends Fragment {
         Date endDate = end.toDate();
         long durationMs = endDate.getTime() - startDate.getTime();
 
-        // Previous period: same length just before current start
         Date prevEndDate = startDate;
         Date prevStartDate = new Date(prevEndDate.getTime() - durationMs);
 
@@ -438,8 +479,8 @@ public class DashboardFragment extends Fragment {
 
         db.collection("earn_codes")
                 .whereEqualTo("status", "redeemed")
-                .whereGreaterThanOrEqualTo("redeemedAt", prevStart)
-                .whereLessThanOrEqualTo("redeemedAt", prevEnd)
+                .whereGreaterThanOrEqualTo(FIELD_EARN_DATE, prevStart)
+                .whereLessThan(FIELD_EARN_DATE, prevEnd)
                 .get()
                 .addOnSuccessListener(snap -> {
                     if (!isAdded()) return;
@@ -459,7 +500,7 @@ public class DashboardFragment extends Fragment {
                 })
                 .addOnFailureListener(e -> {
                     if (!isAdded()) return;
-                    Log.e("Dashboard", "Error loading revenue delta", e);
+                    Log.e(TAG, "Error loading revenue delta", e);
                     tvRevenueDelta.setText("--%");
                 });
     }
@@ -468,19 +509,18 @@ public class DashboardFragment extends Fragment {
     // ALERTS
     // -------------------------------------------------------------------------
     private void checkSuspiciousActivity() {
-        // Example rule: > 50 scans in the last hour
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.HOUR_OF_DAY, -1);
         Timestamp oneHourAgo = new Timestamp(cal.getTime());
 
         db.collection("earn_codes")
-                .whereGreaterThanOrEqualTo("createdAt", oneHourAgo) // adapt field if needed
+                .whereGreaterThanOrEqualTo(FIELD_EARN_DATE, oneHourAgo)
                 .get()
                 .addOnSuccessListener(snap -> {
                     if (!isAdded()) return;
 
                     int count = snap.size();
-                    if (count > 50) { // Threshold
+                    if (count > 50) {
                         if (cardAlert != null && tvAlertMessage != null) {
                             cardAlert.setVisibility(View.VISIBLE);
                             tvAlertMessage.setText(
@@ -493,7 +533,7 @@ public class DashboardFragment extends Fragment {
                 })
                 .addOnFailureListener(e -> {
                     if (!isAdded()) return;
-                    Log.e("Dashboard", "Error checking suspicious activity", e);
+                    Log.e(TAG, "Error checking suspicious activity", e);
                 });
     }
 
@@ -504,101 +544,120 @@ public class DashboardFragment extends Fragment {
         Calendar start = Calendar.getInstance();
         Calendar end = Calendar.getInstance();
 
-        // End is end of today
-        end.set(Calendar.HOUR_OF_DAY, 23);
-        end.set(Calendar.MINUTE, 59);
-        end.set(Calendar.SECOND, 59);
-        end.set(Calendar.MILLISECOND, 999);
-
-        // Base start = today 00:00
+        // Base: today at 00:00
         start.set(Calendar.HOUR_OF_DAY, 0);
         start.set(Calendar.MINUTE, 0);
         start.set(Calendar.SECOND, 0);
         start.set(Calendar.MILLISECOND, 0);
 
-        if (period == Period.WEEK) {
-            // Monday of current week
+        if (period == Period.TODAY) {
+            end.setTime(start.getTime());
+            end.add(Calendar.DAY_OF_YEAR, 1);
+
+        } else if (period == Period.WEEK) {
             start.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);
-        } else if (period == Period.MONTH) {
-            // 1st day of current month
+            end.setTime(start.getTime());
+            end.add(Calendar.WEEK_OF_YEAR, 1);
+
+        } else {
             start.set(Calendar.DAY_OF_MONTH, 1);
+            end.setTime(start.getTime());
+            end.add(Calendar.MONTH, 1);
         }
 
         return new Date[]{start.getTime(), end.getTime()};
     }
 
+    // -------------------------------------------------------------------------
+    // CASHIER PERFORMANCE
+    // -------------------------------------------------------------------------
     private void loadCashierPerformance(Timestamp start, Timestamp end) {
         if (layoutCashierList == null) return;
         if (!isAdded()) return;
 
-        // Map<cashierName, CashierStats>
         Map<String, CashierStats> statsMap = new HashMap<>();
 
-        // 1) D'abord les SCANS (earn_codes)
+        // 1) EARN CODES => "Scans" per cashier
         db.collection("earn_codes")
-                .whereGreaterThanOrEqualTo("createdAt", start)
-                .whereLessThanOrEqualTo("createdAt", end)
+                .whereGreaterThanOrEqualTo(FIELD_EARN_DATE, start)
+                .whereLessThan(FIELD_EARN_DATE, end)
+                // If you want only successful scans, uncomment this:
+                // .whereEqualTo("status", "redeemed")
                 .get()
                 .addOnSuccessListener(snapEarn -> {
 
+                    Log.d(TAG, "cashier scans size = " + snapEarn.size());
+
                     for (DocumentSnapshot doc : snapEarn) {
-                        // 🔁 Adapte ces champs à ton schéma
+                        String cashierId = doc.getString("cashierId");
                         String cashierName = doc.getString("cashierName");
-                        if (cashierName == null) {
+
+                        // Fallbacks for older data that might not have cashier fields
+                        if (cashierId == null || cashierId.trim().isEmpty()) {
+                            cashierId = "unknown";
+                        }
+                        if (cashierName == null || cashierName.trim().isEmpty()) {
+                            // try legacy fields if they exist
                             cashierName = doc.getString("createdByName");
                         }
                         if (cashierName == null || cashierName.trim().isEmpty()) {
                             cashierName = "Unknown";
                         }
 
-                        CashierStats cs = statsMap.get(cashierName);
+                        CashierStats cs = statsMap.get(cashierId);
                         if (cs == null) {
-                            cs = new CashierStats(cashierName);
-                            statsMap.put(cashierName, cs);
+                            cs = new CashierStats(cashierId, cashierName);
+                            statsMap.put(cashierId, cs);
                         }
                         cs.scans++;
                     }
 
-                    // 2) Ensuite les REDEEMS (redeem_codes)
+                    // 2) REDEEM CODES => "Redeems" per cashier
                     db.collection("redeem_codes")
-                            .whereGreaterThanOrEqualTo("createdAt", start)
-                            .whereLessThanOrEqualTo("createdAt", end)
+                            .whereGreaterThanOrEqualTo(FIELD_REDEEM_DATE, start)
+                            .whereLessThan(FIELD_REDEEM_DATE, end)
                             .get()
                             .addOnSuccessListener(snapRedeem -> {
+                                Log.d(TAG, "cashier redeems size = " + snapRedeem.size());
+
                                 for (DocumentSnapshot doc : snapRedeem) {
-                                    // 🔁 Adapte ces champs à ton schéma
+                                    String cashierId = doc.getString("cashierId");
                                     String cashierName = doc.getString("cashierName");
-                                    if (cashierName == null) {
+
+                                    // Fallbacks
+                                    if (cashierId == null || cashierId.trim().isEmpty()) {
+                                        cashierId = "unknown";
+                                    }
+                                    if (cashierName == null || cashierName.trim().isEmpty()) {
                                         cashierName = doc.getString("processedByName");
                                     }
                                     if (cashierName == null || cashierName.trim().isEmpty()) {
                                         cashierName = "Unknown";
                                     }
 
-                                    CashierStats cs = statsMap.get(cashierName);
+                                    CashierStats cs = statsMap.get(cashierId);
                                     if (cs == null) {
-                                        cs = new CashierStats(cashierName);
-                                        statsMap.put(cashierName, cs);
+                                        cs = new CashierStats(cashierId, cashierName);
+                                        statsMap.put(cashierId, cs);
                                     }
                                     cs.redeems++;
                                 }
 
-                                // 3) On met à jour l’UI
                                 if (!isAdded()) return;
                                 renderCashierRows(statsMap);
 
                             })
                             .addOnFailureListener(e -> {
                                 if (!isAdded()) return;
-                                Log.e("Dashboard", "Error loading cashier redeems", e);
-                                renderCashierRows(statsMap); // quand même afficher les scans
+                                Log.e(TAG, "Error loading cashier redeems", e);
+                                // Even if redeem query fails, show scans
+                                renderCashierRows(statsMap);
                             });
 
                 })
                 .addOnFailureListener(e -> {
                     if (!isAdded()) return;
-                    Log.e("Dashboard", "Error loading cashier scans", e);
-                    // On vide la liste pour montrer que rien n'a été chargé
+                    Log.e(TAG, "Error loading cashier scans", e);
                     renderCashierRows(new HashMap<>());
                 });
     }
@@ -607,14 +666,13 @@ public class DashboardFragment extends Fragment {
         if (layoutCashierList == null) return;
         if (!isAdded()) return;
 
-        // Garder la première ligne (header) et supprimer les anciennes lignes dynamiques
+        // Clear previous dynamic rows but keep header (index 0)
         int childCount = layoutCashierList.getChildCount();
         if (childCount > 1) {
             layoutCashierList.removeViews(1, childCount - 1);
         }
 
         if (statsMap.isEmpty()) {
-            // Optionnel : afficher une petite ligne "No data"
             TextView tv = new TextView(getContext());
             tv.setText("No data for this period");
             tv.setTextSize(12);
@@ -624,17 +682,13 @@ public class DashboardFragment extends Fragment {
             return;
         }
 
-        // Convertir la map en liste pour trier
         List<CashierStats> list = new ArrayList<>(statsMap.values());
 
-        // Trier par total (scans + redeems) décroissant
-        Collections.sort(list, new Comparator<CashierStats>() {
-            @Override
-            public int compare(CashierStats o1, CashierStats o2) {
-                int total1 = o1.scans + o1.redeems;
-                int total2 = o2.scans + o2.redeems;
-                return Integer.compare(total2, total1);
-            }
+        // Sort by total activity (scans + redeems) DESC
+        Collections.sort(list, (o1, o2) -> {
+            int total1 = o1.scans + o1.redeems;
+            int total2 = o2.scans + o2.redeems;
+            return Integer.compare(total2, total1);
         });
 
         int paddingHorizontal = (int) (16 * getResources().getDisplayMetrics().density);
@@ -649,20 +703,26 @@ public class DashboardFragment extends Fragment {
             ));
             row.setPadding(paddingHorizontal, paddingVertical, paddingHorizontal, paddingVertical);
 
-            // Colonne 1 : Nom du caissier (weight 2)
+            // NAME
             TextView tvName = new TextView(getContext());
-            LinearLayout.LayoutParams lpName = new LinearLayout.LayoutParams(0,
-                    ViewGroup.LayoutParams.WRAP_CONTENT, 2f);
+            LinearLayout.LayoutParams lpName = new LinearLayout.LayoutParams(
+                    0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    2f
+            );
             tvName.setLayoutParams(lpName);
             tvName.setText(cs.name);
             tvName.setTextSize(13);
             tvName.setTextColor(getResources().getColor(android.R.color.primary_text_light));
             row.addView(tvName);
 
-            // Colonne 2 : Scans (weight 1, centré)
+            // SCANS
             TextView tvScans = new TextView(getContext());
-            LinearLayout.LayoutParams lpScans = new LinearLayout.LayoutParams(0,
-                    ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+            LinearLayout.LayoutParams lpScans = new LinearLayout.LayoutParams(
+                    0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    1f
+            );
             tvScans.setLayoutParams(lpScans);
             tvScans.setText(String.valueOf(cs.scans));
             tvScans.setTextSize(13);
@@ -670,10 +730,13 @@ public class DashboardFragment extends Fragment {
             tvScans.setTextColor(getResources().getColor(android.R.color.primary_text_light));
             row.addView(tvScans);
 
-            // Colonne 3 : Redeems (weight 1, aligné à droite)
+            // REDEEMS
             TextView tvRedeems = new TextView(getContext());
-            LinearLayout.LayoutParams lpRedeems = new LinearLayout.LayoutParams(0,
-                    ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+            LinearLayout.LayoutParams lpRedeems = new LinearLayout.LayoutParams(
+                    0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    1f
+            );
             tvRedeems.setLayoutParams(lpRedeems);
             tvRedeems.setText(String.valueOf(cs.redeems));
             tvRedeems.setTextSize(13);
@@ -681,7 +744,7 @@ public class DashboardFragment extends Fragment {
             tvRedeems.setTextColor(getResources().getColor(android.R.color.primary_text_light));
             row.addView(tvRedeems);
 
-            // Ligne séparatrice légère (optionnel)
+            // Divider
             View divider = new View(getContext());
             LinearLayout.LayoutParams lpDivider = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
@@ -695,16 +758,15 @@ public class DashboardFragment extends Fragment {
         }
     }
 
-
-
     private static class CashierStats {
+        String id;
         String name;
         int scans;
         int redeems;
 
-        CashierStats(String name) {
+        CashierStats(String id, String name) {
+            this.id = id;
             this.name = name;
         }
     }
-
 }

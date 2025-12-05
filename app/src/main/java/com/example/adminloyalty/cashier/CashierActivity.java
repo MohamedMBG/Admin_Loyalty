@@ -7,10 +7,8 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.view.View;
-import android.widget.Button; // Can remove this if switching to MaterialButton below
 import android.widget.ImageView;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -21,6 +19,8 @@ import com.google.android.material.chip.Chip;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textview.MaterialTextView;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
@@ -46,12 +46,16 @@ public class CashierActivity extends AppCompatActivity {
     private ImageView imgQr;
     private ProgressBar progressIssuing;
     private TextInputEditText etReceipt, etAmount;
-
-    // Changed btn_redeeming to MaterialButton to match XML type
     private MaterialButton btnGenerate, btnConfirm, btnCancel, btnRefresh, btn_redeeming;
 
     // Firebase
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private final FirebaseAuth auth = FirebaseAuth.getInstance();   // 🔹 NEW
+
+    // Cashier meta 🔹 NEW
+    private String cashierId;
+    private String cashierName;
+    private String shopId;
 
     // State
     private ListenerRegistration voucherListener;
@@ -68,6 +72,8 @@ public class CashierActivity extends AppCompatActivity {
         bindViews();
         bindActions();
         resetUi();
+
+        initCashierMeta();   // 🔹 load cashier info once
     }
 
     @Override
@@ -78,14 +84,46 @@ public class CashierActivity extends AppCompatActivity {
         cancelTimer(countdown);
     }
 
+    // -------------------- Cashier meta (NEW) --------------------
+    private void initCashierMeta() {
+        FirebaseUser user = auth.getCurrentUser();
+        if (user == null) {
+            snack("Error: no cashier session. Please log in again.");
+            finish();
+            return;
+        }
+
+        cashierId = user.getUid();
+
+        // First safe fallback: email
+        String email = user.getEmail();
+        cashierName = (email != null && !email.trim().isEmpty())
+                ? email
+                : "Unknown Cashier";
+
+        db.collection("users")
+                .document(cashierId)
+                .get()
+                .addOnSuccessListener(snap -> {
+                    if (snap.exists()) {
+                        String profileName = snap.getString("name");   // field in your screenshot
+                        if (profileName != null && !profileName.trim().isEmpty()) {
+                            cashierName = profileName;                 // <-- will become "nisrine"
+                        }
+                    }
+                })
+                .addOnFailureListener(e ->
+                        snack("Failed to load cashier profile: " + e.getMessage())
+                );
+    }
+
+
     // -------------------- Bindings --------------------
     @SuppressLint("WrongViewCast")
     private void bindViews() {
         root = findViewById(android.R.id.content);
 
-        // Updated to MaterialButton
         btn_redeeming = findViewById(R.id.btn_redeeming);
-
         cardConfirm      = findViewById(R.id.card_confirm);
         cardQr           = findViewById(R.id.card_qr);
         tvConfirmTitle   = findViewById(R.id.tvConfirmTitle);
@@ -111,7 +149,6 @@ public class CashierActivity extends AppCompatActivity {
         btnCancel.setOnClickListener(v -> cancelActive());
         btnRefresh.setOnClickListener(v -> openConfirm());
 
-        // Navigation to Redeeming Screen
         btn_redeeming.setOnClickListener(v -> {
             Intent intent = new Intent(CashierActivity.this, RedeemingActivity.class);
             startActivity(intent);
@@ -147,6 +184,12 @@ public class CashierActivity extends AppCompatActivity {
         cancelTimer(confirmCdt);
         cardConfirm.setVisibility(View.GONE);
 
+        // 🔹 Make sure cashier meta is loaded
+        if (cashierId == null) {
+            snack("Cashier not loaded yet. Please try again in a moment.");
+            return;
+        }
+
         String orderNo = text(etReceipt);
         String amtStr  = text(etAmount);
 
@@ -166,17 +209,14 @@ public class CashierActivity extends AppCompatActivity {
                 .whereEqualTo("orderNo", orderNo)
                 .limit(1)
                 .get()
-                .addOnSuccessListener(snap ->{
+                .addOnSuccessListener(snap -> {
                     if (!snap.isEmpty()) {
-                        // Duplicate found -> STOP (no QR)
                         progressIssuing.setVisibility(View.GONE);
                         tvStatus.setText("Blocked");
                         snack("This receipt number already has a QR. No QR generated.");
                         return;
                     }
 
-
-                    // 2) No duplicate -> build payload & create
                     tvStatus.setText("Creating voucher…");
 
                     Map<String, Object> doc = new HashMap<>();
@@ -190,13 +230,21 @@ public class CashierActivity extends AppCompatActivity {
                     doc.put("redeemedByUid", null);
                     doc.put("qrVersion", 1);
                     doc.put("nonce", randomNonce(10));
+                    doc.put("cashierId", cashierId);
+
+                    String safeCashierName = cashierName;
+                    if (safeCashierName == null || safeCashierName.trim().isEmpty()) {
+                        safeCashierName = "Unknown Cashier";
+                    }
+                    doc.put("cashierName", safeCashierName);
+
+
 
                     currentVoucherRef = db.collection("earn_codes").document(); // random ID
                     currentVoucherId  = currentVoucherRef.getId();
 
                     currentVoucherRef.set(doc).addOnSuccessListener(a -> {
-                        // 3) Show QR only after successful create
-                        renderQr(currentVoucherId); // QR contains the docId you just created
+                        renderQr(currentVoucherId); // QR contains only the docId
                         tvQrMeta.setText("Show to customer to scan");
                         progressIssuing.setVisibility(View.GONE);
                         tvStatus.setText("Active");
@@ -294,7 +342,6 @@ public class CashierActivity extends AppCompatActivity {
 
     // -------------------- Cancel / Reset --------------------
     private void cancelActive() {
-        // Try to cancel the pending voucher on Firestore (if it exists)
         if (currentVoucherRef != null && currentVoucherId != null) {
             currentVoucherRef.get().addOnSuccessListener(snap -> {
                 if (snap.exists()) {
@@ -305,7 +352,6 @@ public class CashierActivity extends AppCompatActivity {
                                 .addOnFailureListener(e -> {});
                     }
                 }
-                // Regardless, clear UI
                 teardownAndReset();
             }).addOnFailureListener(e -> teardownAndReset());
         } else {

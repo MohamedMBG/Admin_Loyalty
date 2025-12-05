@@ -21,6 +21,8 @@ import androidx.core.content.ContextCompat;
 import com.example.adminloyalty.R;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -48,8 +50,14 @@ public class RedeemingActivity extends AppCompatActivity {
     // Category Items Containers (Expandable)
     private LinearLayout itemsHotCoffee, itemsIcedCoffee, itemsTea, itemsFrappuccino, itemsPastries;
 
-    // -------- Firestore --------
+    // -------- Firebase --------
     private FirebaseFirestore db;
+    private FirebaseAuth auth;          // 🔹 NEW
+
+    // -------- Cashier meta (NEW) --------
+    private String cashierId;
+    private String cashierName;
+    private String shopId;
 
     // -------- State Variables --------
     private String selectedUserUid = null;
@@ -60,20 +68,61 @@ public class RedeemingActivity extends AppCompatActivity {
     private String selectedItemName = null;
     private int selectedItemCost = 0;
 
-
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_redeeming);
 
         db = FirebaseFirestore.getInstance();
+        auth = FirebaseAuth.getInstance();     // 🔹 NEW
 
         initViews();
         setupCategoryToggles();
         setupItemButtons();
         setupSearch();
         setupRedeemButton();
+
+        initCashierMeta();                    // 🔹 NEW
     }
+
+    // region 0. Cashier meta (NEW)
+    private void initCashierMeta() {
+        FirebaseUser user = auth.getCurrentUser();
+        if (user == null) {
+            showToast("Error: no cashier session. Please log in again.");
+            finish();
+            return;
+        }
+
+        cashierId = user.getUid();
+
+        // first fallback: email, so it’s never null
+        String email = user.getEmail();
+        cashierName = (email != null && !email.trim().isEmpty())
+                ? email
+                : "Unknown Cashier";
+
+        db.collection("users")
+                .document(cashierId)
+                .get()
+                .addOnSuccessListener(snap -> {
+                    if (snap.exists()) {
+                        // ✅ use the REAL field name in Firestore
+                        String profileName = snap.getString("name");   // "nisrine"
+                        if (profileName != null && !profileName.trim().isEmpty()) {
+                            cashierName = profileName;
+                        }
+                        // only if you really have this field
+                        // shopId = snap.getString("shopId");
+                    }
+                })
+                .addOnFailureListener(e ->
+                        showToast("Failed to load cashier profile: " + e.getMessage())
+                );
+    }
+
+
+    // endregion
 
     // region 1. Initialization
     private void initViews() {
@@ -111,7 +160,6 @@ public class RedeemingActivity extends AppCompatActivity {
     }
     // endregion
 
-
     // region 2. Categories Logic
     private void setupCategoryToggles() {
         setupToggle(headerHotCoffee, itemsHotCoffee);
@@ -130,7 +178,6 @@ public class RedeemingActivity extends AppCompatActivity {
         });
     }
     // endregion
-
 
     // region 3. Items Selection Logic
     private void setupItemButtons() {
@@ -175,24 +222,17 @@ public class RedeemingActivity extends AppCompatActivity {
         setupItemRow(R.id.btnBrownie, "Fudge Brownie", 160);
     }
 
-    /**
-     * Helper to bind click listeners to rows.
-     * Checks for null in case XML is not yet updated with all IDs.
-     */
     private void setupItemRow(int viewId, String itemName, int costPoints) {
         View row = findViewById(viewId);
-        if (row == null) return; // ID missing in XML, skip safely
+        if (row == null) return;
 
         row.setOnClickListener(v -> {
-            // 1. Update State
             selectedItemName = itemName;
             selectedItemCost = costPoints;
 
-            // 2. Update UI Feedback
             tvSelectedItem.setText(itemName);
             tvRequiredPoints.setText("Cost: " + costPoints + " pts");
 
-            // 3. Verify Points Immediately (Visual check)
             if (selectedUserUid != null) {
                 checkPointsAndWarn();
             }
@@ -223,7 +263,6 @@ public class RedeemingActivity extends AppCompatActivity {
     }
     // endregion
 
-
     // region 4. Client Search Logic
     private void setupSearch() {
         searchClientEt.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
@@ -244,7 +283,6 @@ public class RedeemingActivity extends AppCompatActivity {
     }
 
     private void searchUser(String query) {
-        // Strategy: Try Email -> then UID -> then Name
         if (query.contains("@")) {
             db.collection("users")
                     .whereEqualTo("email", query)
@@ -255,7 +293,6 @@ public class RedeemingActivity extends AppCompatActivity {
             return;
         }
 
-        // Try UID
         db.collection("users")
                 .whereEqualTo("uid", query)
                 .limit(1)
@@ -264,7 +301,6 @@ public class RedeemingActivity extends AppCompatActivity {
                     if (!snapshot.isEmpty()) {
                         handleUserResult(snapshot);
                     } else {
-                        // Fallback: Search by Name
                         searchUserByName(query);
                     }
                 })
@@ -294,7 +330,6 @@ public class RedeemingActivity extends AppCompatActivity {
 
         DocumentSnapshot doc = querySnapshot.getDocuments().get(0);
 
-        // Update State
         selectedUserDocId = doc.getId();
         selectedUserUid = doc.getString("uid");
         if (selectedUserUid == null) selectedUserUid = selectedUserDocId;
@@ -303,25 +338,21 @@ public class RedeemingActivity extends AppCompatActivity {
         Long pts = doc.getLong("points");
         selectedUserPoints = pts != null ? pts.intValue() : 0;
 
-        // Update UI
         clientNameTv.setText(selectedUserName != null ? selectedUserName : "Unknown User");
         clientIdTv.setText("ID: " + selectedUserUid);
         clientPointsTv.setText(String.format("%,d", selectedUserPoints));
 
         clientCard.setVisibility(View.VISIBLE);
 
-        // Re-check points against currently selected item (if any)
         if (selectedItemName != null) {
             checkPointsAndWarn();
         }
     }
     // endregion
 
-
     // region 5. Redemption Logic
     private void setupRedeemButton() {
         btnRedeem.setOnClickListener(v -> {
-            // Validation Steps
             if (selectedUserUid == null || selectedUserDocId == null) {
                 showToast("Please search and select a client first.");
                 return;
@@ -336,17 +367,20 @@ public class RedeemingActivity extends AppCompatActivity {
                 return;
             }
 
-            // Proceed
+            // 🔹 Ensure cashier is loaded
+            if (cashierId == null) {
+                showToast("Cashier not loaded yet. Please try again.");
+                return;
+            }
+
             createRedeemCode();
         });
     }
 
     private void createRedeemCode() {
-        // Extra safety: disable button to avoid double tap
         btnRedeem.setEnabled(false);
         btnRedeem.setText("Generating...");
 
-        // Create a transaction record in "redeem_codes" collection
         Map<String, Object> data = new HashMap<>();
         data.put("userUid", selectedUserUid);
         data.put("userDocId", selectedUserDocId);
@@ -355,23 +389,22 @@ public class RedeemingActivity extends AppCompatActivity {
         data.put("costPoints", selectedItemCost);
         data.put("clientPointsBefore", selectedUserPoints);
 
-        // IMPORTANT: keep these strings consistent with what user app expects
-        data.put("status", "ACTIVE");   // or "pending" but then scanner must check for that
-        data.put("type", "REDEEM");     // upper-case to be explicit
+        // 🔹 NEW: attach cashier tracking
+        data.put("cashierId", cashierId);
+        if (cashierName != null) data.put("cashierName", cashierName);
+        if (shopId != null)     data.put("shopId", shopId);
+
+        data.put("status", "ACTIVE");   // or "pending"
+        data.put("type", "REDEEM");
         data.put("createdAt", FieldValue.serverTimestamp());
 
         db.collection("redeem_codes")
                 .add(data)
                 .addOnSuccessListener(docRef -> {
                     String codeId = docRef.getId();
-
-                    // Optionally store the codeId inside the document for easy lookup on the client
                     docRef.update("codeId", codeId);
 
-                    // ---------- QR PAYLOAD FORMAT ----------
-                    // REDEEM | codeId | userUid | costPoints
-                    // Example: REDEEM|abc123|UID_456|200
-                    // The USER app scanner must parse this and hit /redeem_codes/{codeId}
+                    // QR payload stays the same
                     String payload = "REDEEM|" + codeId + "|" + selectedUserUid + "|" + selectedItemCost;
 
                     try {
@@ -392,7 +425,6 @@ public class RedeemingActivity extends AppCompatActivity {
                 });
     }
     // endregion
-
 
     // region 6. QR Helper & Dialog
     private Bitmap generateQrCode(String text, int size) throws WriterException {
@@ -421,15 +453,10 @@ public class RedeemingActivity extends AppCompatActivity {
         new AlertDialog.Builder(this)
                 .setTitle("Redemption Pending")
                 .setView(dialogView)
-                .setPositiveButton("Done", (d, which) -> {
-                    d.dismiss();
-                    // Optional: reset UI for next client
-                    // resetUI();
-                })
+                .setPositiveButton("Done", (d, which) -> d.dismiss())
                 .show();
     }
     // endregion
-
 
     // region 7. Helpers
     private void showToast(String msg) {

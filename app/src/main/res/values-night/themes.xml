@@ -5,6 +5,7 @@
         <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
 
         <item name="android:statusBarColor">@color/statusBarDark</item>
+        <item name="colorPrimary">@color/white</item>
         <!-- Light icons on dark background -->
         <item name="android:windowLightStatusBar">false</item>
     </style>

@@ -115,7 +115,7 @@
                 app:boxCornerRadiusTopStart="12dp"
                 app:boxStrokeColor="#4F46E5"
                 app:hintTextColor="#4F46E5"
-                app:prefixText="AED "
+                app:prefixText="MAD "
                 app:prefixTextColor="?android:attr/textColorPrimary"
                 app:startIconDrawable="@android:drawable/ic_menu_info_details"
                 app:startIconTint="?android:attr/textColorSecondary">
