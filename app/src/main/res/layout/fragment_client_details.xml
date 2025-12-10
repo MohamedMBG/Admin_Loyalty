@@ -215,67 +215,18 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- 2. STATS ROW (Modern & Minimalist) -->
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                android:baselineAligned="false"
-                android:orientation="horizontal">
+                android:orientation="vertical">
 
-                <!-- Points Card (Gold Accent) -->
+
+                <!-- 2a. Last Visit Card (Primary/Indigo Accent) -->
                 <com.google.android.material.card.MaterialCardView
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_margin="10dp"
-                    android:layout_marginEnd="8dp"
-                    android:layout_weight="1"
-                    app:cardBackgroundColor="?attr/colorSurface"
-                    app:cardCornerRadius="20dp"
-                    app:cardElevation="4dp"
-                    app:strokeWidth="0dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="start"
-                        android:orientation="vertical"
-                        android:padding="20dp">
-
-                        <ImageView
-                            android:layout_width="28dp"
-                            android:layout_height="28dp"
-                            android:background="@drawable/bg_circle"
-                            android:backgroundTint="#26F59E0B"
-                            android:padding="6dp"
-                            android:src="@drawable/ic_star"
-                            app:tint="#F59E0B" />
-
-                        <TextView
-                            android:id="@+id/tvDetailPoints"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="12dp"
-                            android:textColor="#F59E0B"
-                            android:textSize="24sp"
-                            android:textStyle="bold"
-                            tools:text="1,250" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Loyalty Points"
-                            android:textColor="?android:attr/textColorSecondary"
-                            android:textSize="12sp" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <!-- Spend Card (Teal Accent) -->
-                <com.google.android.material.card.MaterialCardView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:layout_weight="1"
+                    android:layout_marginEnd="4dp"
                     android:layout_margin="10dp"
                     app:cardBackgroundColor="?attr/colorSurface"
                     app:cardCornerRadius="20dp"
@@ -287,36 +238,144 @@
                         android:layout_height="wrap_content"
                         android:gravity="start"
                         android:orientation="vertical"
-                        android:padding="20dp">
+                        android:padding="16dp">
 
                         <ImageView
-                            android:layout_width="28dp"
-                            android:layout_height="28dp"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
                             android:background="@drawable/bg_circle"
-                            android:backgroundTint="#2610B981"
-                            android:padding="6dp"
-                            android:src="@android:drawable/ic_menu_rotate"
-                            app:tint="#10B981" />
+                            android:backgroundTint="#1A4F46E5"
+                            android:padding="5dp"
+                            android:src="@drawable/ic_calendar"
+                            app:tint="?attr/colorPrimary" />
 
                         <TextView
-                            android:id="@+id/tvDetailSpend"
+                            android:id="@+id/tvDetailLastVisit"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="12dp"
-                            android:textColor="#10B981"
-                            android:textSize="24sp"
+                            android:textColor="?attr/colorPrimary"
+                            android:textSize="18sp"
                             android:textStyle="bold"
-                            tools:text="45.50" />
+                            android:lines="1"
+                            android:ellipsize="end"
+                            tools:text="12 Oct" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Avg Spend (MAD)"
+                            android:text="Last Visit"
                             android:textColor="?android:attr/textColorSecondary"
-                            android:textSize="12sp" />
+                            android:textSize="11sp" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
+                <!-- 2. STATS ROW (Modern & Minimalist) -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="24dp"
+                    android:baselineAligned="false"
+                    android:orientation="horizontal">
+
+
+
+                    <!-- Points Card (Gold Accent) -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="10dp"
+                        android:layout_marginEnd="8dp"
+                        android:layout_weight="1"
+                        app:cardBackgroundColor="?attr/colorSurface"
+                        app:cardCornerRadius="20dp"
+                        app:cardElevation="4dp"
+                        app:strokeWidth="0dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="start"
+                            android:orientation="vertical"
+                            android:padding="20dp">
+
+                            <ImageView
+                                android:layout_width="28dp"
+                                android:layout_height="28dp"
+                                android:background="@drawable/bg_circle"
+                                android:backgroundTint="#26F59E0B"
+                                android:padding="6dp"
+                                android:src="@drawable/ic_star"
+                                app:tint="#F59E0B" />
+
+                            <TextView
+                                android:id="@+id/tvDetailPoints"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="12dp"
+                                android:textColor="#F59E0B"
+                                android:textSize="24sp"
+                                android:textStyle="bold"
+                                tools:text="1,250" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Loyalty Points"
+                                android:textColor="?android:attr/textColorSecondary"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <!-- Spend Card (Teal Accent) -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_weight="1"
+                        android:layout_margin="10dp"
+                        app:cardBackgroundColor="?attr/colorSurface"
+                        app:cardCornerRadius="20dp"
+                        app:cardElevation="4dp"
+                        app:strokeWidth="0dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="start"
+                            android:orientation="vertical"
+                            android:padding="20dp">
+
+                            <ImageView
+                                android:layout_width="28dp"
+                                android:layout_height="28dp"
+                                android:background="@drawable/bg_circle"
+                                android:backgroundTint="#2610B981"
+                                android:padding="6dp"
+                                android:src="@android:drawable/ic_menu_rotate"
+                                app:tint="#10B981" />
+
+                            <TextView
+                                android:id="@+id/tvDetailSpend"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="12dp"
+                                android:textColor="#10B981"
+                                android:textSize="24sp"
+                                android:textStyle="bold"
+                                tools:text="45.50" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Avg Spend (MAD)"
+                                android:textColor="?android:attr/textColorSecondary"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+                </LinearLayout>
+
             </LinearLayout>
+
 
             <!-- 3. HISTORY SECTION WITH FILTERS -->
             <LinearLayout

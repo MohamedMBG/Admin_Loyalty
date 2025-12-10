@@ -1,7 +1,6 @@
 package com.example.adminloyalty.fragments;
 
 import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -25,6 +24,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.adminloyalty.R;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
+import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.firebase.Timestamp;
@@ -35,7 +35,6 @@ import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -48,7 +47,7 @@ public class ClientDetailsFragment extends Fragment {
     private FirebaseFirestore db;
 
     // UI Views
-    private TextView tvName, tvEmail, tvPhone, tvGender, tvAddress, tvPoints, tvSpend, tvEmptyHistory;
+    private TextView tvLastVisit, tvName, tvEmail, tvPhone, tvGender, tvAddress, tvPoints, tvSpend, tvEmptyHistory;
     private RecyclerView rvHistory;
     private ProgressBar progressBar;
     private ChipGroup chipGroupFilters;
@@ -91,6 +90,7 @@ public class ClientDetailsFragment extends Fragment {
 
         // Bind Views
         btnBack = view.findViewById(R.id.btnBack);
+        tvLastVisit = view.findViewById(R.id.tvDetailLastVisit);
         tvName = view.findViewById(R.id.tvDetailName);
         tvEmail = view.findViewById(R.id.tvDetailEmail);
         tvPhone = view.findViewById(R.id.tvDetailPhone);
@@ -107,14 +107,15 @@ public class ClientDetailsFragment extends Fragment {
         btnBack.setOnClickListener(v -> requireActivity().onBackPressed());
 
         // Setup Filters
-        setupFilters();
+        setupFilters(view);
 
         // Load Data
         loadUserProfile();
         loadHistory();
     }
 
-    private void setupFilters() {
+    private void setupFilters(View view) {
+        // 1. Group Listener for Toggles (All/Scans/Gifts)
         chipGroupFilters.setOnCheckedStateChangeListener((group, checkedIds) -> {
             if (checkedIds.isEmpty()) return;
 
@@ -125,12 +126,91 @@ public class ClientDetailsFragment extends Fragment {
                 filterList("EARN");
             } else if (id == R.id.filterGifts) {
                 filterList("SPEND");
-            } else if (id == R.id.filterCashier) {
-                showCashierFilterDialog();
-            } else if (id == R.id.filterDate) {
-                showDateRangePicker();
             }
+            // Note: Cashier/Date logic removed from here to avoid double-firing or no-firing issues
         });
+
+        // 2. Direct Click Listeners for Actions (Cashier/Date)
+        // This ensures the dialog opens even if the chip is already "checked"
+        Chip chipCashier = view.findViewById(R.id.filterCashier);
+        chipCashier.setOnClickListener(v -> {
+            chipGroupFilters.check(R.id.filterCashier); // Visually select it
+            showCashierFilterDialog();
+        });
+
+        Chip chipDate = view.findViewById(R.id.filterDate);
+        chipDate.setOnClickListener(v -> {
+            chipGroupFilters.check(R.id.filterDate); // Visually select it
+            showDateRangePicker();
+        });
+    }
+
+    // --- Filter by fetching Cashiers from Firebase ---
+    private void showCashierFilterDialog() {
+        Toast.makeText(getContext(), "Loading cashier list...", Toast.LENGTH_SHORT).show();
+
+        db.collection("users")
+                .whereEqualTo("role", "cashier")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (!isAdded()) return;
+
+                    List<String> cashierNames = new ArrayList<>();
+                    for (DocumentSnapshot doc : queryDocumentSnapshots) {
+                        // Assuming 'fullName' or 'name' stores the cashier's display name
+                        String name = doc.getString("fullName");
+                        if (name == null) name = doc.getString("name"); // Fallback
+
+                        if (name != null && !name.isEmpty()) {
+                            cashierNames.add(name);
+                        }
+                    }
+
+                    if (cashierNames.isEmpty()) {
+                        Toast.makeText(getContext(), "No cashiers found in database", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    // Sort alphabetically for easier searching
+                    Collections.sort(cashierNames);
+
+                    String[] cashierArray = cashierNames.toArray(new String[0]);
+
+                    new AlertDialog.Builder(getContext())
+                            .setTitle("Select Cashier")
+                            .setItems(cashierArray, (dialog, which) -> {
+                                String selectedCashier = cashierArray[which];
+                                filterListByCashier(selectedCashier);
+                            })
+                            .setNegativeButton("Cancel", null)
+                            .setNeutralButton("Show All", (dialog, which) -> {
+                                chipGroupFilters.check(R.id.filterAll); // Reset visual selection
+                                filterList("ALL");
+                            })
+                            .show();
+                })
+                .addOnFailureListener(e -> {
+                    if (!isAdded()) return;
+                    Toast.makeText(getContext(), "Failed to load cashiers: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    private void filterListByCashier(String cashierName) {
+        if (allActivities == null || allActivities.isEmpty()) return;
+
+        List<ActivityItem> filtered = new ArrayList<>();
+        for (ActivityItem item : allActivities) {
+            // Case-insensitive comparison is safer
+            String itemCashier = item.getCashierName() != null ? item.getCashierName() : "";
+            if (itemCashier.equalsIgnoreCase(cashierName)) {
+                filtered.add(item);
+            }
+        }
+        updateAdapter(filtered);
+
+        if (filtered.isEmpty()) {
+            Toast.makeText(getContext(), "No transactions found for " + cashierName, Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void showDateRangePicker() {
@@ -151,6 +231,11 @@ public class ClientDetailsFragment extends Fragment {
             }
         });
 
+        datePicker.addOnNegativeButtonClickListener(v -> {
+            chipGroupFilters.check(R.id.filterAll); // Reset if cancelled
+            filterList("ALL");
+        });
+
         datePicker.show(getParentFragmentManager(), "DATE_PICKER");
     }
 
@@ -158,7 +243,7 @@ public class ClientDetailsFragment extends Fragment {
         if (allActivities == null || allActivities.isEmpty()) return;
 
         List<ActivityItem> filtered = new ArrayList<>();
-        // Add 1 day to end date to make it inclusive (selection returns midnight)
+        // Add 1 day to end date to make it inclusive
         long endOfDay = end + (24 * 60 * 60 * 1000) - 1;
 
         for (ActivityItem item : allActivities) {
@@ -167,49 +252,6 @@ public class ClientDetailsFragment extends Fragment {
                 if (itemTime >= start && itemTime <= endOfDay) {
                     filtered.add(item);
                 }
-            }
-        }
-        updateAdapter(filtered);
-        Toast.makeText(getContext(), "Filtered by Date", Toast.LENGTH_SHORT).show();
-    }
-
-    private void showCashierFilterDialog() {
-        if (allActivities == null || allActivities.isEmpty()) {
-            Toast.makeText(getContext(), "No data to filter", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // Extract unique cashiers
-        Set<String> cashiers = new HashSet<>();
-        for (ActivityItem item : allActivities) {
-            if (item.getCashierName() != null) {
-                cashiers.add(item.getCashierName());
-            }
-        }
-
-        if (cashiers.isEmpty()) {
-            Toast.makeText(getContext(), "No cashier data found", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        String[] cashierArray = cashiers.toArray(new String[0]);
-
-        new AlertDialog.Builder(getContext())
-                .setTitle("Filter by Cashier")
-                .setItems(cashierArray, (dialog, which) -> {
-                    String selectedCashier = cashierArray[which];
-                    filterListByCashier(selectedCashier);
-                })
-                .setNegativeButton("Cancel", null)
-                .setNeutralButton("Clear Filter", (dialog, which) -> filterList("ALL"))
-                .show();
-    }
-
-    private void filterListByCashier(String cashierName) {
-        List<ActivityItem> filtered = new ArrayList<>();
-        for (ActivityItem item : allActivities) {
-            if (item.getCashierName() != null && item.getCashierName().equals(cashierName)) {
-                filtered.add(item);
             }
         }
         updateAdapter(filtered);
@@ -274,6 +316,17 @@ public class ClientDetailsFragment extends Fragment {
                     tvGender.setText(gender != null ? capitalize(gender) : "-");
                     tvAddress.setText(address != null ? address : "No Address");
 
+                    // LAST VISIT LOGIC
+                    Timestamp lastVisit = document.getTimestamp("lastVisitTimestamp");
+                    String lastVisitStr = "Never";
+                    if (lastVisit != null) {
+                        lastVisitStr = DateFormat.format("dd MMM yyyy", lastVisit.toDate()).toString();
+                    }
+                    if (tvLastVisit != null) {
+                        tvLastVisit.setText("Last Visit: " + lastVisitStr);
+                    }
+
+
                     Long points = document.getLong("points");
                     Long visits = document.getLong("visits");
                     long pVal = points != null ? points : 0;
@@ -310,7 +363,6 @@ public class ClientDetailsFragment extends Fragment {
                 .whereEqualTo("status", "completed")
                 .get();
 
-        // Run both queries in parallel
         Tasks.whenAllSuccess(earnTask, spendTask).addOnSuccessListener(results -> {
             if (!isAdded()) return;
             progressBar.setVisibility(View.GONE);
@@ -349,13 +401,12 @@ public class ClientDetailsFragment extends Fragment {
                 }
             }
 
-            // Initial Filter & Sort (Date Descending)
             filterList("ALL");
 
         }).addOnFailureListener(e -> {
             if (!isAdded()) return;
             progressBar.setVisibility(View.GONE);
-            Toast.makeText(getContext(), "Failed to load history: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Failed to load history", Toast.LENGTH_SHORT).show();
         });
     }
 

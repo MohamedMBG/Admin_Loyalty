@@ -15,4 +15,5 @@
     <string name="notifications">Notifications</string>
     <string name="content_description">Content description</string>
     <string name="staff">Staff</string>
+    <string name="manage_reward">Manage Reward</string>
 </resources>

@@ -239,7 +239,7 @@
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
 
-                    <!-- Action: Redemptions -->
+                    <!-- Action: Redemptions (History) -->
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/btnActionRedemptions"
                         android:layout_width="100dp"
@@ -258,6 +258,38 @@
                             android:orientation="vertical">
                             <ImageView android:layout_width="28dp" android:layout_height="28dp" android:src="@android:drawable/ic_menu_agenda" app:tint="#7C3AED"/>
                             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Rewards" android:textColor="#7C3AED" android:textStyle="bold" android:layout_marginTop="8dp"/>
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <!-- NEW: ADD GIFT ACTION -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/btnActionAddGift"
+                        android:layout_width="100dp"
+                        android:layout_height="90dp"
+                        android:layout_margin="6dp"
+                        app:cardBackgroundColor="?attr/colorSurface"
+                        app:cardCornerRadius="16dp"
+                        app:cardElevation="4dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground">
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:orientation="vertical">
+                            <ImageView
+                                android:layout_width="28dp"
+                                android:layout_height="28dp"
+                                android:src="@android:drawable/ic_input_add"
+                                app:tint="#DB2777"/>
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="New Gift"
+                                android:textColor="#DB2777"
+                                android:textStyle="bold"
+                                android:layout_marginTop="8dp"/>
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
 

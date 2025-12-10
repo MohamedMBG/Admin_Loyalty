@@ -2,30 +2,36 @@
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="16dp"
-    android:layout_marginVertical="6dp"
+    android:layout_marginVertical="8dp"
     app:cardBackgroundColor="?attr/colorSurface"
-    app:cardCornerRadius="12dp"
+    app:cardCornerRadius="20dp"
     app:cardElevation="2dp"
+    app:strokeWidth="0dp"
     android:clickable="true"
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
         android:padding="16dp">
 
-        <!-- Family/Category Icon (Placeholder based on text) -->
-        <FrameLayout
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="@drawable/bg_circle"
-            android:backgroundTint="#10B981"> <!-- Teal background for inventory -->
+        <!-- 1. Modern Icon Container (Squircle) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/iconContainer"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            app:cardCornerRadius="18dp"
+            app:cardElevation="0dp"
+            app:cardBackgroundColor="?attr/colorPrimaryContainer"
+            app:strokeWidth="0dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
 
             <TextView
                 android:id="@+id/tvCategoryInitial"
@@ -33,18 +39,23 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:text="C"
-                android:textColor="#FFFFFF"
-                android:textStyle="bold"
-                android:textSize="20sp"/>
-        </FrameLayout>
+                android:textColor="?attr/colorOnPrimaryContainer"
+                android:textSize="24sp"
+                android:fontFamily="sans-serif-black"
+                android:includeFontPadding="false"/>
+        </com.google.android.material.card.MaterialCardView>
 
-        <!-- Info -->
+        <!-- 2. Info Stack -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:orientation="vertical"
             android:layout_marginStart="16dp"
-            android:orientation="vertical">
+            android:layout_marginEnd="8dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/cardPoints"
+            app:layout_constraintStart_toEndOf="@+id/iconContainer"
+            app:layout_constraintTop_toTopOf="parent">
 
             <TextView
                 android:id="@+id/tvRewardName"
@@ -52,37 +63,60 @@
                 android:layout_height="wrap_content"
                 android:text="Caramel Macchiato"
                 android:textAppearance="?attr/textAppearanceSubtitle1"
+                android:textColor="?android:attr/textColorPrimary"
                 android:textStyle="bold"
-                android:textColor="?android:attr/textColorPrimary"/>
+                android:ellipsize="end"
+                android:maxLines="1"/>
 
             <TextView
                 android:id="@+id/tvRewardCategory"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Family: Coffee"
-                android:textSize="12sp"
-                android:textColor="?android:attr/textColorSecondary"/>
+                android:text="Coffee"
+                android:textAppearance="?attr/textAppearanceCaption"
+                android:textColor="?android:attr/textColorSecondary"
+                android:layout_marginTop="2dp"/>
         </LinearLayout>
 
-        <!-- Points Cost -->
-        <TextView
-            android:id="@+id/tvRewardCost"
+        <!-- 3. Points Badge (Modern Pill) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardPoints"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="350 pts"
-            android:textColor="#F59E0B"
-            android:textStyle="bold"
-            android:layout_marginEnd="16dp"/>
+            app:cardBackgroundColor="#1AF59E0B"
+            app:cardCornerRadius="10dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="0dp"
+            android:layout_marginEnd="12dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/btnDeleteReward"
+            app:layout_constraintTop_toTopOf="parent">
+            <!-- #1AF59E0B is Gold with ~10% opacity for the background tint -->
 
-        <!-- Delete Button -->
+            <TextView
+                android:id="@+id/tvRewardCost"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="6dp"
+                android:text="350 pts"
+                android:textColor="#F59E0B"
+                android:textSize="13sp"
+                android:textStyle="bold"/>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- 4. Delete Action -->
         <ImageView
             android:id="@+id/btnDeleteReward"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="6dp"
             android:src="@android:drawable/ic_menu_delete"
             app:tint="#EF4444"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:clickable="true"/>
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </com.google.android.material.card.MaterialCardView>

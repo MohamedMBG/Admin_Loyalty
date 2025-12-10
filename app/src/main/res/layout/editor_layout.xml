@@ -5,38 +5,64 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:background="?attr/colorSurface"
-    android:padding="24dp">
+    android:paddingHorizontal="24dp"
+    android:paddingBottom="24dp"
+    android:paddingTop="12dp">
 
+    <!-- 1. Drag Handle (UX Affordance) -->
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="24dp"
+        android:background="@drawable/bg_circle"
+        android:backgroundTint="?android:attr/textColorTertiary"
+        android:alpha="0.4"/>
+
+    <!-- Header -->
     <TextView
         android:id="@+id/tvSheetTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Manage Reward"
-        android:textAppearance="?attr/textAppearanceHeadline6"
+        android:text="@string/manage_reward"
+        android:textAppearance="?attr/textAppearanceHeadline5"
+        android:textColor="?android:attr/textColorPrimary"
         android:textStyle="bold"
         android:layout_marginBottom="24dp"/>
 
-    <!-- Reward Name -->
+    <!-- 2. Reward Name Input -->
     <com.google.android.material.textfield.TextInputLayout
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Item Name (e.g. Espresso)"
+        android:hint="Item Name"
+        app:boxCornerRadiusTopStart="16dp"
+        app:boxCornerRadiusTopEnd="16dp"
+        app:boxCornerRadiusBottomStart="16dp"
+        app:boxCornerRadiusBottomEnd="16dp"
         android:layout_marginBottom="16dp">
+
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/inputRewardName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="textCapWords"/>
+            android:inputType="textCapWords"
+            android:imeOptions="actionNext"
+            android:maxLines="1"/>
     </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- Family/Category Dropdown -->
+    <!-- 3. Family/Category Dropdown -->
     <com.google.android.material.textfield.TextInputLayout
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Family / Category"
+        android:hint="Category"
+        app:boxCornerRadiusTopStart="16dp"
+        app:boxCornerRadiusTopEnd="16dp"
+        app:boxCornerRadiusBottomStart="16dp"
+        app:boxCornerRadiusBottomEnd="16dp"
         android:layout_marginBottom="16dp">
+
         <AutoCompleteTextView
             android:id="@+id/inputCategory"
             android:layout_width="match_parent"
@@ -44,29 +70,40 @@
             android:inputType="none"
             android:text="Coffee"
             android:completionThreshold="1"/>
-        <!-- 'text' here is just a default, we will set adapter in Java -->
     </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- Points Cost -->
+    <!-- 4. Points Cost Input -->
     <com.google.android.material.textfield.TextInputLayout
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Points Cost"
-        android:layout_marginBottom="24dp">
+        android:hint="Cost"
+        app:suffixText="pts"
+        app:boxCornerRadiusTopStart="16dp"
+        app:boxCornerRadiusTopEnd="16dp"
+        app:boxCornerRadiusBottomStart="16dp"
+        app:boxCornerRadiusBottomEnd="16dp"
+        android:layout_marginBottom="32dp">
+
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/inputPoints"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="number"/>
+            android:inputType="number"
+            android:imeOptions="actionDone"/>
     </com.google.android.material.textfield.TextInputLayout>
 
+    <!-- 5. Save Button (High Contrast Monochrome) -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnSaveReward"
         android:layout_width="match_parent"
-        android:layout_height="60dp"
+        android:layout_height="56dp"
         android:text="Save Item"
-        app:cornerRadius="12dp"
-        android:backgroundTint="?attr/colorPrimary"/>
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="?android:attr/colorBackground"
+        app:cornerRadius="16dp"
+        app:elevation="4dp"
+        app:backgroundTint="?android:attr/textColorPrimary"/>
 
 </LinearLayout>

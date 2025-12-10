@@ -69,7 +69,7 @@ public class DashboardFragment extends Fragment {
     private TextView tvNewClientsValue;
     private TextView tvPointsValue;
     private TextView tvGiftsValue;
-    private CardView cardAlert, allScansCard, btnRedemptions, createCashierCard,btnActionClients;
+    private CardView cardAlert, allScansCard, btnRedemptions, createCashierCard,btnActionClients, giftMenu;
     private TextView tvAlertMessage;
     private ImageView btnLogout;
 
@@ -129,6 +129,7 @@ public class DashboardFragment extends Fragment {
         // Metric Cards
         tvRevenueValue = v.findViewById(R.id.tvRevenueValue);
         tvRevenueDelta = v.findViewById(R.id.tvRevenueDelta);
+        giftMenu = v.findViewById(R.id.btnActionAddGift);
         tvRewardCostValue = v.findViewById(R.id.tvRewardCostValue);
         tvVisitsValue = v.findViewById(R.id.tvVisitsValue);
         tvNewClientsValue = v.findViewById(R.id.tvNewClientsValue);
@@ -174,6 +175,16 @@ public class DashboardFragment extends Fragment {
                     Toast.makeText(getContext(), "Exporting CSV...", Toast.LENGTH_SHORT).show()
             );
         }
+
+        giftMenu.setOnClickListener(view -> {
+            Fragment newFragment = new RewardsAdminFragment();
+            requireActivity()
+                    .getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, newFragment)
+                    .addToBackStack(null)
+                    .commit();
+        });
 
         btnRedemptions.setOnClickListener(view -> {
             Fragment newFragment = new RewadLogsFragment();
