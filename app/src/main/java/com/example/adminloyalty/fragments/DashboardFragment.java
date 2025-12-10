@@ -69,7 +69,7 @@ public class DashboardFragment extends Fragment {
     private TextView tvNewClientsValue;
     private TextView tvPointsValue;
     private TextView tvGiftsValue;
-    private CardView cardAlert, allScansCard, btnRedemptions, createCashierCard;
+    private CardView cardAlert, allScansCard, btnRedemptions, createCashierCard,btnActionClients;
     private TextView tvAlertMessage;
     private ImageView btnLogout;
 
@@ -137,6 +137,7 @@ public class DashboardFragment extends Fragment {
         allScansCard = v.findViewById(R.id.btnActionScans);
         btnRedemptions = v.findViewById(R.id.btnActionRedemptions);
         createCashierCard = v.findViewById(R.id.btnActionClients);
+        btnActionClients = v.findViewById(R.id.btnActionView);
         btnLogout = v.findViewById(R.id.btnLogout);
         btnLogout.setOnClickListener(view -> performLogout());
 
@@ -183,6 +184,16 @@ public class DashboardFragment extends Fragment {
                     .addToBackStack(null)
                     .commit();
         });
+
+        btnActionClients.setOnClickListener(view -> {
+                    Fragment newFragment = new ClientsSummaryFragment();
+                    requireActivity()
+                            .getSupportFragmentManager()
+                            .beginTransaction()
+                            .replace(R.id.fragment_container, newFragment)
+                            .addToBackStack(null)
+                            .commit();
+                });
 
         allScansCard.setOnClickListener(view -> {
             Fragment newFragment = new ScanLogsFragment();

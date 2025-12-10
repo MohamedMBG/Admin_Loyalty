@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="8dp"
+    android:layout_marginHorizontal="8dp"
+    app:cardBackgroundColor="?attr/colorSurface"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp"
+    app:strokeWidth="0dp"
+    app:cardUseCompatPadding="true">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <!-- 1. Color Indicator Strip (Visual ID for Earn/Redeem) -->
+        <!-- Admin can scan this edge color instantly -->
+        <View
+            android:id="@+id/viewStatusIndicator"
+            android:layout_width="6dp"
+            android:layout_height="0dp"
+            android:background="#10B981"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:padding="16dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/viewStatusIndicator"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <!-- 2. Icon Container -->
+            <FrameLayout
+                android:id="@+id/iconContainer"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="@drawable/bg_circle"
+                android:backgroundTint="?android:attr/colorBackground"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <ImageView
+                    android:id="@+id/imgHistoryIcon"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_star"
+                    app:tint="?attr/colorPrimary"
+                    tools:ignore="ContentDescription" />
+            </FrameLayout>
+
+            <!-- 3. Title (Primary Info) -->
+            <TextView
+                android:id="@+id/tvHistoryTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="8dp"
+                android:text="Earned Points"
+                android:textAppearance="?attr/textAppearanceSubtitle1"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toStartOf="@+id/tvHistoryDate"
+                app:layout_constraintStart_toEndOf="@+id/iconContainer"
+                app:layout_constraintTop_toTopOf="@+id/iconContainer" />
+
+            <!-- 4. Date (Top Right - Meta Info) -->
+            <TextView
+                android:id="@+id/tvHistoryDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="12 Oct, 14:30"
+                android:textAppearance="?attr/textAppearanceCaption"
+                android:textColor="?android:attr/textColorTertiary"
+                app:layout_constraintBaseline_toBaselineOf="@+id/tvHistoryTitle"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <!-- 5. NEW: Redeemed Item Name (Visible only for gifts) -->
+            <TextView
+                android:id="@+id/tvRedeemedItem"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:layout_marginEnd="12dp"
+                android:text="Caramel Macchiato"
+                android:textAppearance="?attr/textAppearanceBody2"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textStyle="bold"
+                android:visibility="gone"
+                tools:visibility="gone"
+                app:layout_constraintEnd_toStartOf="@+id/tvHistoryPoints"
+                app:layout_constraintStart_toStartOf="@+id/tvHistoryTitle"
+                app:layout_constraintTop_toBottomOf="@+id/tvHistoryTitle"  />
+
+            <!-- 6. Subtitle (Cashier/Item Details) -->
+            <TextView
+                android:id="@+id/tvHistorySubtitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:layout_marginEnd="16dp"
+                android:text="Processed by: Sarah"
+                android:textAppearance="?attr/textAppearanceCaption"
+                android:textColor="?android:attr/textColorSecondary"
+                app:layout_constraintEnd_toStartOf="@+id/tvHistoryPoints"
+                app:layout_constraintStart_toStartOf="@+id/tvHistoryTitle"
+                app:layout_constraintTop_toBottomOf="@+id/tvRedeemedItem" />
+
+            <!-- 7. Points Value (Bottom Right - Financials) -->
+            <TextView
+                android:id="@+id/tvHistoryPoints"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="+50"
+                android:textAppearance="?attr/textAppearanceHeadline6"
+                android:textStyle="bold"
+                android:textColor="#10B981"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tvHistoryDate" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</com.google.android.material.card.MaterialCardView>

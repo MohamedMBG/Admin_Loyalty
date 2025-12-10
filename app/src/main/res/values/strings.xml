@@ -14,4 +14,5 @@
     <string name="no_members_hint">Try adjusting your search or filter criteria.</string>
     <string name="notifications">Notifications</string>
     <string name="content_description">Content description</string>
+    <string name="staff">Staff</string>
 </resources>
