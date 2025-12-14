@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Active State: Faded Green -->
+    <item android:color="#4D10B981" android:state_checked="true" /> <!-- ~30% Alpha Green -->
+
+    <!-- Inactive State: Faded Gray/Surface Variant -->
+    <item android:color="?attr/colorOnSurface" android:alpha="0.12" />
+</selector>

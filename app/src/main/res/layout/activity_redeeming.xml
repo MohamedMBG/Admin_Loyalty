@@ -7,8 +7,8 @@
     android:layout_height="match_parent"
     android:background="?android:attr/colorBackground">
 
-    <!-- 1. MAIN CONTENT (Header is now inside ScrollView) -->
-    <ScrollView
+    <!-- 1. SCROLLABLE CONTENT -->
+    <androidx.core.widget.NestedScrollView
         android:id="@+id/scrollView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -16,107 +16,116 @@
         android:fillViewport="true"
         android:paddingBottom="100dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.0">
+        app:layout_constraintTop_toTopOf="parent">
 
-        <!-- Inner Container -->
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
-            <!-- HEADER BACKGROUND (Scrolls with content) -->
-            <View
-                android:id="@+id/viewHeaderBg"
+            <!-- HEADER SECTION -->
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
-                android:layout_height="180dp"
-                android:background="@drawable/bg_header_gradient"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:layout_height="wrap_content">
 
-            <!-- SCREEN TITLE -->
-            <TextView
-                android:id="@+id/tvScreenTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="24dp"
-                android:layout_marginTop="30dp"
-                android:text="Redeem Points"
-                android:textColor="#FFFFFF"
-                android:textSize="26sp"
-                android:textStyle="bold"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                <!-- Gradient Background -->
+                <View
+                    android:id="@+id/viewHeaderBg"
+                    android:layout_width="match_parent"
+                    android:layout_height="200dp"
+                    android:background="@drawable/bg_header_gradient"
+                    app:layout_constraintTop_toTopOf="parent" />
 
-            <TextView
-                android:id="@+id/tvScreenSubtitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Select rewards for customer"
-                android:textColor="#E0E7FF"
-                android:textSize="15sp"
-                app:layout_constraintStart_toStartOf="@id/tvScreenTitle"
-                app:layout_constraintTop_toBottomOf="@id/tvScreenTitle" />
+                <!-- Title & Subtitle -->
+                <TextView
+                    android:id="@+id/tvScreenTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="24dp"
+                    android:layout_marginTop="48dp"
+                    android:text="Redeem Points"
+                    android:textColor="#FFFFFF"
+                    android:textSize="28sp"
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
-            <!-- CONTENT CONTAINER -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="10dp"
-                app:layout_constraintTop_toBottomOf="@id/tvScreenSubtitle">
+                <TextView
+                    android:id="@+id/tvScreenSubtitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Process rewards for customers"
+                    android:textColor="#CCFFFFFF"
+                    android:textSize="16sp"
+                    app:layout_constraintStart_toStartOf="@id/tvScreenTitle"
+                    app:layout_constraintTop_toBottomOf="@id/tvScreenTitle" />
 
-                <!-- Search Bar -->
+                <!-- Search Bar (Floating Overlap) -->
                 <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/searchContainer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:layout_marginBottom="20dp"
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginTop="24dp"
                     app:cardBackgroundColor="?attr/colorSurface"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="6dp">
+                    app:cardCornerRadius="24dp"
+                    app:cardElevation="8dp"
+                    app:strokeWidth="0dp"
+                    app:layout_constraintTop_toBottomOf="@+id/tvScreenSubtitle">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingHorizontal="12dp"
-                        android:paddingVertical="6dp">
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="4dp">
 
                         <ImageView
-                            android:layout_width="48dp"
-                            android:layout_height="48dp"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
                             android:contentDescription="Search"
-                            android:padding="12dp"
                             android:src="@android:drawable/ic_menu_search"
-                            app:tint="?android:attr/textColorSecondary" />
+                            app:tint="?attr/colorPrimary" />
 
                         <EditText
                             android:id="@+id/searchClient"
-                            android:layout_width="0dp"
-                            android:layout_height="48dp"
-                            android:layout_weight="1"
+                            android:layout_width="match_parent"
+                            android:layout_height="50dp"
                             android:background="@null"
-                            android:hint="Scan ID or search name..."
+                            android:hint="Scan ID, Phone, or Name..."
+                            android:imeOptions="actionSearch"
                             android:inputType="text"
-                            android:paddingEnd="16dp"
+                            android:maxLines="1"
+                            android:paddingStart="12dp"
                             android:textColor="?android:attr/textColorPrimary"
                             android:textColorHint="?android:attr/textColorSecondary"
                             android:textSize="16sp" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
-                <!-- CUSTOMER PROFILE & OFFERS -->
+            <!-- CONTENT BODY -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="8dp">
+
+                <!-- 2. CUSTOMER PROFILE CARD (Minimalist & Clean) -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/clientCard"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:layout_marginBottom="10dp"
+                    android:layout_marginBottom="24dp"
                     android:visibility="gone"
+                    tools:visibility="visible"
                     app:cardBackgroundColor="?attr/colorSurface"
                     app:cardCornerRadius="24dp"
-                    app:cardElevation="4dp"
-                    app:strokeWidth="0dp">
+                    app:cardElevation="2dp"
+                    app:strokeColor="?attr/colorPrimaryContainer"
+                    app:strokeWidth="1dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -124,16 +133,34 @@
                         android:orientation="vertical"
                         android:padding="20dp">
 
-                        <!-- Profile Header -->
+                        <!-- Profile Header Row -->
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:gravity="center_vertical"
                             android:orientation="horizontal">
 
+                            <!-- Modern Avatar (No Image) -->
+                            <com.google.android.material.card.MaterialCardView
+                                android:layout_width="60dp"
+                                android:layout_height="60dp"
+                                app:cardBackgroundColor="?attr/colorPrimaryContainer"
+                                app:cardCornerRadius="30dp"
+                                app:cardElevation="0dp"
+                                app:strokeWidth="0dp">
+                                <ImageView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:padding="14dp"
+                                    android:src="@drawable/ic_person"
+                                    app:tint="?attr/colorOnPrimaryContainer" />
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <!-- Name & ID -->
                             <LinearLayout
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
+                                android:layout_marginStart="16dp"
                                 android:layout_weight="1"
                                 android:orientation="vertical">
 
@@ -141,22 +168,22 @@
                                     android:id="@+id/clientName"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="John Doe"
+                                    android:text="Client Name"
+                                    android:textAppearance="?attr/textAppearanceHeadline6"
                                     android:textColor="?android:attr/textColorPrimary"
-                                    android:textSize="20sp"
                                     android:textStyle="bold" />
 
                                 <TextView
                                     android:id="@+id/clientId"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:alpha="0.8"
-                                    android:text="ID: C12345 • Gold Tier"
+                                    android:layout_marginTop="2dp"
+                                    android:text="ID: --"
                                     android:textColor="?android:attr/textColorSecondary"
                                     android:textSize="13sp" />
                             </LinearLayout>
 
-                            <!-- Big Points Display -->
+                            <!-- Points Badge -->
                             <LinearLayout
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
@@ -166,96 +193,83 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:alpha="0.8"
-                                    android:text="BALANCE"
+                                    android:text="AVAILABLE"
                                     android:textColor="?android:attr/textColorSecondary"
                                     android:textSize="10sp"
-                                    android:textStyle="bold" />
+                                    android:textStyle="bold"
+                                    android:letterSpacing="0.1"/>
 
                                 <TextView
                                     android:id="@+id/clientPoints"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="2,150"
-                                    android:textColor="#4F46E5"
-                                    android:textSize="24sp"
+                                    android:text="0"
+                                    android:textColor="#F59E0B"
+                                    android:textSize="26sp"
                                     android:textStyle="bold" />
                             </LinearLayout>
                         </LinearLayout>
 
-                        <!-- Offers Scroller -->
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="1dp"
-                            android:layout_marginTop="16dp"
-                            android:layout_marginBottom="12dp"
-                            android:background="?android:attr/listDivider" />
-
+                        <!-- PROMO CONTAINER (Dynamic Offers) -->
                         <LinearLayout
+                            android:id="@+id/layoutPromoContainer"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
+                            android:orientation="vertical"
+                            android:layout_marginTop="16dp"
+                            android:visibility="gone"
+                            tools:visibility="visible"
+                            android:background="@drawable/offer_badge_bg"
+                            android:backgroundTint="?attr/colorSurfaceVariant"
+                            android:padding="16dp">
 
+                            <!-- Header -->
                             <TextView
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:letterSpacing="0.05"
-                                android:text="ACTIVE PERKS"
-                                android:textColor="?android:attr/textColorSecondary"
-                                android:textSize="11sp"
-                                android:textStyle="bold" />
-
-                            <!-- Offer Badge 1 -->
-                            <LinearLayout
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:background="@drawable/offer_badge_bg"
-                                android:backgroundTint="#F3F4F6"
-                                android:gravity="center_vertical|end"
-                                android:orientation="horizontal"
-                                android:paddingHorizontal="10dp"
-                                android:paddingVertical="6dp">
+                                android:text="🎉 ELIGIBLE OFFER:"
+                                android:textSize="12sp"
+                                android:textStyle="bold"
+                                android:textColor="#10B981"
+                                android:letterSpacing="0.05"
+                                android:layout_marginBottom="6dp"/>
 
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginEnd="6dp"
-                                    android:text="🎁" />
+                            <!-- Preview Item -->
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="• Free Cookie (Student)"
+                                android:textColor="?android:attr/textColorPrimary"
+                                android:textSize="14sp"
+                                tools:visibility="visible"
+                                android:visibility="gone"/>
 
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="Free Birthday Cake"
-                                    android:textColor="?android:attr/textColorPrimary"
-                                    android:textSize="12sp"
-                                    android:textStyle="bold" />
-                            </LinearLayout>
                         </LinearLayout>
+
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- CATALOG LABEL -->
+                <!-- MENU TITLE -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginBottom="12dp"
-                    android:layout_marginTop="10dp"
-                    android:text="Menu Categories"
+                    android:text="Rewards Catalog"
+                    android:textAppearance="?attr/textAppearanceHeadline6"
                     android:textColor="?android:attr/textColorPrimary"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    android:layout_marginBottom="16dp"
+                    android:layout_marginStart="4dp"/>
 
-                <!-- === CATEGORY 1: HOT COFFEE === -->
+                <!-- === CATEGORY 1: COFFEE === -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
+                    android:layout_marginBottom="16dp"
                     app:cardBackgroundColor="?attr/colorSurface"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="2dp">
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="1dp"
+                    app:strokeColor="?attr/colorOutline"
+                    app:strokeWidth="0.5dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -272,19 +286,20 @@
                             android:orientation="horizontal"
                             android:padding="16dp">
 
-                            <androidx.cardview.widget.CardView
+                            <!-- Category Icon (Restored) -->
+                            <com.google.android.material.card.MaterialCardView
                                 android:layout_width="56dp"
                                 android:layout_height="56dp"
-                                app:cardBackgroundColor="#FFF7ED"
                                 app:cardCornerRadius="20dp"
-                                app:cardElevation="0dp">
+                                app:cardElevation="0dp"
+                                app:cardBackgroundColor="#FFF7ED">
                                 <ImageView
                                     android:layout_width="match_parent"
                                     android:layout_height="match_parent"
                                     android:padding="4dp"
                                     android:scaleType="centerCrop"
-                                    android:src="@drawable/hot_drinks" />
-                            </androidx.cardview.widget.CardView>
+                                    android:src="@drawable/hot_drinks"/>
+                            </com.google.android.material.card.MaterialCardView>
 
                             <LinearLayout
                                 android:layout_width="0dp"
@@ -305,143 +320,45 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="2dp"
-                                    android:text="6 items"
+                                    android:text="View Items"
                                     android:textColor="?android:attr/textColorSecondary"
                                     android:textSize="13sp" />
                             </LinearLayout>
+
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:src="@drawable/ic_chevron_right"
+                                app:tint="?android:attr/textColorSecondary"/>
                         </LinearLayout>
 
-                        <!-- Items List (Inlined for Simplicity) -->
+                        <!-- Items Container -->
                         <LinearLayout
                             android:id="@+id/itemsHotCoffee"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:background="?attr/selectableItemBackground"
                             android:orientation="vertical"
-                            android:visibility="gone">
-
-                            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?android:attr/listDivider"/>
-
-                            <!-- Espresso -->
-                            <LinearLayout
-                                android:id="@+id/btnEspresso"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:background="?attr/selectableItemBackground"
-                                android:clickable="true"
-                                android:focusable="true"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal"
-                                android:paddingHorizontal="20dp"
-                                android:paddingVertical="14dp">
-                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Espresso" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
-                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="150 pts" android:textColor="#D97706" android:textStyle="bold" />
-                            </LinearLayout>
-                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
-
-                            <!-- Cappuccino -->
-                            <LinearLayout
-                                android:id="@+id/btnCappuccino"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:background="?attr/selectableItemBackground"
-                                android:clickable="true"
-                                android:focusable="true"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal"
-                                android:paddingHorizontal="20dp"
-                                android:paddingVertical="14dp">
-                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Cappuccino" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
-                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="200 pts" android:textColor="#D97706" android:textStyle="bold" />
-                            </LinearLayout>
-                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
-
-                            <!-- Latte -->
-                            <LinearLayout
-                                android:id="@+id/btnLatte"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:background="?attr/selectableItemBackground"
-                                android:clickable="true"
-                                android:focusable="true"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal"
-                                android:paddingHorizontal="20dp"
-                                android:paddingVertical="14dp">
-                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Latte" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
-                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="200 pts" android:textColor="#D97706" android:textStyle="bold" />
-                            </LinearLayout>
-                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
-
-                            <!-- Americano -->
-                            <LinearLayout
-                                android:id="@+id/btnAmericano"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:background="?attr/selectableItemBackground"
-                                android:clickable="true"
-                                android:focusable="true"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal"
-                                android:paddingHorizontal="20dp"
-                                android:paddingVertical="14dp">
-                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Americano" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
-                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="180 pts" android:textColor="#D97706" android:textStyle="bold" />
-                            </LinearLayout>
-                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
-
-                            <!-- Mocha -->
-                            <LinearLayout
-                                android:id="@+id/btnMocha"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:background="?attr/selectableItemBackground"
-                                android:clickable="true"
-                                android:focusable="true"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal"
-                                android:paddingHorizontal="20dp"
-                                android:paddingVertical="14dp">
-                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Mocha" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
-                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="220 pts" android:textColor="#D97706" android:textStyle="bold" />
-                            </LinearLayout>
-                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
-
-                            <!-- Macchiato -->
-                            <LinearLayout
-                                android:id="@+id/btnMacchiato"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:background="?attr/selectableItemBackground"
-                                android:clickable="true"
-                                android:focusable="true"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal"
-                                android:paddingHorizontal="20dp"
-                                android:paddingVertical="14dp">
-                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Macchiato" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
-                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="190 pts" android:textColor="#D97706" android:textStyle="bold" />
-                            </LinearLayout>
-
-                        </LinearLayout>
+                            android:visibility="gone"
+                            android:paddingBottom="8dp"/>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- === CATEGORY 2: ICED COFFEE === -->
+                <!-- === CATEGORY 2: COLD DRINKS === -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
+                    android:layout_marginBottom="16dp"
                     app:cardBackgroundColor="?attr/colorSurface"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="2dp">
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="1dp"
+                    app:strokeColor="?attr/colorOutline"
+                    app:strokeWidth="0.5dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical">
 
-                        <!-- Header -->
                         <LinearLayout
                             android:id="@+id/headerIcedCoffee"
                             android:layout_width="match_parent"
@@ -451,18 +368,18 @@
                             android:orientation="horizontal"
                             android:padding="16dp">
 
-                            <androidx.cardview.widget.CardView
+                            <com.google.android.material.card.MaterialCardView
                                 android:layout_width="56dp"
                                 android:layout_height="56dp"
-                                app:cardBackgroundColor="#F0F9FF"
                                 app:cardCornerRadius="20dp"
-                                app:cardElevation="0dp">
+                                app:cardElevation="0dp"
+                                app:cardBackgroundColor="#F0F9FF">
                                 <ImageView
                                     android:layout_width="match_parent"
                                     android:layout_height="match_parent"
                                     android:scaleType="centerCrop"
-                                    android:src="@drawable/iced_coffee" />
-                            </androidx.cardview.widget.CardView>
+                                    android:src="@drawable/iced_coffee"/>
+                            </com.google.android.material.card.MaterialCardView>
 
                             <LinearLayout
                                 android:layout_width="0dp"
@@ -474,7 +391,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Iced Coffee"
+                                    android:text="Cold Drinks"
                                     android:textColor="?android:attr/textColorPrimary"
                                     android:textSize="16sp"
                                     android:textStyle="bold" />
@@ -483,59 +400,25 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="2dp"
-                                    android:text="6 items"
+                                    android:text="View Items"
                                     android:textColor="?android:attr/textColorSecondary"
                                     android:textSize="13sp" />
                             </LinearLayout>
+
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:src="@drawable/ic_chevron_right"
+                                app:tint="?android:attr/textColorSecondary"/>
                         </LinearLayout>
 
-                        <!-- Items List -->
                         <LinearLayout
                             android:id="@+id/itemsIcedCoffee"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:background="?attr/selectableItemBackground"
                             android:orientation="vertical"
-                            android:visibility="gone">
-
-                            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?android:attr/listDivider"/>
-
-                            <LinearLayout android:id="@+id/btnIcedAmericano" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
-                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Iced Americano" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
-                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="180 pts" android:textColor="#D97706" android:textStyle="bold" />
-                            </LinearLayout>
-                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
-
-                            <LinearLayout android:id="@+id/btnIcedLatte" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
-                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Iced Latte" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
-                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="220 pts" android:textColor="#D97706" android:textStyle="bold" />
-                            </LinearLayout>
-                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
-
-                            <LinearLayout android:id="@+id/btnIcedMocha" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
-                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Iced Mocha" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
-                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="240 pts" android:textColor="#D97706" android:textStyle="bold" />
-                            </LinearLayout>
-                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
-
-                            <LinearLayout android:id="@+id/btnColdBrew" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
-                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Cold Brew" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
-                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="250 pts" android:textColor="#D97706" android:textStyle="bold" />
-                            </LinearLayout>
-                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
-
-                            <LinearLayout android:id="@+id/btnIcedCaramelMacchiato" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
-                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Iced Caramel Macchiato" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
-                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="260 pts" android:textColor="#D97706" android:textStyle="bold" />
-                            </LinearLayout>
-                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
-
-                            <LinearLayout android:id="@+id/btnIcedShakenEspresso" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
-                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Iced Shaken Espresso" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
-                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="230 pts" android:textColor="#D97706" android:textStyle="bold" />
-                            </LinearLayout>
-
-                        </LinearLayout>
+                            android:visibility="gone"
+                            android:paddingBottom="8dp"/>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
@@ -543,17 +426,18 @@
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
+                    android:layout_marginBottom="16dp"
                     app:cardBackgroundColor="?attr/colorSurface"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="2dp">
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="1dp"
+                    app:strokeColor="?attr/colorOutline"
+                    app:strokeWidth="0.5dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical">
 
-                        <!-- Header -->
                         <LinearLayout
                             android:id="@+id/headerTea"
                             android:layout_width="match_parent"
@@ -563,18 +447,18 @@
                             android:orientation="horizontal"
                             android:padding="16dp">
 
-                            <androidx.cardview.widget.CardView
+                            <com.google.android.material.card.MaterialCardView
                                 android:layout_width="56dp"
                                 android:layout_height="56dp"
-                                app:cardBackgroundColor="#ECFDF5"
                                 app:cardCornerRadius="20dp"
-                                app:cardElevation="0dp">
+                                app:cardElevation="0dp"
+                                app:cardBackgroundColor="#ECFDF5">
                                 <ImageView
                                     android:layout_width="match_parent"
                                     android:layout_height="match_parent"
                                     android:scaleType="centerCrop"
-                                    android:src="@drawable/tea_icon" />
-                            </androidx.cardview.widget.CardView>
+                                    android:src="@drawable/tea_icon"/>
+                            </com.google.android.material.card.MaterialCardView>
 
                             <LinearLayout
                                 android:layout_width="0dp"
@@ -595,59 +479,25 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="2dp"
-                                    android:text="6 items"
+                                    android:text="View Items"
                                     android:textColor="?android:attr/textColorSecondary"
                                     android:textSize="13sp" />
                             </LinearLayout>
+
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:src="@drawable/ic_chevron_right"
+                                app:tint="?android:attr/textColorSecondary"/>
                         </LinearLayout>
 
-                        <!-- Items List -->
                         <LinearLayout
                             android:id="@+id/itemsTea"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:background="?attr/selectableItemBackground"
                             android:orientation="vertical"
-                            android:visibility="gone">
-
-                            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?android:attr/listDivider"/>
-
-                            <LinearLayout android:id="@+id/btnGreenTea" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
-                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Green Tea" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
-                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="150 pts" android:textColor="#D97706" android:textStyle="bold" />
-                            </LinearLayout>
-                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
-
-                            <LinearLayout android:id="@+id/btnBlackTea" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
-                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Black Tea" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
-                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="150 pts" android:textColor="#D97706" android:textStyle="bold" />
-                            </LinearLayout>
-                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
-
-                            <LinearLayout android:id="@+id/btnChamomile" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
-                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Chamomile Tea" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
-                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="160 pts" android:textColor="#D97706" android:textStyle="bold" />
-                            </LinearLayout>
-                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
-
-                            <LinearLayout android:id="@+id/btnMatchaLatte" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
-                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Matcha Latte" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
-                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="250 pts" android:textColor="#D97706" android:textStyle="bold" />
-                            </LinearLayout>
-                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
-
-                            <LinearLayout android:id="@+id/btnChaiLatte" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
-                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Chai Latte" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
-                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="240 pts" android:textColor="#D97706" android:textStyle="bold" />
-                            </LinearLayout>
-                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
-
-                            <LinearLayout android:id="@+id/btnEarlGrey" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
-                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Earl Grey" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
-                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="150 pts" android:textColor="#D97706" android:textStyle="bold" />
-                            </LinearLayout>
-
-                        </LinearLayout>
+                            android:visibility="gone"
+                            android:paddingBottom="8dp"/>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
@@ -655,17 +505,18 @@
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
+                    android:layout_marginBottom="16dp"
                     app:cardBackgroundColor="?attr/colorSurface"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="2dp">
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="1dp"
+                    app:strokeColor="?attr/colorOutline"
+                    app:strokeWidth="0.5dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical">
 
-                        <!-- Header -->
                         <LinearLayout
                             android:id="@+id/headerFrappuccino"
                             android:layout_width="match_parent"
@@ -675,18 +526,18 @@
                             android:orientation="horizontal"
                             android:padding="16dp">
 
-                            <androidx.cardview.widget.CardView
+                            <com.google.android.material.card.MaterialCardView
                                 android:layout_width="56dp"
                                 android:layout_height="56dp"
-                                app:cardBackgroundColor="#FAF5FF"
                                 app:cardCornerRadius="20dp"
-                                app:cardElevation="0dp">
+                                app:cardElevation="0dp"
+                                app:cardBackgroundColor="#FAF5FF">
                                 <ImageView
                                     android:layout_width="match_parent"
                                     android:layout_height="match_parent"
                                     android:scaleType="centerCrop"
-                                    android:src="@drawable/frappocino" />
-                            </androidx.cardview.widget.CardView>
+                                    android:src="@drawable/frappocino"/>
+                            </com.google.android.material.card.MaterialCardView>
 
                             <LinearLayout
                                 android:layout_width="0dp"
@@ -707,59 +558,25 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="2dp"
-                                    android:text="6 items"
+                                    android:text="View Items"
                                     android:textColor="?android:attr/textColorSecondary"
                                     android:textSize="13sp" />
                             </LinearLayout>
+
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:src="@drawable/ic_chevron_right"
+                                app:tint="?android:attr/textColorSecondary"/>
                         </LinearLayout>
 
-                        <!-- Items List -->
                         <LinearLayout
                             android:id="@+id/itemsFrappuccino"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:background="?attr/selectableItemBackground"
                             android:orientation="vertical"
-                            android:visibility="gone">
-
-                            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?android:attr/listDivider"/>
-
-                            <LinearLayout android:id="@+id/btnCoffeeFrappuccino" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
-                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Coffee Frappuccino" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
-                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="280 pts" android:textColor="#D97706" android:textStyle="bold" />
-                            </LinearLayout>
-                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
-
-                            <LinearLayout android:id="@+id/btnCaramelFrappuccino" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
-                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Caramel Frappuccino" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
-                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="300 pts" android:textColor="#D97706" android:textStyle="bold" />
-                            </LinearLayout>
-                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
-
-                            <LinearLayout android:id="@+id/btnMochaFrappuccino" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
-                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Mocha Frappuccino" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
-                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="300 pts" android:textColor="#D97706" android:textStyle="bold" />
-                            </LinearLayout>
-                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
-
-                            <LinearLayout android:id="@+id/btnVanillaFrappuccino" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
-                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Vanilla Frappuccino" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
-                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="280 pts" android:textColor="#D97706" android:textStyle="bold" />
-                            </LinearLayout>
-                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
-
-                            <LinearLayout android:id="@+id/btnJavaChipFrappuccino" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
-                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Java Chip Frappuccino" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
-                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="320 pts" android:textColor="#D97706" android:textStyle="bold" />
-                            </LinearLayout>
-                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
-
-                            <LinearLayout android:id="@+id/btnStrawberryFrappuccino" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
-                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Strawberry Frappuccino" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
-                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="320 pts" android:textColor="#D97706" android:textStyle="bold" />
-                            </LinearLayout>
-
-                        </LinearLayout>
+                            android:visibility="gone"
+                            android:paddingBottom="8dp"/>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
@@ -767,17 +584,18 @@
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="120dp"
                     app:cardBackgroundColor="?attr/colorSurface"
-                    android:layout_marginBottom="100dp"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="2dp">
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="1dp"
+                    app:strokeColor="?attr/colorOutline"
+                    app:strokeWidth="0.5dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical">
 
-                        <!-- Header -->
                         <LinearLayout
                             android:id="@+id/headerPastries"
                             android:layout_width="match_parent"
@@ -787,19 +605,19 @@
                             android:orientation="horizontal"
                             android:padding="16dp">
 
-                            <androidx.cardview.widget.CardView
+                            <com.google.android.material.card.MaterialCardView
                                 android:layout_width="56dp"
                                 android:layout_height="56dp"
-                                app:cardBackgroundColor="#FDF2F8"
                                 app:cardCornerRadius="20dp"
-                                app:cardElevation="0dp">
+                                app:cardElevation="0dp"
+                                app:cardBackgroundColor="#FDF2F8">
                                 <TextView
                                     android:layout_width="match_parent"
                                     android:layout_height="match_parent"
                                     android:gravity="center"
                                     android:text="🥐"
                                     android:textSize="28sp" />
-                            </androidx.cardview.widget.CardView>
+                            </com.google.android.material.card.MaterialCardView>
 
                             <LinearLayout
                                 android:layout_width="0dp"
@@ -811,7 +629,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Pastries &amp; Snacks"
+                                    android:text="Pastries"
                                     android:textColor="?android:attr/textColorPrimary"
                                     android:textSize="16sp"
                                     android:textStyle="bold" />
@@ -820,67 +638,33 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="2dp"
-                                    android:text="6 items"
+                                    android:text="View Items"
                                     android:textColor="?android:attr/textColorSecondary"
                                     android:textSize="13sp" />
                             </LinearLayout>
+
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:src="@drawable/ic_chevron_right"
+                                app:tint="?android:attr/textColorSecondary"/>
                         </LinearLayout>
 
-                        <!-- Items List -->
                         <LinearLayout
                             android:id="@+id/itemsPastries"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:background="?attr/selectableItemBackground"
                             android:orientation="vertical"
-                            android:visibility="gone">
-
-                            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?android:attr/listDivider"/>
-
-                            <LinearLayout android:id="@+id/btnCroissant" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
-                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Butter Croissant" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
-                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="120 pts" android:textColor="#D97706" android:textStyle="bold" />
-                            </LinearLayout>
-                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
-
-                            <LinearLayout android:id="@+id/btnChocolateCroissant" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
-                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Choco Croissant" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
-                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="140 pts" android:textColor="#D97706" android:textStyle="bold" />
-                            </LinearLayout>
-                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
-
-                            <LinearLayout android:id="@+id/btnMuffin" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
-                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Blueberry Muffin" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
-                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="150 pts" android:textColor="#D97706" android:textStyle="bold" />
-                            </LinearLayout>
-                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
-
-                            <LinearLayout android:id="@+id/btnCakeSlice" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
-                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Cake Slice" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
-                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="180 pts" android:textColor="#D97706" android:textStyle="bold" />
-                            </LinearLayout>
-                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
-
-                            <LinearLayout android:id="@+id/btnCookie" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
-                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Choco Chip Cookie" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
-                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="100 pts" android:textColor="#D97706" android:textStyle="bold" />
-                            </LinearLayout>
-                            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginHorizontal="20dp" android:background="?android:attr/listDivider"/>
-
-                            <LinearLayout android:id="@+id/btnBrownie" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="20dp" android:paddingVertical="14dp">
-                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Fudge Brownie" android:textColor="?android:attr/textColorPrimary" android:textSize="15sp" android:textStyle="bold" />
-                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="160 pts" android:textColor="#D97706" android:textStyle="bold" />
-                            </LinearLayout>
-
-                        </LinearLayout>
+                            android:visibility="gone"
+                            android:paddingBottom="8dp"/>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
             </LinearLayout>
-        </androidx.constraintlayout.widget.ConstraintLayout>
-    </ScrollView>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
 
-    <!-- 4. BOTTOM BAR -->
+    <!-- 4. BOTTOM BAR (Fixed) -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/bottomBar"
         android:layout_width="match_parent"
@@ -888,7 +672,7 @@
         android:layout_margin="16dp"
         app:cardBackgroundColor="?attr/colorSurface"
         app:cardCornerRadius="20dp"
-        app:cardElevation="16dp"
+        app:cardElevation="12dp"
         app:layout_constraintBottom_toBottomOf="parent">
 
         <LinearLayout
@@ -896,7 +680,7 @@
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingHorizontal="24dp"
+            android:paddingHorizontal="20dp"
             android:paddingVertical="16dp">
 
             <LinearLayout
@@ -909,19 +693,18 @@
                     android:id="@+id/tvSelectedItem"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="No item selected"
+                    android:text="Select Item"
                     android:textColor="?android:attr/textColorPrimary"
                     android:textSize="16sp"
                     android:textStyle="bold"
-                    android:maxLines="1"
-                    android:ellipsize="end" />
+                    android:ellipsize="end"
+                    android:maxLines="1" />
 
                 <TextView
                     android:id="@+id/tvRequiredPoints"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="Tap an item to select"
+                    android:text="-- pts required"
                     android:textColor="?android:attr/textColorSecondary"
                     android:textSize="13sp" />
             </LinearLayout>
@@ -930,17 +713,14 @@
                 android:id="@+id/btnRedeem"
                 android:layout_width="wrap_content"
                 android:layout_height="52dp"
-                android:backgroundTint="#4340A0"
-                android:paddingHorizontal="28dp"
                 android:text="Redeem"
-                android:textColor="#FFFFFF"
-                android:textSize="15sp"
+                android:textColor="?attr/colorOnPrimary"
                 android:textStyle="bold"
                 app:cornerRadius="16dp"
-                app:elevation="4dp"
                 app:icon="@android:drawable/ic_menu_send"
                 app:iconGravity="textEnd"
-                app:iconTint="#FFFFFF" />
+                app:iconTint="?attr/colorOnPrimary"
+                android:backgroundTint="?attr/colorPrimary"/>
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
