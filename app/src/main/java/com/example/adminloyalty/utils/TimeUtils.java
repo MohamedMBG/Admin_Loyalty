@@ -1,6 +1,8 @@
 package com.example.adminloyalty.utils;
 
 import java.util.Calendar;
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 public class TimeUtils {
     /**
@@ -40,5 +42,30 @@ public class TimeUtils {
         } catch (NumberFormatException e) {
             return -1;
         }
+    }
+
+    /**
+     * Checks if the 'current' date is strictly between start and end.
+     * Useful for Promo duration checks.
+     */
+    public static boolean isDateWithinRange(Date current, Date start, Date end) {
+        if (current == null) return false;
+
+        // If start is null, assume it started infinite time ago.
+        // If end is null, assume it never ends.
+        boolean afterStart = (start == null) || !current.before(start);
+        boolean beforeEnd = (end == null) || !current.after(end);
+
+        return afterStart && beforeEnd;
+    }
+
+    /**
+     * Calculates the number of days between two dates.
+     * Useful for "Inactive for X days" logic.
+     */
+    public static long getDaysDifference(Date recent, Date old) {
+        if (recent == null || old == null) return 0;
+        long diffMs = recent.getTime() - old.getTime();
+        return TimeUnit.DAYS.convert(diffMs, TimeUnit.MILLISECONDS);
     }
 }
