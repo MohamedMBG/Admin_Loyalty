@@ -325,11 +325,6 @@
                                     android:textSize="13sp" />
                             </LinearLayout>
 
-                            <ImageView
-                                android:layout_width="24dp"
-                                android:layout_height="24dp"
-                                android:src="@drawable/ic_chevron_right"
-                                app:tint="?android:attr/textColorSecondary"/>
                         </LinearLayout>
 
                         <!-- Items Container -->
@@ -405,11 +400,6 @@
                                     android:textSize="13sp" />
                             </LinearLayout>
 
-                            <ImageView
-                                android:layout_width="24dp"
-                                android:layout_height="24dp"
-                                android:src="@drawable/ic_chevron_right"
-                                app:tint="?android:attr/textColorSecondary"/>
                         </LinearLayout>
 
                         <LinearLayout
@@ -484,11 +474,6 @@
                                     android:textSize="13sp" />
                             </LinearLayout>
 
-                            <ImageView
-                                android:layout_width="24dp"
-                                android:layout_height="24dp"
-                                android:src="@drawable/ic_chevron_right"
-                                app:tint="?android:attr/textColorSecondary"/>
                         </LinearLayout>
 
                         <LinearLayout
@@ -563,11 +548,6 @@
                                     android:textSize="13sp" />
                             </LinearLayout>
 
-                            <ImageView
-                                android:layout_width="24dp"
-                                android:layout_height="24dp"
-                                android:src="@drawable/ic_chevron_right"
-                                app:tint="?android:attr/textColorSecondary"/>
                         </LinearLayout>
 
                         <LinearLayout
@@ -643,11 +623,6 @@
                                     android:textSize="13sp" />
                             </LinearLayout>
 
-                            <ImageView
-                                android:layout_width="24dp"
-                                android:layout_height="24dp"
-                                android:src="@drawable/ic_chevron_right"
-                                app:tint="?android:attr/textColorSecondary"/>
                         </LinearLayout>
 
                         <LinearLayout

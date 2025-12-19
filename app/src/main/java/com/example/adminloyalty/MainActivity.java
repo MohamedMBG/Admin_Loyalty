@@ -9,7 +9,6 @@ import androidx.fragment.app.Fragment;
 
 import com.example.adminloyalty.fragments.DashboardFragment;
 import com.example.adminloyalty.fragments.InboxFragment;
-import com.example.adminloyalty.fragments.MembersManagementFragment;
 import com.google.android.material.navigation.NavigationView;
 
 public class MainActivity extends AppCompatActivity {
@@ -35,8 +34,6 @@ public class MainActivity extends AppCompatActivity {
 
             if (id == R.id.menu_dashboard) {
                 switchTo(new DashboardFragment(), id);
-            } else if (id == R.id.menu_members) {
-                switchTo(new MembersManagementFragment(), id);
             } else if (id == R.id.menu_inbox) {
                 switchTo(new InboxFragment(), id);
             } else if (id == R.id.menu_settings) {
