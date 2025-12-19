@@ -43,11 +43,19 @@ public class ScanLogsFragment extends Fragment {
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_scan_logs, container, false);
 
+        initializeViews(view);
+        setupActions();
+
+        loadScanLogs();
+
+        return view;
+    }
+
+    // here we link the UI elements with the logic code
+    private void initializeViews(View view) {
         recyclerViewLogs = view.findViewById(R.id.recyclerViewLogs);
         progressBar = view.findViewById(R.id.progressBar);
         tvLogCount = view.findViewById(R.id.tvLogCount);
@@ -55,35 +63,30 @@ public class ScanLogsFragment extends Fragment {
 
         db = FirebaseFirestore.getInstance();
 
-        recyclerViewLogs.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new ScanLogAdapter(scanLogList);
+        recyclerViewLogs.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerViewLogs.setAdapter(adapter);
-
-        btnBack.setOnClickListener(v -> {
-            if (getActivity() != null) {
-                getActivity().getOnBackPressedDispatcher().onBackPressed();
-            }
-        });
-
-        loadScanLogs();
-
-        return view;
     }
+
+    //actions method :
+    private void setupActions() {
+        btnBack.setOnClickListener(v -> requireActivity().onBackPressed());
+    }
+
+
+    // we should add the cashier name who made the redemption in the method named loadScanLogs
 
     private void loadScanLogs() {
         progressBar.setVisibility(View.VISIBLE);
-        tvLogCount.setText("Loading records...");
 
-        // 🔥 Read from earn_codes, only redeemed codes, newest first
         db.collection("earn_codes")
-                .whereEqualTo("status", "redeemed")
                 .orderBy("redeemedAt", Query.Direction.DESCENDING)
-                .limit(200)
                 .get()
                 .addOnCompleteListener(this::onLogsLoaded);
     }
 
     private void onLogsLoaded(@NonNull Task<QuerySnapshot> task) {
+
         progressBar.setVisibility(View.GONE);
 
         if (task.isSuccessful() && task.getResult() != null) {
