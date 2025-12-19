@@ -48,13 +48,11 @@ public class ScanLogsFragment extends Fragment {
 
         initializeViews(view);
         setupActions();
-
         loadScanLogs();
 
         return view;
     }
 
-    // here we link the UI elements with the logic code
     private void initializeViews(View view) {
         recyclerViewLogs = view.findViewById(R.id.recyclerViewLogs);
         progressBar = view.findViewById(R.id.progressBar);
@@ -68,25 +66,21 @@ public class ScanLogsFragment extends Fragment {
         recyclerViewLogs.setAdapter(adapter);
     }
 
-    //actions method :
     private void setupActions() {
         btnBack.setOnClickListener(v -> requireActivity().onBackPressed());
     }
-
-
-    // we should add the cashier name who made the redemption in the method named loadScanLogs
 
     private void loadScanLogs() {
         progressBar.setVisibility(View.VISIBLE);
 
         db.collection("earn_codes")
                 .orderBy("redeemedAt", Query.Direction.DESCENDING)
+                .limit(100) // Good practice to limit
                 .get()
                 .addOnCompleteListener(this::onLogsLoaded);
     }
 
     private void onLogsLoaded(@NonNull Task<QuerySnapshot> task) {
-
         progressBar.setVisibility(View.GONE);
 
         if (task.isSuccessful() && task.getResult() != null) {
@@ -96,6 +90,11 @@ public class ScanLogsFragment extends Fragment {
                 String id = doc.getId();
                 String orderNo = doc.getString("orderNo");
                 String redeemedByUid = doc.getString("redeemedByUid");
+
+                // FIX: Ensure we are getting the cashierName from the document
+                // If it's null in DB, fallback to "Unknown"
+                String cashierName = doc.getString("cashierName");
+                if (cashierName == null) cashierName = "Unknown Cashier";
 
                 Double amountDouble = doc.getDouble("amountMAD");
                 double amountMAD = amountDouble != null ? amountDouble : 0.0;
@@ -107,10 +106,15 @@ public class ScanLogsFragment extends Fragment {
                 Timestamp createdAt = doc.getTimestamp("createdAt");
                 String status = doc.getString("status");
 
+                // Initialize with "Loading..." or UID for client name
+                String clientPlaceholder = "Client ID: " + (redeemedByUid != null ? redeemedByUid.substring(0, Math.min(redeemedByUid.length(), 6)) : "Unknown");
+
                 ScanLog log = new ScanLog(
                         id,
                         orderNo,
                         redeemedByUid,
+                        clientPlaceholder, // Temp name
+                        cashierName,       // Actual cashier name
                         amountMAD,
                         points,
                         redeemedAt,
@@ -119,21 +123,46 @@ public class ScanLogsFragment extends Fragment {
                 );
 
                 scanLogList.add(log);
+
+                // Async fetch real client name
+                if (redeemedByUid != null) {
+                    fetchClientName(redeemedByUid, log);
+                }
             }
 
             adapter.notifyDataSetChanged();
-
-            int count = scanLogList.size();
-            if (count == 0) {
-                tvLogCount.setText("No redeemed scans yet");
-            } else {
-                tvLogCount.setText(
-                        String.format(Locale.getDefault(),
-                                "%d redeemed scans", count));
-            }
+            updateCountText();
 
         } else {
             tvLogCount.setText("Failed to load records");
+        }
+    }
+
+    private void fetchClientName(String uid, ScanLog log) {
+        db.collection("users").document(uid).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        String name = documentSnapshot.getString("fullName");
+                        if (name != null && !name.isEmpty()) {
+                            log.setClientName(name);
+                            // Notify adapter to update this specific item
+                            // finding index is inefficient in loop, but okay for small lists.
+                            // Better: notifyDataSetChanged() or use DiffUtil
+                            int index = scanLogList.indexOf(log);
+                            if (index != -1) {
+                                adapter.notifyItemChanged(index);
+                            }
+                        }
+                    }
+                });
+    }
+
+    private void updateCountText() {
+        int count = scanLogList.size();
+        if (count == 0) {
+            tvLogCount.setText("No redeemed scans yet");
+        } else {
+            tvLogCount.setText(String.format(Locale.getDefault(), "%d redeemed scans", count));
         }
     }
 }

@@ -47,7 +47,7 @@ public class ScanLogAdapter extends RecyclerView.Adapter<ScanLogAdapter.ScanLogV
 
         // For the moment we only have redeemedByUid, not full name
         if (log.getRedeemedByUid() != null) {
-            holder.tvUserName.setText("Client: " + log.getRedeemedByUid());
+            holder.tvUserName.setText("Client: " + log.getClientName());
         } else {
             holder.tvUserName.setText("Client: -");
         }
@@ -68,7 +68,7 @@ public class ScanLogAdapter extends RecyclerView.Adapter<ScanLogAdapter.ScanLogV
                 "%.2f MAD", log.getAmountMAD()));
 
         // Cashier (we don't have it yet)
-        holder.tvCashierName.setText("Cashier: -");
+        holder.tvCashierName.setText("Cashier: " + log.getCashierName());
 
         // Points
         holder.tvPoints.setText("+" + log.getPoints() + " pts");
