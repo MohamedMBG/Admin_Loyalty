@@ -48,6 +48,7 @@ public class ScanLogsFragment extends Fragment {
     private RecyclerView recyclerViewLogs;
     private ProgressBar progressBar;
     private TextView tvLogCount;
+    private TextView tvTotalEarning; // NEW
     private ImageView btnBack;
     private ChipGroup chipGroupFilters;
 
@@ -82,6 +83,7 @@ public class ScanLogsFragment extends Fragment {
         recyclerViewLogs = view.findViewById(R.id.recyclerViewLogs);
         progressBar = view.findViewById(R.id.progressBar);
         tvLogCount = view.findViewById(R.id.tvLogCount);
+        tvTotalEarning = view.findViewById(R.id.TotalEarning);
         btnBack = view.findViewById(R.id.btnBack);
         chipGroupFilters = view.findViewById(R.id.chipGroupFilters);
         db = FirebaseFirestore.getInstance();
@@ -94,13 +96,11 @@ public class ScanLogsFragment extends Fragment {
     }
 
     private void setupBack() {
-        // Better than calling requireActivity().onBackPressed() directly.
         requireActivity().getOnBackPressedDispatcher().addCallback(
                 getViewLifecycleOwner(),
                 new OnBackPressedCallback(true) {
                     @Override
                     public void handleOnBackPressed() {
-                        // let system handle back, or pop backstack
                         requireActivity().getSupportFragmentManager().popBackStack();
                     }
                 }
@@ -220,7 +220,7 @@ public class ScanLogsFragment extends Fragment {
         }
 
         adapter.notifyDataSetChanged();
-        updateCountText();
+        refreshHeader(); // NEW (count + total)
     }
 
     private long getLogTimeMs(@NonNull ScanLog log) {
@@ -259,12 +259,10 @@ public class ScanLogsFragment extends Fragment {
 
             String uid = safeTrim(log.getRedeemedByUid());
             if (!uid.isEmpty() && !"null".equalsIgnoreCase(uid)) {
-                // If cached, apply immediately
                 String cached = userNameCache.get(uid);
                 if (cached != null) {
                     log.setClientName(cached);
                 } else {
-                    // placeholder for now, batch fetch later
                     log.setClientName("Loading...");
                     userIdsToFetch.add(uid);
                 }
@@ -275,9 +273,8 @@ public class ScanLogsFragment extends Fragment {
 
         displayedLogs.addAll(allLogs);
         adapter.notifyDataSetChanged();
-        updateCountText();
+        refreshHeader(); // NEW (count + total)
 
-        // Batch fetch user names (reduces reads)
         batchFetchClientNamesDistinct(userIdsToFetch);
     }
 
@@ -291,8 +288,11 @@ public class ScanLogsFragment extends Fragment {
                 doc.getString("cashier")
         );
 
-        double amountMAD = doc.getDouble("amountMAD") != null ? doc.getDouble("amountMAD") : 0.0;
-        long points = doc.getLong("points") != null ? doc.getLong("points") : 0L;
+        Double amountD = doc.getDouble("amountMAD");
+        double amountMAD = amountD != null ? amountD : 0.0;
+
+        Long pointsL = doc.getLong("points");
+        long points = pointsL != null ? pointsL : 0L;
 
         Timestamp redeemedAt = doc.getTimestamp("redeemedAt");
         Timestamp createdAt = doc.getTimestamp("createdAt");
@@ -329,7 +329,6 @@ public class ScanLogsFragment extends Fragment {
     private void batchFetchClientNamesDistinct(@NonNull List<String> userIds) {
         if (userIds.isEmpty()) return;
 
-        // distinct
         Set<String> distinct = new HashSet<>();
         for (String id : userIds) {
             String uid = safeTrim(id);
@@ -338,7 +337,6 @@ public class ScanLogsFragment extends Fragment {
 
         List<String> ids = new ArrayList<>(distinct);
 
-        // Firestore whereIn limit is 10 values per query
         final int BATCH = 10;
         for (int i = 0; i < ids.size(); i += BATCH) {
             int end = Math.min(i + BATCH, ids.size());
@@ -349,7 +347,6 @@ public class ScanLogsFragment extends Fragment {
                     .get()
                     .addOnSuccessListener(qs -> applyFetchedUsers(qs, chunk))
                     .addOnFailureListener(e -> {
-                        // fallback: mark as short ID
                         for (String uid : chunk) {
                             putNameFallback(uid);
                         }
@@ -359,7 +356,6 @@ public class ScanLogsFragment extends Fragment {
     }
 
     private void applyFetchedUsers(@NonNull QuerySnapshot qs, @NonNull List<String> requestedUids) {
-        // Map fetched docs
         Map<String, String> fetched = new HashMap<>();
         for (DocumentSnapshot d : qs.getDocuments()) {
             String uid = d.getId();
@@ -368,7 +364,6 @@ public class ScanLogsFragment extends Fragment {
             if (!name.isEmpty()) fetched.put(uid, name);
         }
 
-        // Fill cache for all requested, even missing ones
         for (String uid : requestedUids) {
             String name = fetched.get(uid);
             if (name != null) {
@@ -378,7 +373,6 @@ public class ScanLogsFragment extends Fragment {
             }
         }
 
-        // Apply to logs
         boolean changed = false;
         for (ScanLog log : allLogs) {
             String uid = safeTrim(log.getRedeemedByUid());
@@ -401,9 +395,29 @@ public class ScanLogsFragment extends Fragment {
 
     private void notifyAllVisibleItemsChanged() {
         if (!isAdded()) return;
-        // simplest + safe: refresh visible list (you can optimize later with DiffUtil)
         adapter.notifyDataSetChanged();
+        // totals don't depend on names, so no refreshHeader() needed here
     }
+
+    // ---------------- NEW: HEADER (COUNT + TOTAL) ----------------
+
+    private void refreshHeader() {
+        updateCountText();
+        updateTotalsUI();
+    }
+
+    private void updateTotalsUI() {
+        if (!isAdded()) return;
+
+        double total = 0.0;
+        for (ScanLog log : displayedLogs) {
+            total += log.getAmountMAD(); // make sure ScanLog has getAmountMAD()
+        }
+
+        tvTotalEarning.setText(String.format(Locale.getDefault(), "Total: %.2f MAD", total));
+    }
+
+    // ------------------------------------------------------------
 
     private void updateCountText() {
         if (!isAdded()) return;
