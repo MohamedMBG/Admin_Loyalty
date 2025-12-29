@@ -16,16 +16,20 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.adminloyalty.R;
 import com.example.adminloyalty.adapters.ClientAdapter;
 import com.example.adminloyalty.models.Client;
+import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
+import okhttp3.internal.concurrent.Task;
 
 public class ClientsSummaryFragment extends Fragment {
     private SwipeRefreshLayout swipeRefreshLayout;
@@ -41,9 +45,7 @@ public class ClientsSummaryFragment extends Fragment {
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_clients_summary, container, false);
 
@@ -81,62 +83,77 @@ public class ClientsSummaryFragment extends Fragment {
     }
 
 
-// Inside your Fragment/Activity class
-
+    // Inside your Fragment/Activity class
     private void loadClients() {
         swipeRefreshLayout.setRefreshing(true);
 
-        // OPTIMIZATION 1: Order by 'points' to show VIPs first
-        // OPTIMIZATION 2: Limit to 100 for performance
         db.collection("users")
                 .orderBy("points", Query.Direction.DESCENDING)
                 .limit(100)
                 .get()
                 .addOnSuccessListener(query -> {
+
                     List<Client> list = new ArrayList<>();
+                    List<com.google.android.gms.tasks.Task<QuerySnapshot>> tasks = new ArrayList<>();
 
                     for (QueryDocumentSnapshot doc : query) {
                         try {
                             String id = doc.getId();
 
-                            // 1. NAME & ID SAFETY
                             String name = doc.getString("fullName");
-                            if (name == null || name.isEmpty()) {
-                                name = "Unknown Client";
-                            }
+                            if (name == null || name.isEmpty()) name = "Unknown Client";
 
                             String email = doc.getString("email");
                             String clientCode = doc.getString("uid");
-
-                            // 2. METRICS PARSING
-                            // Handle Points
-                            Long pointsVal = doc.getLong("points");
-                            long points = pointsVal != null ? pointsVal : 0L;
-
-                            // Handle Visits
-                            Long visitsVal = doc.getLong("visits");
-                            long visits = visitsVal != null ? visitsVal : 0L;
-
-                            // 3. APP-SIDE CALCULATION: Average Spend
-                            // Formula: Total Value (Points) / Total Visits
-                            // We check for visits > 0 to avoid Division By Zero crash
-                            double avg = 0.0;
-                            if (visits > 0) {
-                                avg = (double) points / visits;
-                            }
-
                             Timestamp createdAt = doc.getTimestamp("createdAt");
 
-                            // Create the object
-                            Client c = new Client(id, name, email, clientCode, points, avg, createdAt);
+                            // Create client now with placeholders
+                            Client c = new Client(id, name, email, clientCode, 0L, 0.0, createdAt);
                             list.add(c);
+
+                            // FIX 3: Assign the Firestore operation to a variable 't'
+                            com.google.android.gms.tasks.Task<QuerySnapshot> t = db.collection("users")
+                                    .document(id)
+                                    .collection("activities")
+                                    .whereEqualTo("type", "earn")
+                                    .get()
+                                    .addOnSuccessListener(activitiesSnap -> {
+                                        long totalPoints = 0L;
+                                        long visits = 0L;
+
+                                        for (QueryDocumentSnapshot activityDoc : activitiesSnap) {
+                                            Long pts = activityDoc.getLong("points");
+                                            if (pts != null) {
+                                                totalPoints += pts;
+                                                visits++;
+                                            }
+                                        }
+
+                                        double avg = (visits > 0) ? (double) totalPoints / visits : 0.0;
+
+                                        // Update the object in memory
+                                        c.setPoints(totalPoints);
+                                        c.setAvgSpend(avg);
+                                    });
+
+                            tasks.add(t);
 
                         } catch (Exception e) {
                             Log.e("ClientLoad", "Error parsing client: " + doc.getId(), e);
                         }
                     }
 
-                    updateClientListUI(list);
+                    Tasks.whenAllComplete(tasks)
+                            .addOnSuccessListener(done -> {
+                                swipeRefreshLayout.setRefreshing(false);
+                                updateClientListUI(list);
+                            })
+                            .addOnFailureListener(e -> {
+                                swipeRefreshLayout.setRefreshing(false);
+                                Log.e("ClientLoad", "Activities load error", e);
+                                updateClientListUI(list); // Show whatever we managed to load
+                            });
+
                 })
                 .addOnFailureListener(e -> {
                     swipeRefreshLayout.setRefreshing(false);

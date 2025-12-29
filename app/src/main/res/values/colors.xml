@@ -6,7 +6,15 @@
     <!-- 🎨 Brand / Primary Colors -->
     <color name="colorPrimary">#1976D2</color>           <!-- Deep blue (buttons, icons, highlights) -->
     <color name="colorOnPrimary">#FFFFFF</color>         <!-- Text/icons on primary -->
-    <color name="colorPrimaryContainer">#E3F2FD</color>  <!-- Light blue background for cards/chips -->
+    <color name="colorPrimaryContainer">#E3F2FD</color>
+
+    <color name="green_100">#D1FAE5</color>
+    <color name="green_800">#065F46</color>
+    <color name="red_100">#FEE2E2</color>
+    <color name="red_800">#991B1B</color>
+    <color name="gray_100">#F3F4F6</color>
+    <color name="gray_800">#1F2937</color>
+    <!-- Light blue background for cards/chips -->
 
     <!-- 🎨 Secondary / Accent Colors -->
     <color name="colorSecondary">#FF6B35</color>         <!-- Warm orange accent -->

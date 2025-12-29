@@ -296,14 +296,15 @@ public class ClientDetailsFragment extends Fragment {
             rvHistory.setVisibility(View.VISIBLE);
         }
     }
-
     private void loadUserProfile() {
         if (clientId == null) return;
 
+        // 1. Fetch User Profile
         db.collection("users").document(clientId).get()
                 .addOnSuccessListener(document -> {
                     if (!isAdded() || !document.exists()) return;
 
+                    // --- Basic Info Binding ---
                     String name = document.getString("fullName");
                     String email = document.getString("email");
                     String phone = document.getString("phone");
@@ -316,35 +317,59 @@ public class ClientDetailsFragment extends Fragment {
                     tvGender.setText(gender != null ? capitalize(gender) : "-");
                     tvAddress.setText(address != null ? address : "No Address");
 
-                    // LAST VISIT LOGIC
+                    // --- Last Visit ---
                     Timestamp lastVisit = document.getTimestamp("lastVisitTimestamp");
                     String lastVisitStr = "Never";
                     if (lastVisit != null) {
                         lastVisitStr = DateFormat.format("dd MMM yyyy", lastVisit.toDate()).toString();
                     }
+                    // Assuming you bound tvLastVisit in onViewCreated
+                    // tvLastVisit = view.findViewById(R.id.tvDetailLastVisit);
                     if (tvLastVisit != null) {
-                        tvLastVisit.setText("Last Visit: " + lastVisitStr);
+                        tvLastVisit.setText(lastVisitStr);
                     }
 
-
+                    // --- Points Balance ---
                     Long points = document.getLong("points");
-                    Long visits = document.getLong("visits");
-                    long pVal = points != null ? points : 0;
-                    long vVal = visits != null ? visits : 0;
+                    tvPoints.setText(String.format(Locale.US, "%,d", points != null ? points : 0));
 
-                    tvPoints.setText(String.format(Locale.US, "%,d", pVal));
+                    // --- DYNAMIC CALCULATION: Average Spend (MAD) ---
+                    // We calculate this from the actual transaction history (earn_codes)
+                    db.collection("earn_codes")
+                            .whereEqualTo("redeemedByUid", clientId)
+                            .whereEqualTo("status", "redeemed")
+                            .get()
+                            .addOnSuccessListener(scans -> {
+                                if (!isAdded()) return;
 
-                    double avg = 0.0;
-                    if (vVal > 0) avg = (double) pVal / vVal;
-                    Double dbAvg = document.getDouble("avgSpend");
-                    if (dbAvg != null) avg = dbAvg;
+                                double totalSpendMAD = 0.0;
+                                int visitCount = scans.size();
 
-                    tvSpend.setText(String.format(Locale.US, "%.2f", avg));
+                                for (DocumentSnapshot scan : scans) {
+                                    Double amount = scan.getDouble("amountMAD");
+                                    if (amount != null) {
+                                        totalSpendMAD += amount;
+                                    }
+                                }
+
+                                double avgSpend = 0.0;
+                                if (visitCount > 0) {
+                                    avgSpend = totalSpendMAD / visitCount;
+                                }
+
+                                tvSpend.setText(String.format(Locale.US, "%.2f", avgSpend*0.5));
+                            })
+                            .addOnFailureListener(e -> {
+                                // Fallback on error
+                                tvSpend.setText("0.00");
+                            });
+
                 })
                 .addOnFailureListener(e ->
                         Toast.makeText(getContext(), "Error loading profile", Toast.LENGTH_SHORT).show()
                 );
     }
+
 
     private void loadHistory() {
         if (clientId == null) return;
