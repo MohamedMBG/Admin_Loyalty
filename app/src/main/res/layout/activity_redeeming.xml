@@ -228,18 +228,6 @@
                         app:layout_constraintTop_toTopOf="@id/avatar"
                         app:layout_constraintEnd_toStartOf="@id/pointsChip"/>
 
-                    <TextView
-                        android:id="@+id/clientId"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:layout_marginTop="4dp"
-                        android:text="ID • 0000"
-                        android:textSize="12sp"
-                        android:textColor="?android:attr/textColorSecondary"
-                        app:layout_constraintStart_toEndOf="@id/avatar"
-                        app:layout_constraintTop_toBottomOf="@id/clientName"
-                        app:layout_constraintEnd_toStartOf="@id/pointsChip"/>
 
                     <!-- Points chip -->
                     <com.google.android.material.chip.Chip

@@ -1,5 +1,7 @@
 package com.example.adminloyalty.cashier;
 
+import android.annotation.SuppressLint;
+import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -53,7 +55,7 @@ public class RedeemingActivity extends AppCompatActivity {
     private View emptyStateCard;
     private MaterialCardView clientCard;
 
-    private TextView clientNameTv, clientIdTv;
+    private TextView clientNameTv;
     private Chip pointsChip, eligibilityChip;
     private LinearProgressIndicator progressToReward;
     private TextView tvProgressHint;
@@ -125,7 +127,6 @@ public class RedeemingActivity extends AppCompatActivity {
         clientCard = findViewById(R.id.clientCard);
 
         clientNameTv = findViewById(R.id.clientName);
-        clientIdTv = findViewById(R.id.clientId);
 
         pointsChip = findViewById(R.id.pointsChip);
         eligibilityChip = findViewById(R.id.eligibilityChip);
@@ -280,7 +281,6 @@ public class RedeemingActivity extends AppCompatActivity {
         clientCard.setVisibility(View.VISIBLE);
 
         clientNameTv.setText(!TextUtils.isEmpty(selectedUserName) ? selectedUserName : "Unknown User");
-        clientIdTv.setText("ID • " + (selectedUserUid != null ? selectedUserUid : "--"));
 
         pointsChip.setText(selectedUserPoints + " pts");
         setEligibilityNeutral();
@@ -554,46 +554,49 @@ public class RedeemingActivity extends AppCompatActivity {
      * (still easy & clickable)
      */
     private View createItemRow(String name, int cost) {
-        MaterialCardView card = new MaterialCardView(this);
+        View v = getLayoutInflater().inflate(R.layout.item_reward_row, null, false);
 
-        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-        );
-        p.setMargins(0, 8, 0, 8);
-        card.setLayoutParams(p);
+        MaterialCardView card = v.findViewById(R.id.rewardCard);
+        TextView tvTitle = v.findViewById(R.id.tvTitle);
+        TextView tvSubtitle = v.findViewById(R.id.tvSubtitle);
+        Chip chipPoints = v.findViewById(R.id.chipPoints);
+        ImageView ivSelected = v.findViewById(R.id.ivSelected);
 
-        card.setCardElevation(0f);
-        card.setRadius(18f);
-        card.setStrokeWidth(1);
-        card.setStrokeColor(ContextCompat.getColor(this, R.color.gray_100)); // add or replace
-        card.setCardBackgroundColor(ContextCompat.getColor(this, android.R.color.white));
+        tvTitle.setText(name);
+        tvSubtitle.setText("Tap to select");
+        chipPoints.setText(cost + " pts");
 
-        LinearLayout row = new LinearLayout(this);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setPadding(16, 14, 16, 14);
-        row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        // store data on the view (useful for selection refresh)
+        v.setTag(R.id.tvTitle, name);
 
-        TextView title = new TextView(this);
-        title.setText(name);
-        title.setTextSize(15);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        title.setTextColor(ContextCompat.getColor(this, android.R.color.black));
-        title.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        // apply selected UI if needed
+        boolean isSelected = (selectedItemName != null && selectedItemName.equals(name));
+        applyRewardRowSelectedState(card, ivSelected, isSelected);
 
-        TextView pts = new TextView(this);
-        pts.setText(cost + " pts");
-        pts.setTextSize(13);
-        pts.setTypeface(null, android.graphics.Typeface.BOLD);
-        pts.setTextColor(Color.parseColor("#6D28D9"));
+        card.setOnClickListener(view -> {
+            selectItem(name, cost);
+            refreshRewardSelectionUI(); // update list visuals
+        });
 
-        row.addView(title);
-        row.addView(pts);
-        card.addView(row);
-
-        card.setOnClickListener(v -> selectItem(name, cost));
-        return card;
+        return v;
     }
+
+    private void applyRewardRowSelectedState(MaterialCardView card, ImageView ivSelected, boolean selected) {
+        if (selected) {
+            card.setStrokeWidth((int) (2 * getResources().getDisplayMetrics().density));
+            card.setStrokeColor(com.google.android.material.color.MaterialColors.getColor(
+                    card, com.google.android.material.R.attr.colorOnPrimary
+            ));
+            ivSelected.setVisibility(View.VISIBLE);
+        } else {
+            card.setStrokeWidth((int) (1 * getResources().getDisplayMetrics().density));
+            card.setStrokeColor(com.google.android.material.color.MaterialColors.getColor(
+                    card, com.google.android.material.R.attr.colorOutline
+            ));
+            ivSelected.setVisibility(View.GONE);
+        }
+    }
+
 
     // -------------------------
     // SELECT ITEM + BOTTOM BAR
@@ -607,7 +610,33 @@ public class RedeemingActivity extends AppCompatActivity {
         updateProgressUI();
         checkPointsAndWarn();
         updateRedeemButtonState();
+
+        refreshRewardSelectionUI();
     }
+
+    private void refreshRewardSelectionUI() {
+        refreshContainerSelection(itemsHotCoffee);
+        refreshContainerSelection(itemsIcedCoffee);
+        refreshContainerSelection(itemsTea);
+        refreshContainerSelection(itemsFrappuccino);
+        refreshContainerSelection(itemsPastries);
+    }
+
+    private void refreshContainerSelection(LinearLayout container) {
+        if (container == null) return;
+        for (int i = 0; i < container.getChildCount(); i++) {
+            View row = container.getChildAt(i);
+            MaterialCardView card = row.findViewById(R.id.rewardCard);
+            ImageView ivSelected = row.findViewById(R.id.ivSelected);
+            TextView title = row.findViewById(R.id.tvTitle);
+
+            if (card == null || ivSelected == null || title == null) continue;
+
+            boolean isSelected = (selectedItemName != null && selectedItemName.equals(title.getText().toString()));
+            applyRewardRowSelectedState(card, ivSelected, isSelected);
+        }
+    }
+
 
     private void updateProgressUI() {
         if (selectedUserUid == null || selectedItemCost <= 0) {
@@ -740,11 +769,12 @@ public class RedeemingActivity extends AppCompatActivity {
         eligibilityChip.setTextColor(ContextCompat.getColor(this, android.R.color.black));
     }
 
+    @SuppressLint("ResourceAsColor")
     private void setEligibilitySuccess(String text) {
         eligibilityChip.setText(text);
         eligibilityChip.setChipStrokeWidth(0f);
-        eligibilityChip.setChipBackgroundColorResource(android.R.color.holo_green_light);
-        eligibilityChip.setTextColor(ContextCompat.getColor(this, android.R.color.black));
+        eligibilityChip.setChipBackgroundColorResource(R.color.green_800);
+        eligibilityChip.setTextColor(ContextCompat.getColor(this, android.R.color.white));
     }
 
     private void setEligibilityWarning(String text) {
