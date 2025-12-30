@@ -6,6 +6,8 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.adminloyalty.R;
@@ -13,17 +15,31 @@ import com.example.adminloyalty.models.ScanLog;
 import com.google.firebase.Timestamp;
 
 import java.text.SimpleDateFormat;
-import java.util.List;
 import java.util.Locale;
 
-public class ScanLogAdapter extends RecyclerView.Adapter<ScanLogAdapter.ScanLogViewHolder> {
+public class ScanLogAdapter extends ListAdapter<ScanLog, ScanLogAdapter.ScanLogViewHolder> {
 
-    private final List<ScanLog> scanLogList;
     private final SimpleDateFormat dateFormat =
             new SimpleDateFormat("MMM dd, hh:mm a", Locale.getDefault());
 
-    public ScanLogAdapter(List<ScanLog> scanLogList) {
-        this.scanLogList = scanLogList;
+    public ScanLogAdapter() {
+        super(new DiffUtil.ItemCallback<ScanLog>() {
+            @Override
+            public boolean areItemsTheSame(@NonNull ScanLog oldItem, @NonNull ScanLog newItem) {
+                return oldItem.getId() != null && oldItem.getId().equals(newItem.getId());
+            }
+
+            @Override
+            public boolean areContentsTheSame(@NonNull ScanLog oldItem, @NonNull ScanLog newItem) {
+                return oldItem.getPoints() == newItem.getPoints()
+                        && Double.compare(oldItem.getAmountMAD(), newItem.getAmountMAD()) == 0
+                        && safeEquals(oldItem.getOrderNo(), newItem.getOrderNo())
+                        && safeEquals(oldItem.getClientName(), newItem.getClientName())
+                        && safeEquals(oldItem.getCashierName(), newItem.getCashierName())
+                        && safeTimestampEquals(oldItem.getRedeemedAt(), newItem.getRedeemedAt())
+                        && safeTimestampEquals(oldItem.getCreatedAt(), newItem.getCreatedAt());
+            }
+        });
     }
 
     @NonNull
@@ -36,23 +52,20 @@ public class ScanLogAdapter extends RecyclerView.Adapter<ScanLogAdapter.ScanLogV
 
     @Override
     public void onBindViewHolder(@NonNull ScanLogViewHolder holder, int position) {
-        ScanLog log = scanLogList.get(position);
+        ScanLog log = getItem(position);
 
-        // Order number
         if (log.getOrderNo() != null) {
             holder.tvOrderNo.setText("Order #" + log.getOrderNo());
         } else {
             holder.tvOrderNo.setText("Order -");
         }
 
-        // For the moment we only have redeemedByUid, not full name
         if (log.getRedeemedByUid() != null) {
             holder.tvUserName.setText("Client: " + log.getClientName());
         } else {
             holder.tvUserName.setText("Client: -");
         }
 
-        // Use redeemedAt; if null fallback to createdAt
         Timestamp ts = log.getRedeemedAt() != null
                 ? log.getRedeemedAt()
                 : log.getCreatedAt();
@@ -63,20 +76,11 @@ public class ScanLogAdapter extends RecyclerView.Adapter<ScanLogAdapter.ScanLogV
             holder.tvTimestamp.setText("N/A");
         }
 
-        // Amount MAD
         holder.tvAmount.setText(String.format(Locale.getDefault(),
                 "%.2f MAD", log.getAmountMAD()));
 
-        // Cashier (we don't have it yet)
         holder.tvCashierName.setText("Cashier: " + log.getCashierName());
-
-        // Points
         holder.tvPoints.setText("+" + log.getPoints() + " pts");
-    }
-
-    @Override
-    public int getItemCount() {
-        return scanLogList.size();
     }
 
     static class ScanLogViewHolder extends RecyclerView.ViewHolder {
@@ -92,5 +96,16 @@ public class ScanLogAdapter extends RecyclerView.Adapter<ScanLogAdapter.ScanLogV
             tvCashierName = itemView.findViewById(R.id.tvCashierName);
             tvPoints = itemView.findViewById(R.id.tvPoints);
         }
+    }
+
+    private static boolean safeEquals(String a, String b) {
+        if (a == null) return b == null;
+        return a.equals(b);
+    }
+
+    private static boolean safeTimestampEquals(Timestamp a, Timestamp b) {
+        if (a == null) return b == null;
+        if (b == null) return false;
+        return a.toDate().equals(b.toDate());
     }
 }
