@@ -5,19 +5,17 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.ListAdapter;
 
 import com.example.adminloyalty.R;
 import com.example.adminloyalty.models.Client;
 
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 
-public class ClientAdapter extends RecyclerView.Adapter<ClientAdapter.ClientViewHolder> {
+public class ClientAdapter extends ListAdapter<Client, ClientAdapter.ClientViewHolder> {
 
-    private final List<Client> clients = new ArrayList<>();
     private OnClientClickListener listener;
 
     public interface OnClientClickListener {
@@ -28,12 +26,21 @@ public class ClientAdapter extends RecyclerView.Adapter<ClientAdapter.ClientView
         this.listener = listener;
     }
 
-    public void setClients(List<Client> newList) {
-        clients.clear();
-        if (newList != null) {
-            clients.addAll(newList);
-        }
-        notifyDataSetChanged();
+    public ClientAdapter() {
+        super(new DiffUtil.ItemCallback<Client>() {
+            @Override
+            public boolean areItemsTheSame(@NonNull Client oldItem, @NonNull Client newItem) {
+                return oldItem.getId() != null && oldItem.getId().equals(newItem.getId());
+            }
+
+            @Override
+            public boolean areContentsTheSame(@NonNull Client oldItem, @NonNull Client newItem) {
+                return oldItem.getPoints() == newItem.getPoints()
+                        && Double.compare(oldItem.getAvgSpend(), newItem.getAvgSpend()) == 0
+                        && safeEquals(oldItem.getName(), newItem.getName())
+                        && safeEquals(oldItem.getEmail(), newItem.getEmail());
+            }
+        });
     }
 
     @NonNull
@@ -46,7 +53,7 @@ public class ClientAdapter extends RecyclerView.Adapter<ClientAdapter.ClientView
 
     @Override
     public void onBindViewHolder(@NonNull ClientViewHolder holder, int position) {
-        Client c = clients.get(position);
+        Client c = getItem(position);
 
         // Name & email
         String name = c.getName() != null ? c.getName() : "-";
@@ -66,11 +73,6 @@ public class ClientAdapter extends RecyclerView.Adapter<ClientAdapter.ClientView
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onClientClick(c);
         });
-    }
-
-    @Override
-    public int getItemCount() {
-        return clients.size();
     }
 
     static class ClientViewHolder extends RecyclerView.ViewHolder {
@@ -97,5 +99,10 @@ public class ClientAdapter extends RecyclerView.Adapter<ClientAdapter.ClientView
     private String formatCurrency(double value) {
         DecimalFormat df = new DecimalFormat("#,##0.00");
         return df.format(value);
+    }
+
+    private static boolean safeEquals(String a, String b) {
+        if (a == null) return b == null;
+        return a.equals(b);
     }
 }

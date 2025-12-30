@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.adminloyalty.R;
 import com.example.adminloyalty.adapters.ScanLogAdapter;
+import com.example.adminloyalty.data.LogsRepository;
 import com.example.adminloyalty.models.ScanLog;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.chip.Chip;
@@ -26,29 +27,25 @@ import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public class ScanLogsFragment extends Fragment {
 
-    private static final int LOG_LIMIT = 200;
+    private static final int PAGE_SIZE = 50;
     private static final String TAG_DATE_PICKER = "DATE_PICKER";
 
     private RecyclerView recyclerViewLogs;
     private ProgressBar progressBar;
     private TextView tvLogCount;
-    private TextView tvTotalEarning; // NEW
+    private TextView tvTotalEarning;
     private ImageView btnBack;
     private ChipGroup chipGroupFilters;
 
@@ -56,10 +53,10 @@ public class ScanLogsFragment extends Fragment {
     private final List<ScanLog> displayedLogs = new ArrayList<>();
     private final List<ScanLog> allLogs = new ArrayList<>();
 
-    private FirebaseFirestore db;
-
-    // Cache for userId -> name (prevents repeated reads)
-    private final Map<String, String> userNameCache = new HashMap<>();
+    private LogsRepository logsRepository;
+    private DocumentSnapshot lastSnapshot;
+    private boolean isLoading = false;
+    private boolean hasMore = true;
 
     private enum FilterType { ALL, CASHIER, DATE }
 
@@ -74,9 +71,18 @@ public class ScanLogsFragment extends Fragment {
         setupRecycler();
         setupBack();
         setupFilters(view);
+        logsRepository = new LogsRepository();
 
-        loadScanLogs();
+        loadNextPage();
         return view;
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (logsRepository != null) {
+            logsRepository.shutdown();
+        }
     }
 
     private void bindViews(@NonNull View view) {
@@ -86,13 +92,24 @@ public class ScanLogsFragment extends Fragment {
         tvTotalEarning = view.findViewById(R.id.TotalEarning);
         btnBack = view.findViewById(R.id.btnBack);
         chipGroupFilters = view.findViewById(R.id.chipGroupFilters);
-        db = FirebaseFirestore.getInstance();
     }
 
     private void setupRecycler() {
-        adapter = new ScanLogAdapter(displayedLogs);
+        adapter = new ScanLogAdapter();
         recyclerViewLogs.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerViewLogs.setAdapter(adapter);
+        recyclerViewLogs.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                if (dy <= 0) return;
+                LinearLayoutManager lm = (LinearLayoutManager) recyclerView.getLayoutManager();
+                if (lm == null) return;
+                int lastVisible = lm.findLastVisibleItemPosition();
+                if (!isLoading && hasMore && lastVisible >= adapter.getItemCount() - 5) {
+                    loadNextPage();
+                }
+            }
+        });
     }
 
     private void setupBack() {
@@ -209,7 +226,7 @@ public class ScanLogsFragment extends Fragment {
                 break;
 
             case DATE:
-                long endInclusive = endUtcMs + TimeUnit.DAYS.toMillis(1) - 1; // inclusive end of day
+                long endInclusive = endUtcMs + TimeUnit.DAYS.toMillis(1) - 1;
                 for (ScanLog log : allLogs) {
                     long time = getLogTimeMs(log);
                     if (time != -1 && time >= startUtcMs && time <= endInclusive) {
@@ -219,8 +236,8 @@ public class ScanLogsFragment extends Fragment {
                 break;
         }
 
-        adapter.notifyDataSetChanged();
-        refreshHeader(); // NEW (count + total)
+        adapter.submitList(new ArrayList<>(displayedLogs));
+        refreshHeader();
     }
 
     private long getLogTimeMs(@NonNull ScanLog log) {
@@ -229,177 +246,47 @@ public class ScanLogsFragment extends Fragment {
         return ts.toDate().getTime();
     }
 
-    private void loadScanLogs() {
+    private void loadNextPage() {
+        if (isLoading || !hasMore) return;
+        isLoading = true;
         showLoading(true);
 
-        db.collection("earn_codes")
-                .orderBy("redeemedAt", Query.Direction.DESCENDING)
-                .limit(LOG_LIMIT)
-                .get()
-                .addOnCompleteListener(this::onLogsLoaded);
+        Task<QuerySnapshot> task = logsRepository.loadPage(lastSnapshot, PAGE_SIZE);
+        task.addOnCompleteListener(this::handlePageResult);
     }
 
-    private void onLogsLoaded(@NonNull Task<QuerySnapshot> task) {
+    private void handlePageResult(@NonNull Task<QuerySnapshot> task) {
         showLoading(false);
+        isLoading = false;
 
         if (!task.isSuccessful() || task.getResult() == null) {
-            if (isAdded()) tvLogCount.setText("Failed to load records");
+            toast("Failed to load records");
             return;
         }
 
-        allLogs.clear();
-        displayedLogs.clear();
+        QuerySnapshot snapshot = task.getResult();
+        if (snapshot.isEmpty()) {
+            hasMore = false;
+            return;
+        }
 
-        List<String> userIdsToFetch = new ArrayList<>();
-
-        for (DocumentSnapshot doc : task.getResult().getDocuments()) {
-            ScanLog log = mapDocToScanLog(doc);
-
-            allLogs.add(log);
-
-            String uid = safeTrim(log.getRedeemedByUid());
-            if (!uid.isEmpty() && !"null".equalsIgnoreCase(uid)) {
-                String cached = userNameCache.get(uid);
-                if (cached != null) {
-                    log.setClientName(cached);
-                } else {
-                    log.setClientName("Loading...");
-                    userIdsToFetch.add(uid);
-                }
-            } else {
-                log.setClientName("Unknown ID");
+        logsRepository.mapDocuments(snapshot, (logs, error) -> {
+            if (error != null) {
+                toast("Partial data loaded");
             }
-        }
+            if (!isAdded()) return;
 
-        displayedLogs.addAll(allLogs);
-        adapter.notifyDataSetChanged();
-        refreshHeader(); // NEW (count + total)
+            allLogs.addAll(logs);
+            displayedLogs.clear();
+            displayedLogs.addAll(allLogs);
+            adapter.submitList(new ArrayList<>(displayedLogs));
+            refreshHeader();
 
-        batchFetchClientNamesDistinct(userIdsToFetch);
+            List<DocumentSnapshot> docs = snapshot.getDocuments();
+            lastSnapshot = docs.get(docs.size() - 1);
+            hasMore = docs.size() >= PAGE_SIZE;
+        });
     }
-
-    private ScanLog mapDocToScanLog(@NonNull DocumentSnapshot doc) {
-        String id = doc.getId();
-        String orderNo = doc.getString("orderNo");
-        String redeemedByUid = doc.getString("redeemedByUid");
-
-        String cashierName = normalizeCashierName(
-                doc.getString("cashierName"),
-                doc.getString("cashier")
-        );
-
-        Double amountD = doc.getDouble("amountMAD");
-        double amountMAD = amountD != null ? amountD : 0.0;
-
-        Long pointsL = doc.getLong("points");
-        long points = pointsL != null ? pointsL : 0L;
-
-        Timestamp redeemedAt = doc.getTimestamp("redeemedAt");
-        Timestamp createdAt = doc.getTimestamp("createdAt");
-        String status = doc.getString("status");
-
-        return new ScanLog(
-                id,
-                orderNo,
-                redeemedByUid,
-                "Loading...",
-                cashierName,
-                amountMAD,
-                points,
-                redeemedAt,
-                createdAt,
-                status
-        );
-    }
-
-    private String normalizeCashierName(@Nullable String cashierName, @Nullable String fallbackCashier) {
-        String name = safeTrim(cashierName);
-        if (name.isEmpty() || "null".equalsIgnoreCase(name)) {
-            name = safeTrim(fallbackCashier);
-        }
-        if (name.isEmpty() || "null".equalsIgnoreCase(name)) {
-            return "Unknown Staff";
-        }
-        return name;
-    }
-
-    /**
-     * Fetch user names in batches using whereIn (Firestore limit = 10).
-     */
-    private void batchFetchClientNamesDistinct(@NonNull List<String> userIds) {
-        if (userIds.isEmpty()) return;
-
-        Set<String> distinct = new HashSet<>();
-        for (String id : userIds) {
-            String uid = safeTrim(id);
-            if (!uid.isEmpty() && !"null".equalsIgnoreCase(uid)) distinct.add(uid);
-        }
-
-        List<String> ids = new ArrayList<>(distinct);
-
-        final int BATCH = 10;
-        for (int i = 0; i < ids.size(); i += BATCH) {
-            int end = Math.min(i + BATCH, ids.size());
-            List<String> chunk = ids.subList(i, end);
-
-            db.collection("users")
-                    .whereIn("__name__", chunk)
-                    .get()
-                    .addOnSuccessListener(qs -> applyFetchedUsers(qs, chunk))
-                    .addOnFailureListener(e -> {
-                        for (String uid : chunk) {
-                            putNameFallback(uid);
-                        }
-                        notifyAllVisibleItemsChanged();
-                    });
-        }
-    }
-
-    private void applyFetchedUsers(@NonNull QuerySnapshot qs, @NonNull List<String> requestedUids) {
-        Map<String, String> fetched = new HashMap<>();
-        for (DocumentSnapshot d : qs.getDocuments()) {
-            String uid = d.getId();
-            String name = safeTrim(d.getString("fullName"));
-            if (name.isEmpty()) name = safeTrim(d.getString("name"));
-            if (!name.isEmpty()) fetched.put(uid, name);
-        }
-
-        for (String uid : requestedUids) {
-            String name = fetched.get(uid);
-            if (name != null) {
-                userNameCache.put(uid, name);
-            } else {
-                putNameFallback(uid);
-            }
-        }
-
-        boolean changed = false;
-        for (ScanLog log : allLogs) {
-            String uid = safeTrim(log.getRedeemedByUid());
-            if (requestedUids.contains(uid)) {
-                String newName = userNameCache.get(uid);
-                if (newName != null && !newName.equals(log.getClientName())) {
-                    log.setClientName(newName);
-                    changed = true;
-                }
-            }
-        }
-
-        if (changed) notifyAllVisibleItemsChanged();
-    }
-
-    private void putNameFallback(@NonNull String uid) {
-        String shortId = uid.substring(0, Math.min(uid.length(), 6));
-        userNameCache.put(uid, "Client: " + shortId);
-    }
-
-    private void notifyAllVisibleItemsChanged() {
-        if (!isAdded()) return;
-        adapter.notifyDataSetChanged();
-        // totals don't depend on names, so no refreshHeader() needed here
-    }
-
-    // ---------------- NEW: HEADER (COUNT + TOTAL) ----------------
 
     private void refreshHeader() {
         updateCountText();
@@ -411,13 +298,11 @@ public class ScanLogsFragment extends Fragment {
 
         double total = 0.0;
         for (ScanLog log : displayedLogs) {
-            total += log.getAmountMAD(); // make sure ScanLog has getAmountMAD()
+            total += log.getAmountMAD();
         }
 
         tvTotalEarning.setText(String.format(Locale.getDefault(), "Total: %.2f MAD", total));
     }
-
-    // ------------------------------------------------------------
 
     private void updateCountText() {
         if (!isAdded()) return;

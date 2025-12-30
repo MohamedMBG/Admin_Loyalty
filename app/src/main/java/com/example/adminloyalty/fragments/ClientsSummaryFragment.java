@@ -170,7 +170,7 @@ public class ClientsSummaryFragment extends Fragment {
     }
 
     private void updateClientListUI(List<Client> list) {
-        clientAdapter.setClients(list);
+        clientAdapter.submitList(new ArrayList<>(list));
         swipeRefreshLayout.setRefreshing(false);
 
         if (list.isEmpty()) {
