@@ -9,13 +9,14 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.cardview.widget.CardView;
 import com.example.adminloyalty.R;
+import com.example.adminloyalty.data.DashboardRepository;
 import com.example.adminloyalty.fragments.DashboardFragment;
 
 import java.util.List;
 
 public class CashierRowBuilder {
 
-    public static void renderCashierRows(LinearLayout container, List<DashboardFragment.CashierStats> cashierList,
+    public static void renderCashierRows(LinearLayout container, List<DashboardRepository.CashierStats> cashierList,
                                          Context context, int maxRows) {
 
         // Clear previous rows
@@ -29,13 +30,13 @@ public class CashierRowBuilder {
         // Show top performers (limit to maxRows)
         int displayCount = Math.min(cashierList.size(), maxRows);
         for (int i = 0; i < displayCount; i++) {
-            DashboardFragment.CashierStats stats = cashierList.get(i);
+            DashboardRepository.CashierStats stats = cashierList.get(i);
             CardView cardView = createCashierCard(context, stats, i + 1);
             container.addView(cardView);
         }
     }
 
-    private static CardView createCashierCard(Context context, DashboardFragment.CashierStats stats, int rank) {
+    private static CardView createCashierCard(Context context, DashboardRepository.CashierStats stats, int rank) {
         // Inflate card layout
         CardView cardView = (CardView) LayoutInflater.from(context)
                 .inflate(R.layout.item_cashier_performance, null);
@@ -46,7 +47,7 @@ public class CashierRowBuilder {
         return cardView;
     }
 
-    private static void bindCashierData(CardView cardView, DashboardFragment.CashierStats stats, int rank, Context context) {
+    private static void bindCashierData(CardView cardView, DashboardRepository.CashierStats stats, int rank, Context context) {
         // Find views
         TextView tvRank = cardView.findViewById(R.id.tvRank);
         TextView tvCashierName = cardView.findViewById(R.id.tvCashierName);
