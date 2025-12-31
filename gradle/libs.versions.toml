@@ -17,6 +17,8 @@ zxingCore = "3.5.3"
 zxingEmbedded = "4.3.0"
 firebaseAuth = "24.0.1"
 okhttp = "4.12.0"
+mockito = "5.13.0"
+archCoreTesting = "2.2.0"
 
 
 [libraries]
@@ -41,6 +43,9 @@ firebase-auth = { group = "com.google.firebase", name = "firebase-auth", version
 
 
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+mockito-inline = { module = "org.mockito:mockito-inline", version.ref = "mockito" }
+arch-core-testing = { module = "androidx.arch.core:core-testing", version.ref = "archCoreTesting" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

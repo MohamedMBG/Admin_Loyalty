@@ -127,12 +127,13 @@ public class DashboardRepository {
         });
     }
 
-    private DashboardData buildDashboardData(@NonNull DashboardPeriod period,
-                                             @NonNull DateRange range,
-                                             @NonNull QuerySnapshot earnSnap,
-                                             @NonNull QuerySnapshot prevRevenueSnap,
-                                             @NonNull QuerySnapshot redeemSnap,
-                                             @NonNull AggregateQuerySnapshot newClientsSnap) {
+    @androidx.annotation.VisibleForTesting
+    DashboardData buildDashboardData(@NonNull DashboardPeriod period,
+                                     @NonNull DateRange range,
+                                     @NonNull QuerySnapshot earnSnap,
+                                     @NonNull QuerySnapshot prevRevenueSnap,
+                                     @NonNull QuerySnapshot redeemSnap,
+                                     @NonNull AggregateQuerySnapshot newClientsSnap) {
         double revenue = 0.0;
         long points = 0L;
         Set<String> uniqueVisits = new HashSet<>();
