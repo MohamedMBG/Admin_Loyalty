@@ -1,11 +1,8 @@
 package com.example.adminloyalty.authetification;
 
-import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -13,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.adminloyalty.MainActivity;
 import com.example.adminloyalty.R;
 import com.example.adminloyalty.cashier.CashierActivity;
+import com.example.adminloyalty.databinding.ActivityLoginBinding;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -21,37 +19,29 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 public class LoginActivity extends AppCompatActivity {
 
-    EditText email, password;
-    Button connect;
-    View root;
+    private ActivityLoginBinding binding;
 
     // 🔹 Firebase for cashier login
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
 
-    @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_login);
+        binding = ActivityLoginBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
         // Firebase init
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
-        // UI
-        email = findViewById(R.id.emailInput);
-        password = findViewById(R.id.passwordInput);
-        connect = findViewById(R.id.loginButton);
-        root = findViewById(R.id.login_root);
-
-        connect.setOnClickListener(v -> {
-            String mail = email.getText().toString().trim();
-            String pwd = password.getText().toString().trim();
+        binding.loginButton.setOnClickListener(v -> {
+            String mail = binding.emailInput.getText().toString().trim();
+            String pwd = binding.passwordInput.getText().toString().trim();
 
             if (mail.isEmpty() || pwd.isEmpty()) {
-                Snackbar.make(root, "Please fill all the fields!", Snackbar.LENGTH_SHORT).show();
+                Snackbar.make(binding.loginRoot, "Please fill all the fields!", Snackbar.LENGTH_SHORT).show();
                 return; // 🔹 SUPER IMPORTANT: stop here
             }
 
@@ -71,8 +61,8 @@ public class LoginActivity extends AppCompatActivity {
 
     // 🔹 Login cashier with FirebaseAuth + check role in Firestore
     private void loginCashierWithFirebase(String mail, String pwd) {
-        connect.setEnabled(false);
-        connect.setText("Logging in...");
+        binding.loginButton.setEnabled(false);
+        binding.loginButton.setText("Logging in...");
 
         mAuth.signInWithEmailAndPassword(mail, pwd)
                 .addOnSuccessListener(authResult -> {
@@ -122,11 +112,11 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void resetButton() {
-        connect.setEnabled(true);
-        connect.setText("Login");
+        binding.loginButton.setEnabled(true);
+        binding.loginButton.setText("Login");
     }
 
     private void showSnack(String msg) {
-        Snackbar.make(root, msg, Snackbar.LENGTH_SHORT).show();
+        Snackbar.make(binding.loginRoot, msg, Snackbar.LENGTH_SHORT).show();
     }
 }
