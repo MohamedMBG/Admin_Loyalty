@@ -25,16 +25,24 @@ public class TimeUtilsTest {
 
     @Test
     public void calculateAge_handlesNotBornYetThisYear() {
-        // Setup a date 20 years ago, but next month (so they are still 19)
         Calendar cal = Calendar.getInstance();
         int currentYear = cal.get(Calendar.YEAR);
-        int nextMonth = cal.get(Calendar.MONTH) + 2;
-        if (nextMonth > 12) nextMonth = 1;
 
-        String dob = (currentYear - 20) + "-" + String.format("%02d", nextMonth) + "-01";
+        int month1Based = cal.get(Calendar.MONTH) + 1; // 1..12
+        int nextMonth = month1Based + 1;
+
+        int birthYear = currentYear - 20;
+
+        // if next month wraps to January, the birthday would be next year,
+        // so to still be 19 today (in December), birth year must be currentYear - 19
+        if (nextMonth == 13) {
+            nextMonth = 1;
+            birthYear = currentYear - 19;
+        }
+
+        String dob = birthYear + "-" + String.format("%02d", nextMonth) + "-01";
         int age = TimeUtils.calculateAge(dob);
 
-        // Still 19 because birthday hasn't happened yet this year
         assertEquals(19, age);
     }
 

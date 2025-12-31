@@ -25,6 +25,7 @@ public class TimeUtils {
             int day = Integer.parseInt(parts[2]);
 
             Calendar dob = Calendar.getInstance();
+            dob.clear();
             dob.set(year, month - 1, day); // Month is 0-based
 
             Calendar today = Calendar.getInstance();
