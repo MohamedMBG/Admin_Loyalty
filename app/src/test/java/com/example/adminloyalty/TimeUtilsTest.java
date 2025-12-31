@@ -33,6 +33,9 @@ public class TimeUtilsTest {
 
         String dob = (currentYear - 20) + "-" + String.format("%02d", nextMonth) + "-01";
         int age = TimeUtils.calculateAge(dob);
+
+        // Still 19 because birthday hasn't happened yet this year
+        assertEquals(19, age);
     }
 
     @Test

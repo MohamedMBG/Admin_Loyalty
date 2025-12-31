@@ -43,6 +43,9 @@ dependencies {
     implementation(libs.firebase.functions)
     implementation(libs.firebase.auth)
     testImplementation(libs.junit)
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.mockito.inline)
+    testImplementation(libs.arch.core.testing)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
     // PieChart & LineChart
