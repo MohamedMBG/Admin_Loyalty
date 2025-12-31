@@ -1,7 +1,6 @@
 package com.example.adminloyalty.cashier;
 
 import android.annotation.SuppressLint;
-import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -10,7 +9,6 @@ import android.os.Looper;
 import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ImageView;
