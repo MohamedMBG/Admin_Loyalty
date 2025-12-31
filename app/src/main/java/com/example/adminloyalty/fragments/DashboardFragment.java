@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -13,7 +12,6 @@ import android.widget.Toast;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -21,11 +19,11 @@ import com.example.adminloyalty.R;
 import com.example.adminloyalty.authetification.LoginActivity;
 import com.example.adminloyalty.data.DashboardRepository.CashierStats;
 import com.example.adminloyalty.data.DashboardRepository.DashboardPeriod;
+import com.example.adminloyalty.databinding.FragmentDashboardBinding;
 import com.example.adminloyalty.utils.CashierRowBuilder;
 import com.example.adminloyalty.viewmodel.DashboardViewModel;
 import com.example.adminloyalty.viewmodel.DashboardViewModel.DashboardUiState;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.chip.ChipGroup;
 import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.Arrays;
@@ -45,17 +43,7 @@ public class DashboardFragment extends Fragment {
     private DashboardViewModel viewModel;
     private DashboardPeriod currentPeriod = DashboardPeriod.TODAY;
 
-    private ChipGroup chipGroupPeriod;
-
-    private TextView tvRevenueValue, tvRevenueDelta;
-    private TextView tvRewardCostValue;
-    private TextView tvVisitsValue;
-    private TextView tvNewClientsValue;
-    private TextView tvPointsValue;
-    private TextView tvGiftsValue;
-
-    private CardView btnOffers, allScansCard, btnRedemptions, createCashierCard, btnActionClients, giftMenu;
-    private ImageView btnLogout;
+    private FragmentDashboardBinding binding;
 
     private final View[] chartBars = new View[CHART_SIZE];
     private final TextView[] chartValues = new TextView[CHART_SIZE];
@@ -70,21 +58,27 @@ public class DashboardFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_dashboard, container, false);
+        binding = FragmentDashboardBinding.inflate(inflater, container, false);
 
         density = getResources().getDisplayMetrics().density;
 
-        bindViews(view);
+        bindViews();
         setupListeners();
         setupNavigation();
         setupLogout();
-        setupExport(view);
+        setupExport();
         setupBack();
         setupViewModel();
 
         viewModel.selectPeriod(DashboardPeriod.TODAY);
 
-        return view;
+        return binding.getRoot();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 
     private void setupViewModel() {
@@ -102,50 +96,34 @@ public class DashboardFragment extends Fragment {
         });
     }
 
-    private void bindViews(@NonNull View view) {
-        chipGroupPeriod = view.findViewById(R.id.chipGroupPeriod);
+    private void bindViews() {
+        if (binding == null) return;
 
-        tvRevenueValue = view.findViewById(R.id.tvRevenueValue);
-        tvRevenueDelta = view.findViewById(R.id.tvRevenueDelta);
-        tvRewardCostValue = view.findViewById(R.id.tvRewardCostValue);
-        tvVisitsValue = view.findViewById(R.id.tvVisitsValue);
-        tvNewClientsValue = view.findViewById(R.id.tvNewClientsValue);
-        tvPointsValue = view.findViewById(R.id.tvPointsValue);
-        tvGiftsValue = view.findViewById(R.id.tvGiftsValue);
+        chartBars[0] = binding.viewChartBar1;
+        chartBars[1] = binding.viewChartBar2;
+        chartBars[2] = binding.viewChartBar3;
+        chartBars[3] = binding.viewChartBar4;
+        chartBars[4] = binding.viewChartBar5;
+        chartBars[5] = binding.viewChartBar6;
+        chartBars[6] = binding.viewChartBar7;
 
-        chartBars[0] = view.findViewById(R.id.viewChartBar1);
-        chartBars[1] = view.findViewById(R.id.viewChartBar2);
-        chartBars[2] = view.findViewById(R.id.viewChartBar3);
-        chartBars[3] = view.findViewById(R.id.viewChartBar4);
-        chartBars[4] = view.findViewById(R.id.viewChartBar5);
-        chartBars[5] = view.findViewById(R.id.viewChartBar6);
-        chartBars[6] = view.findViewById(R.id.viewChartBar7);
+        chartValues[0] = binding.tvChartVal1;
+        chartValues[1] = binding.tvChartVal2;
+        chartValues[2] = binding.tvChartVal3;
+        chartValues[3] = binding.tvChartVal4;
+        chartValues[4] = binding.tvChartVal5;
+        chartValues[5] = binding.tvChartVal6;
+        chartValues[6] = binding.tvChartVal7;
 
-        chartValues[0] = view.findViewById(R.id.tvChartVal1);
-        chartValues[1] = view.findViewById(R.id.tvChartVal2);
-        chartValues[2] = view.findViewById(R.id.tvChartVal3);
-        chartValues[3] = view.findViewById(R.id.tvChartVal4);
-        chartValues[4] = view.findViewById(R.id.tvChartVal5);
-        chartValues[5] = view.findViewById(R.id.tvChartVal6);
-        chartValues[6] = view.findViewById(R.id.tvChartVal7);
+        chartLabels[0] = binding.tvLabel1;
+        chartLabels[1] = binding.tvLabel2;
+        chartLabels[2] = binding.tvLabel3;
+        chartLabels[3] = binding.tvLabel4;
+        chartLabels[4] = binding.tvLabel5;
+        chartLabels[5] = binding.tvLabel6;
+        chartLabels[6] = binding.tvLabel7;
 
-        chartLabels[0] = view.findViewById(R.id.tvLabel1);
-        chartLabels[1] = view.findViewById(R.id.tvLabel2);
-        chartLabels[2] = view.findViewById(R.id.tvLabel3);
-        chartLabels[3] = view.findViewById(R.id.tvLabel4);
-        chartLabels[4] = view.findViewById(R.id.tvLabel5);
-        chartLabels[5] = view.findViewById(R.id.tvLabel6);
-        chartLabels[6] = view.findViewById(R.id.tvLabel7);
-
-        giftMenu = view.findViewById(R.id.btnActionAddGift);
-        allScansCard = view.findViewById(R.id.btnActionScans);
-        btnRedemptions = view.findViewById(R.id.btnActionRedemptions);
-        createCashierCard = view.findViewById(R.id.btnActionClients);
-        btnActionClients = view.findViewById(R.id.btnActionView);
-        btnLogout = view.findViewById(R.id.btnLogout);
-        btnOffers = view.findViewById(R.id.btnActionOffers);
-
-        layoutCashierList = view.findViewById(R.id.layoutCashierList);
+        layoutCashierList = binding.layoutCashierList;
     }
 
     private void setupBack() {
@@ -161,7 +139,8 @@ public class DashboardFragment extends Fragment {
     }
 
     private void setupListeners() {
-        chipGroupPeriod.setOnCheckedChangeListener((group, checkedId) -> {
+        if (binding == null) return;
+        binding.chipGroupPeriod.setOnCheckedChangeListener((group, checkedId) -> {
             if (checkedId == R.id.chipToday) applyPeriod(DashboardPeriod.TODAY);
             else if (checkedId == R.id.chipWeek) applyPeriod(DashboardPeriod.WEEK);
             else if (checkedId == R.id.chipMonth) applyPeriod(DashboardPeriod.MONTH);
@@ -169,25 +148,26 @@ public class DashboardFragment extends Fragment {
     }
 
     private void setupNavigation() {
-        giftMenu.setOnClickListener(v -> navigateToFragment(new RewardsAdminFragment()));
-        btnRedemptions.setOnClickListener(v -> navigateToFragment(new RewadLogsFragment()));
-        btnActionClients.setOnClickListener(v -> navigateToFragment(new ClientsSummaryFragment()));
-        allScansCard.setOnClickListener(v -> navigateToFragment(new ScanLogsFragment()));
-        createCashierCard.setOnClickListener(v -> navigateToFragment(new CreateCashierFragment()));
-        btnOffers.setOnClickListener(v -> navigateToFragment(new PromotionsAdminFragment()));
+        if (binding == null) return;
+        binding.btnActionAddGift.setOnClickListener(v -> navigateToFragment(new RewardsAdminFragment()));
+        binding.btnActionRedemptions.setOnClickListener(v -> navigateToFragment(new RewadLogsFragment()));
+        binding.btnActionView.setOnClickListener(v -> navigateToFragment(new ClientsSummaryFragment()));
+        binding.btnActionScans.setOnClickListener(v -> navigateToFragment(new ScanLogsFragment()));
+        binding.btnActionClients.setOnClickListener(v -> navigateToFragment(new CreateCashierFragment()));
+        binding.btnActionOffers.setOnClickListener(v -> navigateToFragment(new PromotionsAdminFragment()));
     }
 
     private void setupLogout() {
-        btnLogout.setOnClickListener(v -> performLogout());
+        if (binding == null) return;
+        binding.btnLogout.setOnClickListener(v -> performLogout());
     }
 
-    private void setupExport(@NonNull View root) {
-        View btnExport = root.findViewById(R.id.btnActionExport);
-        if (btnExport != null) {
-            btnExport.setOnClickListener(v ->
-                    Toast.makeText(getContext(), "Exporting CSV...", Toast.LENGTH_SHORT).show()
-            );
-        }
+    private void setupExport() {
+        if (binding == null) return;
+        View btnExport = binding.btnActionExport;
+        btnExport.setOnClickListener(v ->
+                Toast.makeText(getContext(), "Exporting CSV...", Toast.LENGTH_SHORT).show()
+        );
     }
 
     private void navigateToFragment(@NonNull Fragment fragment) {
@@ -207,13 +187,15 @@ public class DashboardFragment extends Fragment {
     }
 
     private void resetUI() {
-        setText(tvRevenueValue, "--");
-        setText(tvRevenueDelta, "--%");
-        setText(tvRewardCostValue, "--");
-        setText(tvVisitsValue, "--");
-        setText(tvNewClientsValue, "--");
-        setText(tvPointsValue, "--");
-        setText(tvGiftsValue, "--");
+        if (binding != null) {
+            setText(binding.tvRevenueValue, "--");
+            setText(binding.tvRevenueDelta, "--%");
+            setText(binding.tvRewardCostValue, "--");
+            setText(binding.tvVisitsValue, "--");
+            setText(binding.tvNewClientsValue, "--");
+            setText(binding.tvPointsValue, "--");
+            setText(binding.tvGiftsValue, "--");
+        }
 
         int[] zeros = new int[CHART_SIZE];
         updateChartUI(zeros);
@@ -223,13 +205,13 @@ public class DashboardFragment extends Fragment {
         if (state == null || !isAdded()) return;
         currentPeriod = state.period;
 
-        tvRevenueValue.setText(formatMoney0(state.revenue));
-        tvRevenueDelta.setText(formatDeltaPercent(state.revenue, state.previousRevenue));
-        tvRewardCostValue.setText(formatMoney0(state.totalCostPoints * 0.5));
-        tvVisitsValue.setText(String.valueOf(state.uniqueVisits));
-        tvNewClientsValue.setText(String.valueOf(state.newClients));
-        tvPointsValue.setText(formatPoints(state.points));
-        tvGiftsValue.setText(String.valueOf(state.gifts));
+        binding.tvRevenueValue.setText(formatMoney0(state.revenue));
+        binding.tvRevenueDelta.setText(formatDeltaPercent(state.revenue, state.previousRevenue));
+        binding.tvRewardCostValue.setText(formatMoney0(state.totalCostPoints * 0.5));
+        binding.tvVisitsValue.setText(String.valueOf(state.uniqueVisits));
+        binding.tvNewClientsValue.setText(String.valueOf(state.newClients));
+        binding.tvPointsValue.setText(formatPoints(state.points));
+        binding.tvGiftsValue.setText(String.valueOf(state.gifts));
 
         updateChartUI(state.chartData);
         renderCashierRows(state.cashiers);
@@ -251,19 +233,16 @@ public class DashboardFragment extends Fragment {
     }
 
     private void handleEmptyState(boolean empty) {
-        View root = getView();
-        if (root == null) return;
+        if (binding == null) return;
 
-        View emptyState = root.findViewById(R.id.layoutEmptyState);
-        if (emptyState != null) emptyState.setVisibility(empty ? View.VISIBLE : View.GONE);
+        View emptyState = binding.layoutEmptyState;
+        emptyState.setVisibility(empty ? View.VISIBLE : View.GONE);
     }
 
     private void handleViewAllButton(boolean show) {
-        View root = getView();
-        if (root == null) return;
+        if (binding == null) return;
 
-        MaterialButton btnViewAll = root.findViewById(R.id.btnViewAllCashiers);
-        if (btnViewAll == null) return;
+        MaterialButton btnViewAll = binding.btnViewAllCashiers;
 
         btnViewAll.setVisibility(show ? View.VISIBLE : View.GONE);
         if (show) btnViewAll.setOnClickListener(v -> showAllCashiers());
