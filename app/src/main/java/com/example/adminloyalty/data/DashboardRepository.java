@@ -2,14 +2,22 @@ package com.example.adminloyalty.data;
 
 import androidx.annotation.NonNull;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.AggregateField;
+import com.google.firebase.firestore.AggregateQuery;
 import com.google.firebase.firestore.AggregateQuerySnapshot;
 import com.google.firebase.firestore.AggregateSource;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -51,13 +59,15 @@ public class DashboardRepository {
     private final FirebaseFirestore db;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final Map<String, DashboardData> cache = new HashMap<>();
+    private final SharedPreferences prefs;
 
-    public DashboardRepository() {
-        this(FirebaseFirestore.getInstance());
+    public DashboardRepository(Context context) {
+        this(FirebaseFirestore.getInstance(), context);
     }
 
-    public DashboardRepository(@NonNull FirebaseFirestore db) {
+    public DashboardRepository(@NonNull FirebaseFirestore db, Context context) {
         this.db = db;
+        this.prefs = context.getSharedPreferences("dashboard_cache", Context.MODE_PRIVATE);
     }
 
     public void shutdown() {
@@ -68,10 +78,15 @@ public class DashboardRepository {
         DateRange range = DateRange.forPeriod(period);
         String cacheKey = period.name() + range.start.getTime();
 
-        DashboardData cached = cache.get(cacheKey);
-        if (cached != null) {
-            callback.onSuccess(cached, true);
-            return;
+        DashboardData memCached = cache.get(cacheKey);
+        if (memCached != null) {
+            callback.onSuccess(memCached, true);
+        } else {
+            DashboardData diskCached = loadFromPreferences(cacheKey);
+            if (diskCached != null) {
+                cache.put(cacheKey, diskCached);
+                callback.onSuccess(diskCached, true);
+            }
         }
 
         Task<QuerySnapshot> earnTask = db.collection(COL_EARN)
@@ -81,11 +96,12 @@ public class DashboardRepository {
                 .get();
 
         DateRange prevRange = DateRange.previousOf(range.start, range.end);
-        Task<QuerySnapshot> prevRevenueTask = db.collection(COL_EARN)
+        Task<AggregateQuerySnapshot> prevRevenueTask = db.collection(COL_EARN)
                 .whereEqualTo(FIELD_STATUS, STATUS_REDEEMED)
                 .whereGreaterThanOrEqualTo(FIELD_CREATED_AT, new Timestamp(prevRange.start))
                 .whereLessThan(FIELD_CREATED_AT, new Timestamp(prevRange.end))
-                .get();
+                .aggregate(AggregateField.sum(FIELD_AMOUNT_MAD))
+                .get(AggregateSource.SERVER);
 
         Task<QuerySnapshot> redeemTask = db.collection(COL_REDEEM)
                 .whereGreaterThanOrEqualTo(FIELD_CREATED_AT, new Timestamp(range.start))
@@ -121,6 +137,7 @@ public class DashboardRepository {
             executor.execute(() -> {
                 DashboardData data = buildDashboardData(period, range, earnTask.getResult(), prevRevenueTask.getResult(), redeemTask.getResult(), newClientsTask.getResult());
                 cache.put(cacheKey, data);
+                saveToPreferences(cacheKey, data);
                 delivered.set(true);
                 callback.onSuccess(data, false);
             });
@@ -131,7 +148,7 @@ public class DashboardRepository {
     DashboardData buildDashboardData(@NonNull DashboardPeriod period,
                                      @NonNull DateRange range,
                                      @NonNull QuerySnapshot earnSnap,
-                                     @NonNull QuerySnapshot prevRevenueSnap,
+                                     @NonNull AggregateQuerySnapshot prevRevenueSnap,
                                      @NonNull QuerySnapshot redeemSnap,
                                      @NonNull AggregateQuerySnapshot newClientsSnap) {
         double revenue = 0.0;
@@ -153,8 +170,9 @@ public class DashboardRepository {
         }
 
         double prevRevenue = 0.0;
-        for (DocumentSnapshot doc : prevRevenueSnap.getDocuments()) {
-            prevRevenue += safeDouble(doc, FIELD_AMOUNT_MAD);
+        Double sum = prevRevenueSnap.get(AggregateField.sum(FIELD_AMOUNT_MAD));
+        if (sum != null) {
+            prevRevenue = sum;
         }
 
         double totalCostPoints = 0.0;
@@ -270,6 +288,75 @@ public class DashboardRepository {
             map.put(info.id, stats);
         }
         return stats;
+    }
+
+    private void saveToPreferences(String cacheKey, DashboardData data) {
+        try {
+            JSONObject obj = new JSONObject();
+            obj.put("period", data.period.name());
+            obj.put("rangeStart", data.range.start.getTime());
+            obj.put("rangeEnd", data.range.end.getTime());
+            obj.put("revenue", data.revenue);
+            obj.put("previousRevenue", data.previousRevenue);
+            obj.put("points", data.points);
+            obj.put("uniqueVisits", data.uniqueVisits);
+
+            JSONArray chartArr = new JSONArray();
+            for (int v : data.chartData) chartArr.put(v);
+            obj.put("chartData", chartArr);
+
+            obj.put("totalCostPoints", data.totalCostPoints);
+            obj.put("gifts", data.gifts);
+            obj.put("newClients", data.newClients);
+
+            JSONArray cashiersArr = new JSONArray();
+            for (CashierStats cs : data.cashiers) {
+                JSONObject c = new JSONObject();
+                c.put("id", cs.id);
+                c.put("name", cs.name);
+                c.put("scans", cs.scans);
+                c.put("redeems", cs.redeems);
+                cashiersArr.put(c);
+            }
+            obj.put("cashiers", cashiersArr);
+
+            prefs.edit().putString(cacheKey, obj.toString()).apply();
+        } catch (Exception ignored) { }
+    }
+
+    private DashboardData loadFromPreferences(String cacheKey) {
+        String json = prefs.getString(cacheKey, null);
+        if (json == null) return null;
+        try {
+            JSONObject obj = new JSONObject(json);
+            DashboardPeriod period = DashboardPeriod.valueOf(obj.getString("period"));
+            DateRange range = new DateRange(new java.util.Date(obj.getLong("rangeStart")), new java.util.Date(obj.getLong("rangeEnd")));
+
+            JSONArray chartArr = obj.getJSONArray("chartData");
+            int[] chartData = new int[chartArr.length()];
+            for (int i = 0; i < chartArr.length(); i++) chartData[i] = chartArr.getInt(i);
+
+            JSONArray cashiersArr = obj.getJSONArray("cashiers");
+            List<CashierStats> cashiers = new ArrayList<>();
+            for (int i = 0; i < cashiersArr.length(); i++) {
+                JSONObject c = cashiersArr.getJSONObject(i);
+                CashierStats cs = new CashierStats(c.getString("id"), c.getString("name"));
+                cs.scans = c.getInt("scans");
+                cs.redeems = c.getInt("redeems");
+                cashiers.add(cs);
+            }
+
+            return new DashboardData(
+                    period, range,
+                    obj.getDouble("revenue"), obj.getDouble("previousRevenue"),
+                    obj.getLong("points"), obj.getInt("uniqueVisits"),
+                    chartData, obj.getDouble("totalCostPoints"),
+                    obj.getInt("gifts"), obj.getLong("newClients"),
+                    cashiers
+            );
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public interface DashboardCallback {

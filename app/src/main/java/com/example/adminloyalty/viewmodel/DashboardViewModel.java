@@ -1,9 +1,11 @@
 package com.example.adminloyalty.viewmodel;
 
+import android.app.Application;
+
 import androidx.annotation.NonNull;
+import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
 
 import com.example.adminloyalty.data.DashboardRepository;
 import com.example.adminloyalty.data.DashboardRepository.CashierStats;
@@ -12,7 +14,7 @@ import com.example.adminloyalty.data.DashboardRepository.DashboardPeriod;
 
 import java.util.List;
 
-public class DashboardViewModel extends ViewModel {
+public class DashboardViewModel extends AndroidViewModel {
 
     private final DashboardRepository repository;
 
@@ -20,12 +22,9 @@ public class DashboardViewModel extends ViewModel {
     private final MutableLiveData<Boolean> loading = new MutableLiveData<>(false);
     private final MutableLiveData<String> error = new MutableLiveData<>();
 
-    public DashboardViewModel() {
-        this(new DashboardRepository());
-    }
-
-    public DashboardViewModel(@NonNull DashboardRepository repository) {
-        this.repository = repository;
+    public DashboardViewModel(@NonNull Application application) {
+        super(application);
+        this.repository = new DashboardRepository(application);
     }
 
     public LiveData<DashboardUiState> getUiState() {
