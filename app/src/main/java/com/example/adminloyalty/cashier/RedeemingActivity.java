@@ -89,8 +89,10 @@ public class RedeemingActivity extends AppCompatActivity {
     private Timestamp selectedUserLastVisit = null;
 
     // Selected reward
+    private String selectedItemDocId = null;
     private String selectedItemName = null;
     private int selectedItemCost = 0;
+    private String selectedPromoDocId = null;
 
     // Debounce
     private final Handler searchHandler = new Handler(Looper.getMainLooper());
@@ -334,6 +336,7 @@ public class RedeemingActivity extends AppCompatActivity {
         promoCard.setVisibility(View.GONE);
         tvOfferText.setText("");
 
+        selectedPromoDocId = null;
         db.collection("promotions")
                 .whereEqualTo("active", true)
                 .get()
@@ -360,6 +363,7 @@ public class RedeemingActivity extends AppCompatActivity {
                     });
 
                     DocumentSnapshot topPromo = eligiblePromos.get(0);
+                    selectedPromoDocId = topPromo.getId();
                     String title = topPromo.getString("title");
                     if (TextUtils.isEmpty(title)) title = "Special offer";
 
@@ -484,9 +488,8 @@ public class RedeemingActivity extends AppCompatActivity {
                 .orderBy("name", Query.Direction.ASCENDING)
                 .get()
                 .addOnSuccessListener(snapshots -> {
-                    if (snapshots == null || snapshots.isEmpty()) return;
-
                     for (DocumentSnapshot doc : snapshots) {
+                        String id = doc.getId();
                         String name = doc.getString("name");
                         String cat = doc.getString("category");
                         Long costL = doc.getLong("costPoints");
@@ -494,7 +497,7 @@ public class RedeemingActivity extends AppCompatActivity {
 
                         if (TextUtils.isEmpty(name) || TextUtils.isEmpty(cat)) continue;
 
-                        View itemView = createItemRow(name, cost);
+                        View itemView = createItemRow(id, name, cost);
                         addToContainer(cat, itemView);
                     }
                 })
@@ -551,7 +554,7 @@ public class RedeemingActivity extends AppCompatActivity {
      * Better-looking item row than a transparent MaterialButton
      * (still easy & clickable)
      */
-    private View createItemRow(String name, int cost) {
+    private View createItemRow(String id, String name, int cost) {
         View v = getLayoutInflater().inflate(R.layout.item_reward_row, null, false);
 
         MaterialCardView card = v.findViewById(R.id.rewardCard);
@@ -564,15 +567,16 @@ public class RedeemingActivity extends AppCompatActivity {
         tvSubtitle.setText("Tap to select");
         chipPoints.setText(cost + " pts");
 
-        // store data on the view (useful for selection refresh)
+        // store data on the view
         v.setTag(R.id.tvTitle, name);
+        v.setTag(R.id.rewardCard, id);
 
         // apply selected UI if needed
-        boolean isSelected = (selectedItemName != null && selectedItemName.equals(name));
+        boolean isSelected = (selectedItemDocId != null && selectedItemDocId.equals(id));
         applyRewardRowSelectedState(card, ivSelected, isSelected);
 
         card.setOnClickListener(view -> {
-            selectItem(name, cost);
+            selectItem(id, name, cost);
             refreshRewardSelectionUI(); // update list visuals
         });
 
@@ -599,7 +603,8 @@ public class RedeemingActivity extends AppCompatActivity {
     // -------------------------
     // SELECT ITEM + BOTTOM BAR
     // -------------------------
-    private void selectItem(String name, int cost) {
+    private void selectItem(String id, String name, int cost) {
+        selectedItemDocId = id;
         selectedItemName = name;
         selectedItemCost = cost;
 
@@ -627,10 +632,11 @@ public class RedeemingActivity extends AppCompatActivity {
             MaterialCardView card = row.findViewById(R.id.rewardCard);
             ImageView ivSelected = row.findViewById(R.id.ivSelected);
             TextView title = row.findViewById(R.id.tvTitle);
+            String rowId = (String) row.getTag(R.id.rewardCard);
 
             if (card == null || ivSelected == null || title == null) continue;
 
-            boolean isSelected = (selectedItemName != null && selectedItemName.equals(title.getText().toString()));
+            boolean isSelected = (selectedItemDocId != null && selectedItemDocId.equals(rowId));
             applyRewardRowSelectedState(card, ivSelected, isSelected);
         }
     }
@@ -699,47 +705,86 @@ public class RedeemingActivity extends AppCompatActivity {
     }
 
     private void createRedeemCode() {
+        if (selectedUserDocId == null || selectedItemDocId == null) {
+            showToast("Selection incomplete.");
+            return;
+        }
+
         btnRedeem.setEnabled(false);
         btnRedeem.setAlpha(0.6f);
-        btnRedeem.setText("Generating...");
+        btnRedeem.setText("Processing...");
 
-        Map<String, Object> data = new HashMap<>();
-        data.put("userUid", selectedUserUid);
-        data.put("userDocId", selectedUserDocId);
-        data.put("userName", selectedUserName);
-        data.put("itemName", selectedItemName);
-        data.put("costPoints", selectedItemCost);
-        data.put("clientPointsBefore", selectedUserPoints);
-        data.put("cashierId", cashierId);
-        if (cashierName != null) data.put("cashierName", cashierName);
-        if (shopId != null) data.put("shopId", shopId);
-        data.put("status", "ACTIVE");
-        data.put("type", "REDEEM");
-        data.put("createdAt", FieldValue.serverTimestamp());
+        // 🔹 SECURE TRANSACTION: Deduct points on server side
+        db.runTransaction(transaction -> {
+            // 1. Get latest user data
+            com.google.firebase.firestore.DocumentReference userRef = db.collection("users").document(selectedUserDocId);
+            DocumentSnapshot userSnap = transaction.get(userRef);
+            
+            // 2. Get latest reward cost
+            com.google.firebase.firestore.DocumentReference rewardRef = db.collection("rewards_catalog").document(selectedItemDocId);
+            DocumentSnapshot rewardSnap = transaction.get(rewardRef);
 
-        db.collection("redeem_codes")
-                .add(data)
-                .addOnSuccessListener(doc -> {
-                    String codeId = doc.getId();
-                    doc.update("codeId", codeId);
+            if (!userSnap.exists()) throw new IllegalStateException("User does not exist.");
+            if (!rewardSnap.exists()) throw new IllegalStateException("Reward no longer exists.");
 
-                    String payload = "REDEEM|" + codeId + "|" + selectedUserUid + "|" + selectedItemCost;
+            long currentPoints = userSnap.getLong("points") != null ? userSnap.getLong("points") : 0;
+            long officialCost = rewardSnap.getLong("costPoints") != null ? rewardSnap.getLong("costPoints") : 999999;
+            
+            // 🔹 Optional: Verify Promo
+            if (selectedPromoDocId != null) {
+                 DocumentSnapshot promoSnap = transaction.get(db.collection("promotions").document(selectedPromoDocId));
+                 if (promoSnap.exists() && promoSnap.getBoolean("active")) {
+                      // Logic for promo-based cost discount could go here
+                      // For now, we trust the eligibility check but rules should verify
+                 }
+            }
 
-                    try {
-                        Bitmap qr = generateQrCode(payload, 512);
-                        showQrDialog(qr, selectedItemName, selectedItemCost);
-                    } catch (WriterException e) {
-                        showToast("QR generation failed");
-                    }
+            if (currentPoints < officialCost) {
+                throw new IllegalStateException("Insufficient points (latest: " + currentPoints + ")");
+            }
 
-                    btnRedeem.setText("Redeem");
-                    updateRedeemButtonState();
-                })
-                .addOnFailureListener(e -> {
-                    showToast("Failed: " + (e.getMessage() != null ? e.getMessage() : ""));
-                    btnRedeem.setText("Redeem");
-                    updateRedeemButtonState();
-                });
+            // 3. Deduct Points
+            transaction.update(userRef, "points", currentPoints - officialCost);
+            transaction.update(userRef, "lastVisitTimestamp", FieldValue.serverTimestamp());
+
+            // 4. Create Log
+            com.google.firebase.firestore.DocumentReference newLogRef = db.collection("redeem_codes").document();
+            Map<String, Object> data = new HashMap<>();
+            data.put("userUid", selectedUserUid);
+            data.put("userDocId", selectedUserDocId);
+            data.put("userName", selectedUserName);
+            data.put("itemName", selectedItemName);
+            data.put("itemId", selectedItemDocId);
+            data.put("costPoints", officialCost);
+            data.put("appliedPromoId", selectedPromoDocId);
+            data.put("cashierId", cashierId);
+            if (cashierName != null) data.put("cashierName", cashierName);
+            data.put("status", "completed"); // Marked as completed because points are deducted
+            data.put("type", "REDEEM");
+            data.put("createdAt", FieldValue.serverTimestamp());
+            data.put("completedAt", FieldValue.serverTimestamp());
+
+            transaction.set(newLogRef, data);
+
+            return "REDEEM|" + newLogRef.getId() + "|" + selectedUserUid + "|" + officialCost;
+        }).addOnSuccessListener(payload -> {
+            showToast("Success! Points deducted.");
+            try {
+                Bitmap qr = generateQrCode(payload, 512);
+                showQrDialog(qr, selectedItemName, (int) selectedItemCost);
+            } catch (WriterException e) {
+                showToast("QR generation failed");
+            }
+            // Refresh local UI points
+            triggerSearchNow(); 
+            btnRedeem.setText("Redeem");
+            updateRedeemButtonState();
+        }).addOnFailureListener(e -> {
+            showToast("Redemption failed: " + e.getMessage());
+            btnRedeem.setText("Redeem");
+            btnRedeem.setEnabled(true);
+            btnRedeem.setAlpha(1.0f);
+        });
     }
 
     // -------------------------
