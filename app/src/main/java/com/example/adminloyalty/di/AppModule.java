@@ -18,4 +18,10 @@ public class AppModule {
     public FirebaseFirestore provideFirestore() {
         return FirebaseFirestore.getInstance();
     }
+
+    @Provides
+    @Singleton
+    public com.google.firebase.auth.FirebaseAuth provideFirebaseAuth() {
+        return com.google.firebase.auth.FirebaseAuth.getInstance();
+    }
 }
