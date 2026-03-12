@@ -18,33 +18,32 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.adminloyalty.R;
-import com.google.android.gms.tasks.Task;
-import com.google.android.gms.tasks.Tasks;
+import com.example.adminloyalty.viewmodel.ClientDetailsViewModel;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class ClientDetailsFragment extends Fragment {
 
     private static final String ARG_CLIENT_ID = "client_id";
     private String clientId;
-    private FirebaseFirestore db;
+
+    private ClientDetailsViewModel viewModel;
 
     // UI Views
     private TextView tvLastVisit, tvName, tvEmail, tvPhone, tvGender, tvAddress, tvPoints, tvSpend, tvEmptyHistory;
@@ -75,7 +74,6 @@ public class ClientDetailsFragment extends Fragment {
         if (getArguments() != null) {
             clientId = getArguments().getString(ARG_CLIENT_ID);
         }
-        db = FirebaseFirestore.getInstance();
     }
 
     @Nullable
@@ -106,16 +104,92 @@ public class ClientDetailsFragment extends Fragment {
         // Setup Toolbar Action
         btnBack.setOnClickListener(v -> requireActivity().onBackPressed());
 
+        // Setup ViewModel
+        viewModel = new ViewModelProvider(this).get(ClientDetailsViewModel.class);
+        observeViewModel();
+
         // Setup Filters
         setupFilters(view);
 
         // Load Data
-        loadUserProfile();
-        loadHistory();
+        if (clientId != null) {
+            viewModel.loadClientData(clientId);
+        }
+    }
+
+    private void observeViewModel() {
+        viewModel.getUserProfile().observe(getViewLifecycleOwner(), document -> {
+            if (document != null && document.exists()) {
+                String name = document.getString("fullName");
+                String email = document.getString("email");
+                String phone = document.getString("phone");
+                String gender = document.getString("gender");
+                String address = document.getString("address");
+
+                tvName.setText(name != null ? name : "Unknown");
+                tvEmail.setText(email != null ? email : "-");
+                tvPhone.setText(phone != null ? phone : "No Phone");
+                tvGender.setText(gender != null ? capitalize(gender) : "-");
+                tvAddress.setText(address != null ? address : "No Address");
+
+                Timestamp lastVisit = document.getTimestamp("lastVisitTimestamp");
+                String lastVisitStr = "Never";
+                if (lastVisit != null) {
+                    lastVisitStr = DateFormat.format("dd MMM yyyy", lastVisit.toDate()).toString();
+                }
+                if (tvLastVisit != null) {
+                    tvLastVisit.setText(lastVisitStr);
+                }
+
+                Long points = document.getLong("points");
+                tvPoints.setText(String.format(Locale.US, "%,d", points != null ? points : 0));
+            }
+        });
+
+        viewModel.getAverageSpend().observe(getViewLifecycleOwner(), spend -> {
+            tvSpend.setText(String.format(Locale.US, "%.2f", spend != null ? spend : 0.0));
+        });
+
+        viewModel.getAllActivities().observe(getViewLifecycleOwner(), activities -> {
+            if (activities != null) {
+                allActivities.clear();
+                allActivities.addAll(activities);
+                filterList("ALL");
+            }
+        });
+
+        viewModel.getLoadingHistory().observe(getViewLifecycleOwner(), isLoading -> {
+            progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+        });
+
+        viewModel.getError().observe(getViewLifecycleOwner(), error -> {
+            if (error != null && !error.isEmpty()) {
+                Toast.makeText(getContext(), error, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        viewModel.getCashiers().observe(getViewLifecycleOwner(), cashiers -> {
+            if (cashiers != null && !cashiers.isEmpty()) {
+                String[] cashierArray = cashiers.toArray(new String[0]);
+                new AlertDialog.Builder(getContext())
+                        .setTitle("Select Cashier")
+                        .setItems(cashierArray, (dialog, which) -> {
+                            String selectedCashier = cashierArray[which];
+                            filterListByCashier(selectedCashier);
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .setNeutralButton("Show All", (dialog, which) -> {
+                            chipGroupFilters.check(R.id.filterAll);
+                            filterList("ALL");
+                        })
+                        .show();
+            } else if (cashiers != null && cashiers.isEmpty()) {
+                Toast.makeText(getContext(), "No cashiers found in database", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void setupFilters(View view) {
-        // 1. Group Listener for Toggles (All/Scans/Gifts)
         chipGroupFilters.setOnCheckedStateChangeListener((group, checkedIds) -> {
             if (checkedIds.isEmpty()) return;
 
@@ -127,72 +201,20 @@ public class ClientDetailsFragment extends Fragment {
             } else if (id == R.id.filterGifts) {
                 filterList("SPEND");
             }
-            // Note: Cashier/Date logic removed from here to avoid double-firing or no-firing issues
         });
 
-        // 2. Direct Click Listeners for Actions (Cashier/Date)
-        // This ensures the dialog opens even if the chip is already "checked"
         Chip chipCashier = view.findViewById(R.id.filterCashier);
         chipCashier.setOnClickListener(v -> {
-            chipGroupFilters.check(R.id.filterCashier); // Visually select it
-            showCashierFilterDialog();
+            chipGroupFilters.check(R.id.filterCashier);
+            Toast.makeText(getContext(), "Loading cashier list...", Toast.LENGTH_SHORT).show();
+            viewModel.fetchCashiers();
         });
 
         Chip chipDate = view.findViewById(R.id.filterDate);
         chipDate.setOnClickListener(v -> {
-            chipGroupFilters.check(R.id.filterDate); // Visually select it
+            chipGroupFilters.check(R.id.filterDate);
             showDateRangePicker();
         });
-    }
-
-    // --- Filter by fetching Cashiers from Firebase ---
-    private void showCashierFilterDialog() {
-        Toast.makeText(getContext(), "Loading cashier list...", Toast.LENGTH_SHORT).show();
-
-        db.collection("users")
-                .whereEqualTo("role", "cashier")
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    if (!isAdded()) return;
-
-                    List<String> cashierNames = new ArrayList<>();
-                    for (DocumentSnapshot doc : queryDocumentSnapshots) {
-                        // Assuming 'fullName' or 'name' stores the cashier's display name
-                        String name = doc.getString("fullName");
-                        if (name == null) name = doc.getString("name"); // Fallback
-
-                        if (name != null && !name.isEmpty()) {
-                            cashierNames.add(name);
-                        }
-                    }
-
-                    if (cashierNames.isEmpty()) {
-                        Toast.makeText(getContext(), "No cashiers found in database", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-
-                    // Sort alphabetically for easier searching
-                    Collections.sort(cashierNames);
-
-                    String[] cashierArray = cashierNames.toArray(new String[0]);
-
-                    new AlertDialog.Builder(getContext())
-                            .setTitle("Select Cashier")
-                            .setItems(cashierArray, (dialog, which) -> {
-                                String selectedCashier = cashierArray[which];
-                                filterListByCashier(selectedCashier);
-                            })
-                            .setNegativeButton("Cancel", null)
-                            .setNeutralButton("Show All", (dialog, which) -> {
-                                chipGroupFilters.check(R.id.filterAll); // Reset visual selection
-                                filterList("ALL");
-                            })
-                            .show();
-                })
-                .addOnFailureListener(e -> {
-                    if (!isAdded()) return;
-                    Toast.makeText(getContext(), "Failed to load cashiers: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                });
     }
 
     private void filterListByCashier(String cashierName) {
@@ -200,7 +222,6 @@ public class ClientDetailsFragment extends Fragment {
 
         List<ActivityItem> filtered = new ArrayList<>();
         for (ActivityItem item : allActivities) {
-            // Case-insensitive comparison is safer
             String itemCashier = item.getCashierName() != null ? item.getCashierName() : "";
             if (itemCashier.equalsIgnoreCase(cashierName)) {
                 filtered.add(item);
@@ -232,7 +253,7 @@ public class ClientDetailsFragment extends Fragment {
         });
 
         datePicker.addOnNegativeButtonClickListener(v -> {
-            chipGroupFilters.check(R.id.filterAll); // Reset if cancelled
+            chipGroupFilters.check(R.id.filterAll);
             filterList("ALL");
         });
 
@@ -243,7 +264,6 @@ public class ClientDetailsFragment extends Fragment {
         if (allActivities == null || allActivities.isEmpty()) return;
 
         List<ActivityItem> filtered = new ArrayList<>();
-        // Add 1 day to end date to make it inclusive
         long endOfDay = end + (24 * 60 * 60 * 1000) - 1;
 
         for (ActivityItem item : allActivities) {
@@ -272,7 +292,6 @@ public class ClientDetailsFragment extends Fragment {
             }
         }
 
-        // Default Sort: Newest First
         Collections.sort(filtered, (o1, o2) -> {
             if (o1.getTs() == null || o2.getTs() == null) return 0;
             return o2.getTs().compareTo(o1.getTs());
@@ -296,144 +315,6 @@ public class ClientDetailsFragment extends Fragment {
             rvHistory.setVisibility(View.VISIBLE);
         }
     }
-    private void loadUserProfile() {
-        if (clientId == null) return;
-
-        // 1. Fetch User Profile
-        db.collection("users").document(clientId).get()
-                .addOnSuccessListener(document -> {
-                    if (!isAdded() || !document.exists()) return;
-
-                    // --- Basic Info Binding ---
-                    String name = document.getString("fullName");
-                    String email = document.getString("email");
-                    String phone = document.getString("phone");
-                    String gender = document.getString("gender");
-                    String address = document.getString("address");
-
-                    tvName.setText(name != null ? name : "Unknown");
-                    tvEmail.setText(email != null ? email : "-");
-                    tvPhone.setText(phone != null ? phone : "No Phone");
-                    tvGender.setText(gender != null ? capitalize(gender) : "-");
-                    tvAddress.setText(address != null ? address : "No Address");
-
-                    // --- Last Visit ---
-                    Timestamp lastVisit = document.getTimestamp("lastVisitTimestamp");
-                    String lastVisitStr = "Never";
-                    if (lastVisit != null) {
-                        lastVisitStr = DateFormat.format("dd MMM yyyy", lastVisit.toDate()).toString();
-                    }
-                    // Assuming you bound tvLastVisit in onViewCreated
-                    // tvLastVisit = view.findViewById(R.id.tvDetailLastVisit);
-                    if (tvLastVisit != null) {
-                        tvLastVisit.setText(lastVisitStr);
-                    }
-
-                    // --- Points Balance ---
-                    Long points = document.getLong("points");
-                    tvPoints.setText(String.format(Locale.US, "%,d", points != null ? points : 0));
-
-                    // --- DYNAMIC CALCULATION: Average Spend (MAD) ---
-                    // We calculate this from the actual transaction history (earn_codes)
-                    db.collection("earn_codes")
-                            .whereEqualTo("redeemedByUid", clientId)
-                            .whereEqualTo("status", "redeemed")
-                            .get()
-                            .addOnSuccessListener(scans -> {
-                                if (!isAdded()) return;
-
-                                double totalSpendMAD = 0.0;
-                                int visitCount = scans.size();
-
-                                for (DocumentSnapshot scan : scans) {
-                                    Double amount = scan.getDouble("amountMAD");
-                                    if (amount != null) {
-                                        totalSpendMAD += amount;
-                                    }
-                                }
-
-                                double avgSpend = 0.0;
-                                if (visitCount > 0) {
-                                    avgSpend = totalSpendMAD / visitCount;
-                                }
-
-                                tvSpend.setText(String.format(Locale.US, "%.2f", avgSpend*0.5));
-                            })
-                            .addOnFailureListener(e -> {
-                                // Fallback on error
-                                tvSpend.setText("0.00");
-                            });
-
-                })
-                .addOnFailureListener(e ->
-                        Toast.makeText(getContext(), "Error loading profile", Toast.LENGTH_SHORT).show()
-                );
-    }
-
-
-    private void loadHistory() {
-        if (clientId == null) return;
-
-        progressBar.setVisibility(View.VISIBLE);
-
-        // 1. Fetch EARN history (Scans)
-        Task<QuerySnapshot> earnTask = db.collection("earn_codes")
-                .whereEqualTo("redeemedByUid", clientId)
-                .whereEqualTo("status", "redeemed")
-                .get();
-
-        // 2. Fetch SPEND history (Gifts)
-        Task<QuerySnapshot> spendTask = db.collection("redeem_codes")
-                .whereEqualTo("userUid", clientId)
-                .whereEqualTo("status", "completed")
-                .get();
-
-        Tasks.whenAllSuccess(earnTask, spendTask).addOnSuccessListener(results -> {
-            if (!isAdded()) return;
-            progressBar.setVisibility(View.GONE);
-            allActivities.clear();
-
-            // --- Process Scans (Earn) ---
-            QuerySnapshot earnSnap = (QuerySnapshot) results.get(0);
-            for (DocumentSnapshot doc : earnSnap.getDocuments()) {
-                try {
-                    Long pts = doc.getLong("points");
-                    long points = pts != null ? pts : 0;
-                    String cashier = doc.getString("cashierName");
-                    Timestamp ts = doc.getTimestamp("redeemedAt");
-
-                    ActivityItem item = new ActivityItem("earn", points, null, cashier, ts);
-                    allActivities.add(item);
-                } catch (Exception e) {
-                    Log.e("History", "Error parsing earn log", e);
-                }
-            }
-
-            // --- Process Gifts (Spend) ---
-            QuerySnapshot spendSnap = (QuerySnapshot) results.get(1);
-            for (DocumentSnapshot doc : spendSnap.getDocuments()) {
-                try {
-                    Long pts = doc.getLong("costPoints");
-                    long points = pts != null ? pts : 0;
-                    String itemName = doc.getString("itemName");
-                    String cashier = doc.getString("cashierName");
-                    Timestamp ts = doc.getTimestamp("completedAt");
-
-                    ActivityItem item = new ActivityItem("spend", points, itemName, cashier, ts);
-                    allActivities.add(item);
-                } catch (Exception e) {
-                    Log.e("History", "Error parsing spend log", e);
-                }
-            }
-
-            filterList("ALL");
-
-        }).addOnFailureListener(e -> {
-            if (!isAdded()) return;
-            progressBar.setVisibility(View.GONE);
-            Toast.makeText(getContext(), "Failed to load history", Toast.LENGTH_SHORT).show();
-        });
-    }
 
     private void setupRecyclerView(List<ActivityItem> items) {
         adapter = new ActivityAdapter(items);
@@ -445,8 +326,6 @@ public class ClientDetailsFragment extends Fragment {
         if (str == null || str.isEmpty()) return str;
         return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
-
-    // --- INNER CLASSES (Model & Adapter) ---
 
     public static class ActivityItem {
         private String type;
