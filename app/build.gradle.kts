@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.google.services)   // <- REQUIRED
+    alias(libs.plugins.hilt)
 }
 
 android {
@@ -41,6 +42,10 @@ dependencies {
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
+    
+    // Hilt Dependency Injection
+    implementation(libs.hilt.android)
+    annotationProcessor(libs.hilt.compiler)
     implementation(libs.constraintlayout)
     implementation(libs.swiperefreshlayout)
     implementation(platform(libs.firebase.bom))

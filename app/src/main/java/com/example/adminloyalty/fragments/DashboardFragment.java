@@ -31,6 +31,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class DashboardFragment extends Fragment {
 
     private static final String TAG = "DashboardFragment";

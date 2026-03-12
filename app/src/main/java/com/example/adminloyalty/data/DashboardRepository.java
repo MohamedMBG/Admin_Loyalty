@@ -16,6 +16,10 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import dagger.hilt.android.qualifiers.ApplicationContext;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -39,6 +43,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Repository holding all Firestore calls for dashboard data.
  * Uses simple in-memory cache (per period) to avoid repeated reads when toggling tabs.
  */
+@Singleton
 public class DashboardRepository {
 
     private static final String COL_EARN = "earn_codes";
@@ -61,11 +66,8 @@ public class DashboardRepository {
     private final Map<String, DashboardData> cache = new HashMap<>();
     private final SharedPreferences prefs;
 
-    public DashboardRepository(Context context) {
-        this(FirebaseFirestore.getInstance(), context);
-    }
-
-    public DashboardRepository(@NonNull FirebaseFirestore db, Context context) {
+    @Inject
+    public DashboardRepository(@NonNull FirebaseFirestore db, @ApplicationContext Context context) {
         this.db = db;
         this.prefs = context.getSharedPreferences("dashboard_cache", Context.MODE_PRIVATE);
     }
@@ -170,9 +172,9 @@ public class DashboardRepository {
         }
 
         double prevRevenue = 0.0;
-        Double sum = prevRevenueSnap.get(AggregateField.sum(FIELD_AMOUNT_MAD));
-        if (sum != null) {
-            prevRevenue = sum;
+        Object sumObj = prevRevenueSnap.get(AggregateField.sum(FIELD_AMOUNT_MAD));
+        if (sumObj instanceof Number) {
+            prevRevenue = ((Number) sumObj).doubleValue();
         }
 
         double totalCostPoints = 0.0;

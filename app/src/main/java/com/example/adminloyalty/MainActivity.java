@@ -12,6 +12,9 @@ import com.example.adminloyalty.fragments.InboxFragment;
 import com.example.adminloyalty.databinding.ActivityMainBinding;
 import com.google.android.material.navigation.NavigationView;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding binding;

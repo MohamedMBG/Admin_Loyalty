@@ -12,6 +12,14 @@ import com.google.firebase.firestore.AggregateQuerySnapshot;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.AggregateField;
+
+import android.content.Context;
+import android.content.SharedPreferences;
+
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -31,7 +39,10 @@ public class DashboardRepositoryTest {
 
     @Before
     public void setUp() {
-        repository = new DashboardRepository(mock(FirebaseFirestore.class));
+        Context mockContext = mock(Context.class);
+        SharedPreferences mockPrefs = mock(SharedPreferences.class);
+        when(mockContext.getSharedPreferences(anyString(), anyInt())).thenReturn(mockPrefs);
+        repository = new DashboardRepository(mock(FirebaseFirestore.class), mockContext);
 
         Calendar cal = Calendar.getInstance();
         cal.set(2024, Calendar.OCTOBER, 14, 0, 0, 0); // Monday
@@ -61,7 +72,8 @@ public class DashboardRepositoryTest {
         redeemDocs.add(mockRedeemDoc("r2", 5.0, "cash-1", "", "Helper"));
 
         QuerySnapshot earnSnap = mockSnapshot(earnDocs);
-        QuerySnapshot prevSnap = mockSnapshot(previousDocs);
+        AggregateQuerySnapshot prevSnap = mock(AggregateQuerySnapshot.class);
+        when(prevSnap.get(any(AggregateField.class))).thenReturn(45.0);
         QuerySnapshot redeemSnap = mockSnapshot(redeemDocs);
 
         AggregateQuerySnapshot newClientsSnap = mock(AggregateQuerySnapshot.class);

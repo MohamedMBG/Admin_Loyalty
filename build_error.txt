@@ -1,0 +1,52 @@
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:dataBindingMergeDependencyArtifactsDebug UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:processDebugGoogleServices UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:dataBindingGenBaseClassesDebug UP-TO-DATE
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
+
+> Task :app:compileDebugJavaWithJavac
+C:\Users\pc\AndroidStudioProjects\AdminLoyalty\app\src\main\java\com\example\adminloyalty\cashier\CashierActivity.java:211: error: cannot find symbol
+            Task<QuerySnapshot> checkTask = db.collection("earn_codes")
+            ^
+  symbol:   class Task
+  location: class CashierActivity
+C:\Users\pc\AndroidStudioProjects\AdminLoyalty\app\src\main\java\com\example\adminloyalty\cashier\CashierActivity.java:211: error: cannot find symbol
+            Task<QuerySnapshot> checkTask = db.collection("earn_codes")
+                 ^
+  symbol:   class QuerySnapshot
+  location: class CashierActivity
+C:\Users\pc\AndroidStudioProjects\AdminLoyalty\app\src\main\java\com\example\adminloyalty\data\DashboardRepository.java:175: error: incompatible types: Object cannot be converted to Double
+        Double sum = prevRevenueSnap.get(AggregateField.sum(FIELD_AMOUNT_MAD));
+                                        ^
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+3 errors
+
+> Task :app:compileDebugJavaWithJavac FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugJavaWithJavac'.
+> Compilation failed; see the compiler error output for details.
+
+* Try:
+> Run with --info option to get more log output.
+> Run with --scan to get full insights.
+
+BUILD FAILED in 4s
+18 actionable tasks: 1 executed, 17 up-to-date
