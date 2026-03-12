@@ -1,6 +1,5 @@
 package com.example.adminloyalty.fragments;
 
-
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,35 +11,35 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.adminloyalty.R;
 import com.example.adminloyalty.adapters.RewardAdminAdapter;
 import com.example.adminloyalty.models.RewardItem;
+import com.example.adminloyalty.viewmodel.RewardsAdminViewModel;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
-import java.util.List;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class RewardsAdminFragment extends Fragment {
 
     private RecyclerView rvRewards;
     private ExtendedFloatingActionButton fabAdd;
     private MaterialToolbar toolbar;
     private RewardAdminAdapter adapter;
-    private FirebaseFirestore db;
-    private final String COLLECTION_NAME = "rewards_catalog";
 
-    // Hardcoded Families for now - You could also load these from Firestore
+    private RewardsAdminViewModel viewModel;
+
     private final String[] FAMILIES = {"Coffee", "Tea", "Pastries", "Cold Drinks", "Merchandise", "Others"};
 
     @Nullable @Override
@@ -49,19 +48,33 @@ public class RewardsAdminFragment extends Fragment {
 
         rvRewards = v.findViewById(R.id.rvRewards);
         fabAdd = v.findViewById(R.id.fabAddReward);
-        toolbar = v.findViewById(R.id.toolbar); // Bind toolbar
+        toolbar = v.findViewById(R.id.toolbar);
 
-        db = FirebaseFirestore.getInstance();
-
-        // Setup Back Button Logic
         toolbar.setNavigationOnClickListener(view -> requireActivity().onBackPressed());
 
         setupRecyclerView();
-        loadRewards();
+
+        viewModel = new ViewModelProvider(this).get(RewardsAdminViewModel.class);
+        observeViewModel();
 
         fabAdd.setOnClickListener(view -> showEditorDialog(null));
 
         return v;
+    }
+
+    private void observeViewModel() {
+        viewModel.getRewards().observe(getViewLifecycleOwner(), rewards -> {
+            if (rewards != null) {
+                adapter.setItems(rewards);
+            }
+        });
+
+        viewModel.getActionStatus().observe(getViewLifecycleOwner(), msg -> {
+            if (msg != null && !msg.isEmpty()) {
+                Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
+                viewModel.resetStatus();
+            }
+        });
     }
 
     private void setupRecyclerView() {
@@ -82,45 +95,23 @@ public class RewardsAdminFragment extends Fragment {
         });
     }
 
-    private void loadRewards() {
-        db.collection(COLLECTION_NAME)
-                .orderBy("name") // Alphabetical order
-                .addSnapshotListener((snapshots, e) -> {
-                    if (e != null || snapshots == null) return;
-                    List<RewardItem> list = new ArrayList<>();
-                    for (DocumentSnapshot doc : snapshots) {
-                        RewardItem item = doc.toObject(RewardItem.class);
-                        if (item != null) {
-                            item.setId(doc.getId()); // Helper to save ID locally
-                            list.add(item);
-                        }
-                    }
-                    adapter.setItems(list);
-                });
-    }
-
-    // --- ADD / EDIT LOGIC ---
-
     private void showEditorDialog(@Nullable RewardItem itemToEdit) {
         BottomSheetDialog sheet = new BottomSheetDialog(requireContext());
         View view = getLayoutInflater().inflate(R.layout.editor_layout, null);
         sheet.setContentView(view);
 
-        // Bind Views
         TextInputEditText etName = view.findViewById(R.id.inputRewardName);
         TextInputEditText etPoints = view.findViewById(R.id.inputPoints);
         AutoCompleteTextView dropCategory = view.findViewById(R.id.inputCategory);
         MaterialButton btnSave = view.findViewById(R.id.btnSaveReward);
 
-        // Setup Dropdown
         ArrayAdapter<String> catAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_dropdown_item_1line, FAMILIES);
         dropCategory.setAdapter(catAdapter);
 
-        // Pre-fill if Editing
         if (itemToEdit != null) {
             etName.setText(itemToEdit.getName());
             etPoints.setText(String.valueOf(itemToEdit.getCostPoints()));
-            dropCategory.setText(itemToEdit.getCategory(), false); // false filters
+            dropCategory.setText(itemToEdit.getCategory(), false);
             btnSave.setText("Update Gift");
         } else {
             btnSave.setText("Add Gift");
@@ -140,13 +131,9 @@ public class RewardsAdminFragment extends Fragment {
             RewardItem newItem = new RewardItem(name, cat, points);
 
             if (itemToEdit == null) {
-                // ADD NEW
-                db.collection(COLLECTION_NAME).add(newItem)
-                        .addOnSuccessListener(ref -> Toast.makeText(getContext(), "Reward Added", Toast.LENGTH_SHORT).show());
+                viewModel.addReward(newItem);
             } else {
-                // UPDATE EXISTING
-                db.collection(COLLECTION_NAME).document(itemToEdit.getId()).set(newItem)
-                        .addOnSuccessListener(aVoid -> Toast.makeText(getContext(), "Reward Updated", Toast.LENGTH_SHORT).show());
+                viewModel.updateReward(itemToEdit.getId(), newItem);
             }
             sheet.dismiss();
         });
@@ -159,7 +146,7 @@ public class RewardsAdminFragment extends Fragment {
                 .setTitle("Delete Gift?")
                 .setMessage("Are you sure you want to remove " + item.getName() + " from the catalog?")
                 .setPositiveButton("Delete", (dialog, which) -> {
-                    db.collection(COLLECTION_NAME).document(item.getId()).delete();
+                    viewModel.deleteReward(item.getId());
                 })
                 .setNegativeButton("Cancel", null)
                 .show();

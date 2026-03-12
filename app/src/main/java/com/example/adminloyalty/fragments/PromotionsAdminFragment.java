@@ -7,7 +7,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -15,41 +14,42 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.adminloyalty.R;
 import com.example.adminloyalty.models.Promotion;
+import com.example.adminloyalty.viewmodel.PromotionsViewModel;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.Timestamp;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class PromotionsAdminFragment extends Fragment {
 
     private RecyclerView rvPromos;
     private ExtendedFloatingActionButton fabAdd;
-    private FirebaseFirestore db;
     private PromoAdapter adapter;
     private MaterialToolbar toolbar;
     private LinearLayout layoutEmptyState;
+
+    private PromotionsViewModel viewModel;
 
     private final String[] CRITERIA_OPTIONS = {
             "All Clients", "Age Under (Years)", "Gender (Male/Female)",
@@ -70,45 +70,49 @@ public class PromotionsAdminFragment extends Fragment {
 
         toolbar.setNavigationOnClickListener(view -> requireActivity().onBackPressed());
 
-        db = FirebaseFirestore.getInstance();
         setupRecyclerView();
-        loadPromotions();
+
+        viewModel = new ViewModelProvider(this).get(PromotionsViewModel.class);
+        observeViewModel();
 
         fabAdd.setOnClickListener(view -> showAddDialog());
 
         return v;
     }
 
+    private void observeViewModel() {
+        viewModel.getPromotions().observe(getViewLifecycleOwner(), list -> {
+            if (list != null) {
+                adapter.setItems(list);
+                if (list.isEmpty()) {
+                    layoutEmptyState.setVisibility(View.VISIBLE);
+                    rvPromos.setVisibility(View.GONE);
+                } else {
+                    layoutEmptyState.setVisibility(View.GONE);
+                    rvPromos.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+
+        viewModel.getActionStatus().observe(getViewLifecycleOwner(), msg -> {
+            if (msg != null && !msg.isEmpty()) {
+                Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
+                viewModel.resetStatus();
+            }
+        });
+
+        viewModel.getError().observe(getViewLifecycleOwner(), msg -> {
+            if (msg != null && !msg.isEmpty()) {
+                Toast.makeText(getContext(), msg, Toast.LENGTH_LONG).show();
+                viewModel.resetStatus();
+            }
+        });
+    }
+
     private void setupRecyclerView() {
         adapter = new PromoAdapter();
         rvPromos.setLayoutManager(new LinearLayoutManager(getContext()));
         rvPromos.setAdapter(adapter);
-    }
-
-    private void loadPromotions() {
-        // Load and Sort by Priority (Descending)
-        db.collection("promotions")
-                .orderBy("priority", Query.Direction.DESCENDING)
-                .addSnapshotListener((snapshots, e) -> {
-                    if (e != null || snapshots == null) return;
-                    List<Promotion> list = new ArrayList<>();
-                    for (DocumentSnapshot doc : snapshots) {
-                        Promotion p = doc.toObject(Promotion.class);
-                        if (p != null) {
-                            p.setId(doc.getId());
-                            list.add(p);
-                        }
-                    }
-                    adapter.setItems(list);
-
-                    if (list.isEmpty()) {
-                        layoutEmptyState.setVisibility(View.VISIBLE);
-                        rvPromos.setVisibility(View.GONE);
-                    } else {
-                        layoutEmptyState.setVisibility(View.GONE);
-                        rvPromos.setVisibility(View.VISIBLE);
-                    }
-                });
     }
 
     private void showAddDialog() {
@@ -120,7 +124,6 @@ public class PromotionsAdminFragment extends Fragment {
         TextInputEditText etValue = view.findViewById(R.id.inputPromoValue);
         TextInputEditText etPriority = view.findViewById(R.id.inputPriority);
 
-        // Date Inputs
         TextInputEditText etStartDate = view.findViewById(R.id.inputStartDate);
         TextInputEditText etEndDate = view.findViewById(R.id.inputEndDate);
 
@@ -128,12 +131,10 @@ public class PromotionsAdminFragment extends Fragment {
         AutoCompleteTextView dropCriteria = view.findViewById(R.id.inputCriteria);
         MaterialButton btnSave = view.findViewById(R.id.btnSavePromo);
 
-        // Variables to hold the selected timestamps
         final Timestamp[] startTimestamp = {null};
         final Timestamp[] endTimestamp = {null};
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
 
-        // --- Date Picker Logic ---
         etStartDate.setOnClickListener(v -> {
             MaterialDatePicker<Long> datePicker = MaterialDatePicker.Builder.datePicker()
                     .setTitleText("Select Start Date")
@@ -156,16 +157,14 @@ public class PromotionsAdminFragment extends Fragment {
 
             datePicker.addOnPositiveButtonClickListener(selection -> {
                 Date date = new Date(selection);
-                // Set end date to end of day (23:59:59) ideally, or just use selected time
                 etEndDate.setText(dateFormat.format(date));
                 endTimestamp[0] = new Timestamp(date);
             });
             datePicker.show(getParentFragmentManager(), "END_DATE");
         });
-        // -------------------------
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_dropdown_item_1line, CRITERIA_OPTIONS);
-        dropCriteria.setAdapter(adapter);
+        ArrayAdapter<String> optionsAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_dropdown_item_1line, CRITERIA_OPTIONS);
+        dropCriteria.setAdapter(optionsAdapter);
         dropCriteria.setText(CRITERIA_OPTIONS[0], false);
 
         dropCriteria.setOnItemClickListener((parent, view1, position, id) -> {
@@ -213,11 +212,9 @@ public class PromotionsAdminFragment extends Fragment {
                 return;
             }
 
-            // Save with Priority and Date Range
             Promotion p = new Promotion(title, dbKey, value, true, priority, startTimestamp[0], endTimestamp[0]);
-            db.collection("promotions").add(p);
+            viewModel.addPromotion(p);
             sheet.dismiss();
-            Toast.makeText(getContext(), "Promo Live!", Toast.LENGTH_SHORT).show();
         });
 
         sheet.show();
@@ -252,7 +249,6 @@ public class PromotionsAdminFragment extends Fragment {
             else if ("LOCATION_CONTAINS".equals(c)) ruleText = "Loc: " + v;
             else if ("POINTS_UNDER".equals(c)) ruleText = "Points < " + v;
 
-            // Append priority and Date info if available
             StringBuilder details = new StringBuilder(ruleText);
             details.append(" • P: ").append(p.getPriority());
 
@@ -267,15 +263,16 @@ public class PromotionsAdminFragment extends Fragment {
 
             holder.tvRule.setText(details.toString());
 
+            holder.swActive.setOnCheckedChangeListener(null); // Clear listener first to avoid loops
             holder.swActive.setChecked(p.isActive());
 
             holder.swActive.setOnCheckedChangeListener((btn, isChecked) ->
-                    db.collection("promotions").document(p.getId()).update("active", isChecked));
+                    viewModel.updatePromotionStatus(p.getId(), isChecked));
 
             holder.btnDelete.setOnClickListener(vClick ->
                     new MaterialAlertDialogBuilder(requireContext())
                             .setTitle("Delete?")
-                            .setPositiveButton("Yes", (d, w) -> db.collection("promotions").document(p.getId()).delete())
+                            .setPositiveButton("Yes", (d, w) -> viewModel.deletePromotion(p.getId()))
                             .setNegativeButton("No", null)
                             .show());
         }

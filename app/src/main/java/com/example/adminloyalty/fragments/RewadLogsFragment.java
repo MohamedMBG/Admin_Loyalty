@@ -12,20 +12,22 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.adminloyalty.R;
+import com.example.adminloyalty.viewmodel.RewardLogsViewModel;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class RewadLogsFragment extends Fragment {
 
     private RecyclerView recyclerView;
@@ -33,10 +35,9 @@ public class RewadLogsFragment extends Fragment {
     private TextView tvTotalCost, tvRecordCount;
     private ImageView btnBack, btnExport;
 
-    private FirebaseFirestore db;
     private RedemptionAdapter adapter;
     private List<DocumentSnapshot> logList = new ArrayList<>();
-
+    private RewardLogsViewModel viewModel;
 
     private static final double POINT_TO_MAD = 0.2;
 
@@ -44,11 +45,14 @@ public class RewadLogsFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_rewad_logs, container, false);
-        db = FirebaseFirestore.getInstance();
 
         initViews(v);
         setupRecyclerView();
-        fetchRedemptions();
+
+        viewModel = new ViewModelProvider(this).get(RewardLogsViewModel.class);
+        observeViewModel();
+
+        viewModel.loadRedemptions();
 
         return v;
     }
@@ -74,36 +78,34 @@ public class RewadLogsFragment extends Fragment {
         recyclerView.setAdapter(adapter);
     }
 
-    private void fetchRedemptions() {
-        progressBar.setVisibility(View.VISIBLE);
+    private void observeViewModel() {
+        viewModel.getRedemptions().observe(getViewLifecycleOwner(), redemptions -> {
+            if (redemptions != null) {
+                logList.clear();
+                logList.addAll(redemptions);
+                calculateTotal(logList);
+                adapter.notifyDataSetChanged();
+            }
+        });
 
-        // Query 'redeem_codes' sorted by createdAt descending
-        // Ensure you have an index if you add complex filters later
-        db.collection("redeem_codes")
-                .orderBy("createdAt", Query.Direction.DESCENDING)
-                .limit(100)
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    progressBar.setVisibility(View.GONE);
-                    logList.clear();
-                    logList.addAll(queryDocumentSnapshots.getDocuments());
+        viewModel.getLoading().observe(getViewLifecycleOwner(), isLoading -> {
+            progressBar.setVisibility(isLoading != null && isLoading ? View.VISIBLE : View.GONE);
+        });
 
-                    calculateTotal(logList);
-                    adapter.notifyDataSetChanged();
-                })
-                .addOnFailureListener(e -> {
-                    progressBar.setVisibility(View.GONE);
-                    Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                });
+        viewModel.getError().observe(getViewLifecycleOwner(), error -> {
+            if (error != null && !error.isEmpty()) {
+                Toast.makeText(getContext(), "Error: " + error, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void calculateTotal(List<DocumentSnapshot> docs) {
         double totalMad = 0;
 
         for (DocumentSnapshot doc : docs) {
-            Long points = doc.getLong("costPoints"); // On lit les points
+            Long points = doc.getLong("costPoints");
             if (points != null) {
-                totalMad += points * POINT_TO_MAD;   // Conversion en MAD
+                totalMad += points * POINT_TO_MAD;
             }
         }
 
@@ -120,22 +122,18 @@ public class RewadLogsFragment extends Fragment {
         if (!isAdded() || getContext() == null) return;
 
         try {
-            // 1. Create directory in app-specific external storage
             java.io.File dir = new java.io.File(requireContext().getExternalFilesDir(null), "exports");
             if (!dir.exists()) {
                 dir.mkdirs();
             }
 
-            // 2. Create file
             String timeStamp = new java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.getDefault())
                     .format(new java.util.Date());
             String fileName = "reward_logs_" + timeStamp + ".csv";
             java.io.File file = new java.io.File(dir, fileName);
 
-            // 3. Write CSV header + rows
             java.io.FileWriter writer = new java.io.FileWriter(file);
 
-            // Header
             writer.append("Item Name,Client Name,Cost MAD,Cost Points,Cashier Name,Created At\n");
 
             java.text.SimpleDateFormat sdfExport =
@@ -151,7 +149,6 @@ public class RewadLogsFragment extends Fragment {
 
                 String dateStr = ts != null ? sdfExport.format(ts.toDate()) : "";
 
-                // Handle nulls + escape commas
                 writer.append(escapeCsv(item));
                 writer.append(",");
                 writer.append(escapeCsv(client));
@@ -169,7 +166,6 @@ public class RewadLogsFragment extends Fragment {
             writer.flush();
             writer.close();
 
-            // 4. Share the file
             android.net.Uri uri = androidx.core.content.FileProvider.getUriForFile(
                     requireContext(),
                     requireContext().getPackageName() + ".fileprovider",
@@ -191,9 +187,6 @@ public class RewadLogsFragment extends Fragment {
         }
     }
 
-    /**
-     * Simple CSV escaping: wrap in quotes if contains comma or quote and escape double-quotes.
-     */
     private String escapeCsv(String value) {
         if (value == null) return "";
         String v = value;
@@ -206,12 +199,10 @@ public class RewadLogsFragment extends Fragment {
         return v;
     }
 
-
-    // --- Adapter ---
     private class RedemptionAdapter extends RecyclerView.Adapter<RedemptionAdapter.ViewHolder> {
 
         private final List<DocumentSnapshot> items;
-        private final SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, hh:mm a", Locale.getDefault());
+        private final java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("MMM dd, hh:mm a", Locale.getDefault());
 
         public RedemptionAdapter(List<DocumentSnapshot> items) {
             this.items = items;
@@ -229,15 +220,12 @@ public class RewadLogsFragment extends Fragment {
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
             DocumentSnapshot doc = items.get(position);
 
-            // 1. Item Name
             String item = doc.getString("itemName");
             holder.tvItemName.setText(item != null ? item : "Unknown Item");
 
-            // 2. Client Name
             String client = doc.getString("userName");
             holder.tvCustomerName.setText(client != null ? "Client: " + client : "Client: Unknown");
 
-            // 3. Cost in MAD (calculated from points)
             Long points = doc.getLong("costPoints");
             double costMad = 0;
             if (points != null) {
@@ -245,15 +233,11 @@ public class RewadLogsFragment extends Fragment {
             }
             holder.tvCostMad.setText(String.format(Locale.US, "-%.2f MAD", costMad));
 
-            // 4. Cost in Points
             holder.tvCostPoints.setText(points != null ? "(" + points + " pts)" : "(0 pts)");
 
-
-            // 5. Cashier Name
             String cashier = doc.getString("cashierName");
             holder.tvCashierName.setText(cashier != null ? "Processed by: " + cashier : "By: System");
 
-            // 6. Timestamp
             Timestamp ts = doc.getTimestamp("createdAt");
             if (ts != null) {
                 holder.tvTimestamp.setText(sdf.format(ts.toDate()));
