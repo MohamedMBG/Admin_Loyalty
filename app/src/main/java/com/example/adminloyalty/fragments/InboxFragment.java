@@ -12,162 +12,175 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.example.adminloyalty.R;
+import com.example.adminloyalty.viewmodel.InboxViewModel;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.slider.RangeSlider;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.util.Locale;
-import java.util.Objects;
-import java.util.function.Consumer;
 
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
+import dagger.hilt.android.AndroidEntryPoint;
 
+/**
+ * InboxFragment — UI layer for composing and sending push notifications.
+ *
+ * MVVM responsibilities:
+ *   - Fragment:   View binding, click listeners, reading UI state, observing LiveData
+ *   - ViewModel:  Orchestrates preview/send calls, exposes LiveData for UI state
+ *   - Repository: Raw HTTP calls to push API, Firebase Auth token management
+ *
+ * The Fragment NEVER makes network calls directly. It reads the current filter
+ * state from chips/sliders/switches, builds a JSONObject, and passes it to the
+ * ViewModel. The ViewModel delegates to the Repository and posts results back
+ * via LiveData, which the Fragment observes.
+ */
+@AndroidEntryPoint
 public class InboxFragment extends Fragment {
 
-    private TextInputEditText etTitle, etMessage;
-    private SwitchMaterial switchAll;
-    private SwitchMaterial switchBirthdayToday;
-    private RangeSlider sliderAge;
-    private TextView tvAgeRange;
-    private TextView tvTargetCount;
-    private View filtersContainer;
+    // ──────────────────────────────────────────────
+    // 1. VIEW REFERENCES
+    //    These are the UI widgets we need to read from or write to.
+    //    They are bound in initViews() and used throughout the Fragment.
+    // ──────────────────────────────────────────────
 
-    // Chips
+    private TextInputEditText etTitle, etMessage;
+    private SwitchMaterial switchAll, switchBirthdayToday;
+    private RangeSlider sliderAge;
+    private TextView tvAgeRange, tvTargetCount, btnResetAge;
+    private View filtersContainer, sendAllRow;
+    private ImageView btnRefreshCount, btnBack;
     private Chip chipMale, chipFemale;
     private Chip chipLocHassan, chipLocAgdal, chipLocIrfane, chipLocOther;
     private Chip chipVisit3days, chipVisitWeek, chipVisitMonth;
+    private MaterialButton btnPreview, btnSend;
 
-    // IMPORTANT: keep BASE without trailing "api/"; we append endpoints below.
-    private static final String API_BASE = "https://email-api-git-main-programmingmbmy-3449s-projects.vercel.app";
-    private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+    // ──────────────────────────────────────────────
+    // 2. VIEWMODEL REFERENCE
+    //    The ViewModel survives configuration changes (rotation).
+    //    We never put View references inside it.
+    // ──────────────────────────────────────────────
 
-    private final OkHttpClient http = new OkHttpClient();
+    private InboxViewModel viewModel;
 
-    public InboxFragment() { /* Required empty */ }
+    public InboxFragment() { /* Required empty constructor */ }
+
+    // ──────────────────────────────────────────────
+    // 3. LIFECYCLE: onCreateView
+    //    Inflate the layout and bind all view references.
+    //    This is called BEFORE onViewCreated.
+    // ──────────────────────────────────────────────
 
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_inbox, container, false);
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View v = inflater.inflate(R.layout.fragment_inbox, container, false);
+        initViews(v);
+        return v;
     }
+
+    // ──────────────────────────────────────────────
+    // 4. LIFECYCLE: onViewCreated
+    //    The view is fully created — safe to initialize the ViewModel
+    //    and start observing LiveData. We also set up click listeners
+    //    that delegate to the ViewModel.
+    // ──────────────────────────────────────────────
 
     @Override
     public void onViewCreated(@NonNull View v, @Nullable Bundle savedInstanceState) {
-        // Main inputs
-        etTitle       = v.findViewById(R.id.et_title);
-        etMessage     = v.findViewById(R.id.et_message);
-        switchAll     = v.findViewById(R.id.switch_send_all);
-        sliderAge     = v.findViewById(R.id.slider_age_range);
-        tvAgeRange    = v.findViewById(R.id.tv_age_range);
-        tvTargetCount = v.findViewById(R.id.tv_target_count);
-        filtersContainer = v.findViewById(R.id.ll_filters_container);
-        switchBirthdayToday = v.findViewById(R.id.switch_birthday_today);
+        // Initialize the ViewModel through Hilt — Hilt looks at the @Inject
+        // constructor of InboxViewModel and automatically provides InboxRepository.
+        viewModel = new ViewModelProvider(this).get(InboxViewModel.class);
 
-        // Gender chips
-        chipMale   = v.findViewById(R.id.chip_male);
-        chipFemale = v.findViewById(R.id.chip_female);
+        // Wire up LiveData observers so the UI reacts to data changes
+        observeViewModel();
 
-        // Location chips
-        chipLocHassan  = v.findViewById(R.id.chip_loc_casablanca); // Hassan
-        chipLocAgdal   = v.findViewById(R.id.chip_loc_rabat);      // Agdal
-        chipLocIrfane  = v.findViewById(R.id.chip_loc_marrakech);  // Al Irfane
-        chipLocOther   = v.findViewById(R.id.chip_loc_other);      // Other
+        // Set up click listeners that need the ViewModel
+        setupActions();
+    }
 
-        // Last visit chips
-        chipVisit3days = v.findViewById(R.id.chip_visit_3days);
-        chipVisitWeek  = v.findViewById(R.id.chip_visit_week);
-        chipVisitMonth = v.findViewById(R.id.chip_visit_month);
+    // ──────────────────────────────────────────────
+    // 5. OBSERVE VIEWMODEL
+    //    Each LiveData from the ViewModel maps to a UI update.
+    //    We use getViewLifecycleOwner() so observers are automatically
+    //    removed when the Fragment's view is destroyed.
+    // ──────────────────────────────────────────────
 
-        TextView btnResetAge       = v.findViewById(R.id.btn_reset_age);
-        ImageView btnRefreshCount  = v.findViewById(R.id.btn_refresh_count);
-        MaterialButton btnPreview  = v.findViewById(R.id.btn_preview);
-        MaterialButton btnSend     = v.findViewById(R.id.btn_send);
-        ImageView btnBack          = v.findViewById(R.id.btnBack);
-        View sendAllRow            = v.findViewById(R.id.ll_send_all);
-
-        // ---------- Back button ----------
-        if (btnBack != null) {
-            btnBack.setOnClickListener(view ->
-                    requireActivity().getOnBackPressedDispatcher().onBackPressed()
-            );
-        }
-
-        // ---------- Age slider + label ----------
-        if (sliderAge != null && tvAgeRange != null) {
-            // Init label with default values
-            if (sliderAge.getValues() != null && sliderAge.getValues().size() >= 2) {
-                int min = Math.round(sliderAge.getValues().get(0));
-                int max = Math.round(sliderAge.getValues().get(1));
-                tvAgeRange.setText(String.format(Locale.getDefault(), "%d - %d years", min, max));
+    private void observeViewModel() {
+        // When the API returns a recipient count, display it
+        viewModel.getRecipientCount().observe(getViewLifecycleOwner(), count -> {
+            if (tvTargetCount != null) {
+                tvTargetCount.setText(String.valueOf(count));
             }
+        });
 
-            sliderAge.addOnChangeListener((slider, value, fromUser) -> {
-                int min = Math.round(slider.getValues().get(0));
-                int max = Math.round(slider.getValues().get(1));
-                tvAgeRange.setText(String.format(Locale.getDefault(), "%d - %d years", min, max));
-            });
-        }
+        // Show "…" loading indicator while previewing
+        viewModel.getIsPreviewing().observe(getViewLifecycleOwner(), loading -> {
+            if (Boolean.TRUE.equals(loading) && tvTargetCount != null) {
+                tvTargetCount.setText("…");
+            }
+        });
 
-        // Reset age
-        if (btnResetAge != null && sliderAge != null) {
-            btnResetAge.setOnClickListener(x -> {
-                sliderAge.setValues(18f, 65f);
-                tvAgeRange.setText("18 - 65 years");
-            });
-        }
+        // Disable send button and show "Sending..." while push is in flight
+        viewModel.getIsSending().observe(getViewLifecycleOwner(), sending -> {
+            if (btnSend != null) {
+                btnSend.setEnabled(!Boolean.TRUE.equals(sending));
+                btnSend.setText(Boolean.TRUE.equals(sending) ? "Sending..." : "Send");
+            }
+        });
 
-        // ---------- "Send to all" switch toggles filters ----------
-        if (switchAll != null && filtersContainer != null) {
-            // Initialise: when checked -> hide filters
-            toggleFiltersVisibility(switchAll.isChecked());
+        // Show success toast when push completes
+        viewModel.getSendResult().observe(getViewLifecycleOwner(), result -> {
+            if (result != null && !result.isEmpty()) {
+                Toast.makeText(getContext(), result, Toast.LENGTH_SHORT).show();
+                viewModel.clearSendResult();
+            }
+        });
 
-            switchAll.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                toggleFiltersVisibility(isChecked);
-                // Clear filters when toggling back to "all"
-                if (isChecked) {
-                    clearAllFilters();
+        // Show error toast and reset the count display on failure
+        viewModel.getError().observe(getViewLifecycleOwner(), err -> {
+            if (err != null && !err.isEmpty()) {
+                Toast.makeText(getContext(), err, Toast.LENGTH_SHORT).show();
+                viewModel.clearError();
+                // Reset count display if preview failed
+                if (tvTargetCount != null && !Boolean.TRUE.equals(viewModel.getIsPreviewing().getValue())) {
+                    tvTargetCount.setText("--");
                 }
-            });
-        }
+            }
+        });
+    }
 
-        // Tap on the whole row to toggle switch
-        if (sendAllRow != null && switchAll != null) {
-            sendAllRow.setOnClickListener(view ->
-                    switchAll.setChecked(!switchAll.isChecked())
+    // ──────────────────────────────────────────────
+    // 6. SETUP ACTIONS
+    //    Click listeners that need the ViewModel are set up here
+    //    (separate from initViews because viewModel isn't available
+    //    during onCreateView — it's created in onViewCreated).
+    // ──────────────────────────────────────────────
+
+    private void setupActions() {
+        // Refresh recipient count: read current filter state → pass to ViewModel
+        if (btnRefreshCount != null) {
+            btnRefreshCount.setOnClickListener(x ->
+                    viewModel.previewRecipientCount(buildFilters())
             );
         }
 
-        // ---------- Target count preview ----------
-        if (btnRefreshCount != null) {
-            btnRefreshCount.setOnClickListener(x -> refreshRecipientCount());
-        }
-
-        // ---------- Preview dialog ----------
+        // Preview dialog: purely local UI — no network call needed
         if (btnPreview != null) {
             btnPreview.setOnClickListener(x -> {
                 String title = safeText(etTitle);
                 String message = safeText(etMessage);
 
                 if (TextUtils.isEmpty(title) || TextUtils.isEmpty(message)) {
-                    runToast("Please enter a title and a message first.");
+                    Toast.makeText(getContext(), "Please enter a title and a message first.", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
@@ -179,132 +192,137 @@ public class InboxFragment extends Fragment {
             });
         }
 
-        // ---------- Send push ----------
+        // Send push: validate inputs → read filters → delegate to ViewModel
         if (btnSend != null) {
-            btnSend.setOnClickListener(x -> sendPush());
-        }
-    }
+            btnSend.setOnClickListener(x -> {
+                String title = safeText(etTitle);
+                String message = safeText(etMessage);
 
-    // ---------------------------
-    // Networking helpers
-    // ---------------------------
+                if (TextUtils.isEmpty(title) || TextUtils.isEmpty(message)) {
+                    Toast.makeText(getContext(), "Title and message are required", Toast.LENGTH_SHORT).show();
+                    return;
+                }
 
-    private void refreshRecipientCount() {
-        if (tvTargetCount != null) {
-            tvTargetCount.setText("…"); // loading state
-        }
-
-        try {
-            JSONObject body = new JSONObject();
-            body.put("filters", buildFilters());
-
-            RequestBody reqBody = RequestBody.create(body.toString(), JSON);
-            withIdToken(idToken -> {
-                Request.Builder rb = new Request.Builder()
-                        .url(API_BASE + "/api/push/preview")
-                        .post(reqBody)
-                        .addHeader("Content-Type", "application/json");
-                if (idToken != null) rb.addHeader("Authorization", "Bearer " + idToken);
-
-                http.newCall(rb.build()).enqueue(new Callback() {
-                    @Override public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                        runToast("Preview failed: " + e.getMessage());
-                        if (!isAdded()) return;
-                        requireActivity().runOnUiThread(() -> {
-                            if (tvTargetCount != null) tvTargetCount.setText("--");
-                        });
-                    }
-                    @Override public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                        String resp = Objects.requireNonNull(response.body()).string();
-                        if (!response.isSuccessful()) {
-                            runToast("Preview error: " + response.code());
-                            if (!isAdded()) return;
-                            requireActivity().runOnUiThread(() -> {
-                                if (tvTargetCount != null) tvTargetCount.setText("--");
-                            });
-                            return;
-                        }
-                        try {
-                            JSONObject obj = new JSONObject(resp);
-                            final int count = obj.optInt("count", 0);
-                            if (!isAdded()) return;
-                            requireActivity().runOnUiThread(() -> {
-                                if (tvTargetCount != null) {
-                                    tvTargetCount.setText(String.valueOf(count));
-                                }
-                            });
-                        } catch (Exception ex) {
-                            runToast("Bad preview response");
-                            if (!isAdded()) return;
-                            requireActivity().runOnUiThread(() -> {
-                                if (tvTargetCount != null) tvTargetCount.setText("--");
-                            });
-                        }
-                    }
-                });
+                viewModel.sendPush(title, message, buildFilters());
             });
-        } catch (Exception e) {
-            runToast(e.getMessage());
-            if (tvTargetCount != null) tvTargetCount.setText("--");
         }
     }
 
-    private void sendPush() {
-        String title = safeText(etTitle);
-        String message = safeText(etMessage);
+    // ──────────────────────────────────────────────
+    // 7. VIEW BINDING
+    //    Find all views by ID and set up UI-only interactions
+    //    (back button, slider labels, switch toggles).
+    //    These are pure UI concerns — no business logic here.
+    // ──────────────────────────────────────────────
 
-        if (TextUtils.isEmpty(title) || TextUtils.isEmpty(message)) {
-            runToast("Title and message are required");
-            return;
+    private void initViews(View v) {
+        // --- Text inputs ---
+        etTitle   = v.findViewById(R.id.et_title);
+        etMessage = v.findViewById(R.id.et_message);
+
+        // --- Switches ---
+        switchAll           = v.findViewById(R.id.switch_send_all);
+        switchBirthdayToday = v.findViewById(R.id.switch_birthday_today);
+
+        // --- Age range slider ---
+        sliderAge    = v.findViewById(R.id.slider_age_range);
+        tvAgeRange   = v.findViewById(R.id.tv_age_range);
+        btnResetAge  = v.findViewById(R.id.btn_reset_age);
+
+        // --- Target count display ---
+        tvTargetCount = v.findViewById(R.id.tv_target_count);
+
+        // --- Filter container (hidden when "send to all" is on) ---
+        filtersContainer = v.findViewById(R.id.ll_filters_container);
+
+        // --- Gender chips ---
+        chipMale   = v.findViewById(R.id.chip_male);
+        chipFemale = v.findViewById(R.id.chip_female);
+
+        // --- Location chips ---
+        chipLocHassan = v.findViewById(R.id.chip_loc_casablanca);
+        chipLocAgdal  = v.findViewById(R.id.chip_loc_rabat);
+        chipLocIrfane = v.findViewById(R.id.chip_loc_marrakech);
+        chipLocOther  = v.findViewById(R.id.chip_loc_other);
+
+        // --- Last visit chips ---
+        chipVisit3days = v.findViewById(R.id.chip_visit_3days);
+        chipVisitWeek  = v.findViewById(R.id.chip_visit_week);
+        chipVisitMonth = v.findViewById(R.id.chip_visit_month);
+
+        // --- Action buttons ---
+        btnRefreshCount = v.findViewById(R.id.btn_refresh_count);
+        btnPreview      = v.findViewById(R.id.btn_preview);
+        btnSend         = v.findViewById(R.id.btn_send);
+        btnBack         = v.findViewById(R.id.btnBack);
+        sendAllRow      = v.findViewById(R.id.ll_send_all);
+
+        // ── Back button: navigate back ──
+        if (btnBack != null) {
+            btnBack.setOnClickListener(view ->
+                    requireActivity().getOnBackPressedDispatcher().onBackPressed()
+            );
         }
 
-        try {
-            JSONObject body = new JSONObject();
-            body.put("title", title);
-            body.put("message", message);
-            body.put("filters", buildFilters());
+        // ── Age slider: update the label text as the user drags ──
+        if (sliderAge != null && tvAgeRange != null) {
+            // Set initial label from XML defaults
+            if (sliderAge.getValues() != null && sliderAge.getValues().size() >= 2) {
+                int min = Math.round(sliderAge.getValues().get(0));
+                int max = Math.round(sliderAge.getValues().get(1));
+                tvAgeRange.setText(String.format(Locale.getDefault(), "%d - %d years", min, max));
+            }
 
-            // Optional extra payload (deep link, screen, etc.)
-            // JSONObject data = new JSONObject();
-            // data.put("deepLink", "app://promo/cheesecake");
-            // body.put("data", data);
-
-            RequestBody reqBody = RequestBody.create(body.toString(), JSON);
-
-            withIdToken(idToken -> {
-                Request.Builder rb = new Request.Builder()
-                        .url(API_BASE + "/api/push/send")
-                        .post(reqBody)
-                        .addHeader("Content-Type", "application/json");
-                if (idToken != null) rb.addHeader("Authorization", "Bearer " + idToken);
-
-                http.newCall(rb.build()).enqueue(new Callback() {
-                    @Override public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                        runToast("Send failed: " + e.getMessage());
-                    }
-                    @Override public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                        String resp = Objects.requireNonNull(response.body()).string();
-                        if (!response.isSuccessful()) {
-                            runToast("Send error: " + response.code());
-                            return;
-                        }
-                        runToast("Push sent successfully");
-                    }
-                });
+            // Update label on drag
+            sliderAge.addOnChangeListener((slider, value, fromUser) -> {
+                int min = Math.round(slider.getValues().get(0));
+                int max = Math.round(slider.getValues().get(1));
+                tvAgeRange.setText(String.format(Locale.getDefault(), "%d - %d years", min, max));
             });
-        } catch (Exception e) {
-            runToast(e.getMessage());
+        }
+
+        // ── Reset age slider to defaults ──
+        if (btnResetAge != null && sliderAge != null) {
+            btnResetAge.setOnClickListener(x -> {
+                sliderAge.setValues(18f, 65f);
+                tvAgeRange.setText("18 - 65 years");
+            });
+        }
+
+        // ── "Send to all" switch: hides/shows the filters section ──
+        if (switchAll != null && filtersContainer != null) {
+            toggleFiltersVisibility(switchAll.isChecked());
+
+            switchAll.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                toggleFiltersVisibility(isChecked);
+                if (isChecked) {
+                    clearAllFilters();
+                }
+            });
+        }
+
+        // ── Tap entire row to toggle the "send to all" switch ──
+        if (sendAllRow != null && switchAll != null) {
+            sendAllRow.setOnClickListener(view ->
+                    switchAll.setChecked(!switchAll.isChecked())
+            );
         }
     }
 
-    // ---------------------------
-    // Filters builder
-    // ---------------------------
+    // ──────────────────────────────────────────────
+    // 8. BUILD FILTERS
+    //    Reads the current state of all chips/sliders/switches
+    //    and produces a JSONObject the API expects.
+    //
+    //    This stays in the Fragment because it reads from Views.
+    //    The ViewModel receives the finished JSONObject — it never
+    //    touches any View directly.
+    // ──────────────────────────────────────────────
 
     private JSONObject buildFilters() {
         JSONObject filters = new JSONObject();
         try {
-            // "Send to all" = backend targets all
+            // If "send to all" is checked, no other filters apply
             if (switchAll != null && switchAll.isChecked()) {
                 filters.put("sendToAll", true);
                 return filters;
@@ -312,46 +330,34 @@ public class InboxFragment extends Fragment {
 
             filters.put("sendToAll", false);
 
-            // Age filters
+            // Age range from the slider
             if (sliderAge != null && sliderAge.getValues() != null && sliderAge.getValues().size() >= 2) {
-                int min = Math.round(sliderAge.getValues().get(0));
-                int max = Math.round(sliderAge.getValues().get(1));
-                filters.put("minAge", min);
-                filters.put("maxAge", max);
+                filters.put("minAge", Math.round(sliderAge.getValues().get(0)));
+                filters.put("maxAge", Math.round(sliderAge.getValues().get(1)));
             }
 
-            // Gender filters -> ["male","female"]
+            // Gender chips → ["male", "female"]
             JSONArray genders = new JSONArray();
-            if (chipMale != null && chipMale.isChecked())   genders.put("male");
+            if (chipMale != null && chipMale.isChecked())     genders.put("male");
             if (chipFemale != null && chipFemale.isChecked()) genders.put("female");
-            if (genders.length() > 0) {
-                filters.put("genders", genders);
-            }
+            if (genders.length() > 0) filters.put("genders", genders);
 
-            // Location filters -> ["Hassan","Agdal","Al Irfane","Other"]
+            // Location chips → ["Hassan", "Agdal", "Al Irfane", "Other"]
             JSONArray locations = new JSONArray();
-            if (chipLocHassan != null && chipLocHassan.isChecked())  locations.put("Hassan");
-            if (chipLocAgdal != null && chipLocAgdal.isChecked())    locations.put("Agdal");
-            if (chipLocIrfane != null && chipLocIrfane.isChecked())  locations.put("Al Irfane");
-            if (chipLocOther != null && chipLocOther.isChecked())    locations.put("Other");
-            if (locations.length() > 0) {
-                filters.put("locations", locations);
-            }
+            if (chipLocHassan != null && chipLocHassan.isChecked())   locations.put("Hassan");
+            if (chipLocAgdal != null && chipLocAgdal.isChecked())     locations.put("Agdal");
+            if (chipLocIrfane != null && chipLocIrfane.isChecked())   locations.put("Al Irfane");
+            if (chipLocOther != null && chipLocOther.isChecked())     locations.put("Other");
+            if (locations.length() > 0) filters.put("locations", locations);
 
-            // Last visit (mutually exclusive chips -> convert to "lastVisitDays")
+            // Last visit — mutually exclusive chips → single "lastVisitDays" value
             int lastVisitDays = -1;
-            if (chipVisit3days != null && chipVisit3days.isChecked()) {
-                lastVisitDays = 3;
-            } else if (chipVisitWeek != null && chipVisitWeek.isChecked()) {
-                lastVisitDays = 7;
-            } else if (chipVisitMonth != null && chipVisitMonth.isChecked()) {
-                lastVisitDays = 30;
-            }
-            if (lastVisitDays > 0) {
-                filters.put("lastVisitDays", lastVisitDays);
-            }
+            if (chipVisit3days != null && chipVisit3days.isChecked())      lastVisitDays = 3;
+            else if (chipVisitWeek != null && chipVisitWeek.isChecked())   lastVisitDays = 7;
+            else if (chipVisitMonth != null && chipVisitMonth.isChecked()) lastVisitDays = 30;
+            if (lastVisitDays > 0) filters.put("lastVisitDays", lastVisitDays);
 
-            // Birthday today
+            // Birthday today switch
             if (switchBirthdayToday != null && switchBirthdayToday.isChecked()) {
                 filters.put("birthdayToday", true);
             }
@@ -360,76 +366,41 @@ public class InboxFragment extends Fragment {
         return filters;
     }
 
-    // Clear all UI filters when switching back to "send to all"
-    private void clearAllFilters() {
-        // Reset age slider
-        if (sliderAge != null) {
-            sliderAge.setValues(18f, 65f);
-        }
-        if (tvAgeRange != null) {
-            tvAgeRange.setText("18 - 65 years");
-        }
+    // ──────────────────────────────────────────────
+    // 9. UI HELPERS
+    //    Pure UI manipulation — no business logic.
+    //    These stay in the Fragment, never in the ViewModel.
+    // ──────────────────────────────────────────────
 
-        // Gender
-        if (chipMale != null)   chipMale.setChecked(false);
-        if (chipFemale != null) chipFemale.setChecked(false);
-
-        // Locations
-        if (chipLocHassan != null) chipLocHassan.setChecked(false);
-        if (chipLocAgdal != null)  chipLocAgdal.setChecked(false);
-        if (chipLocIrfane != null) chipLocIrfane.setChecked(false);
-        if (chipLocOther != null)  chipLocOther.setChecked(false);
-
-        // Last visit
-        if (chipVisit3days != null) chipVisit3days.setChecked(false);
-        if (chipVisitWeek != null)  chipVisitWeek.setChecked(false);
-        if (chipVisitMonth != null) chipVisitMonth.setChecked(false);
-
-        // Birthday
-        if (switchBirthdayToday != null) switchBirthdayToday.setChecked(false);
-    }
-
+    /** Hide all filter controls when "send to all" is enabled */
     private void toggleFiltersVisibility(boolean sendToAllChecked) {
         if (filtersContainer == null) return;
         filtersContainer.setVisibility(sendToAllChecked ? View.GONE : View.VISIBLE);
     }
 
-    // ---------------------------
-    // Utilities
-    // ---------------------------
+    /** Reset every filter widget back to its default state */
+    private void clearAllFilters() {
+        if (sliderAge != null)          sliderAge.setValues(18f, 65f);
+        if (tvAgeRange != null)         tvAgeRange.setText("18 - 65 years");
 
+        if (chipMale != null)           chipMale.setChecked(false);
+        if (chipFemale != null)         chipFemale.setChecked(false);
+
+        if (chipLocHassan != null)      chipLocHassan.setChecked(false);
+        if (chipLocAgdal != null)       chipLocAgdal.setChecked(false);
+        if (chipLocIrfane != null)      chipLocIrfane.setChecked(false);
+        if (chipLocOther != null)       chipLocOther.setChecked(false);
+
+        if (chipVisit3days != null)     chipVisit3days.setChecked(false);
+        if (chipVisitWeek != null)      chipVisitWeek.setChecked(false);
+        if (chipVisitMonth != null)     chipVisitMonth.setChecked(false);
+
+        if (switchBirthdayToday != null) switchBirthdayToday.setChecked(false);
+    }
+
+    /** Safely extract trimmed text from an EditText (prevents NPE) */
     private String safeText(TextInputEditText et) {
         if (et == null || et.getText() == null) return "";
         return et.getText().toString().trim();
-    }
-
-    private void runToast(String msg) {
-        if (!isAdded()) return;
-        requireActivity().runOnUiThread(() ->
-                Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
-        );
-    }
-
-    /**
-     * Gets a fresh Firebase ID token if available, then passes it to the consumer.
-     * If the user is not signed in, we call back with null (backend accepts no Authorization).
-     */
-    private void withIdToken(Consumer<String> useToken) {
-        try {
-            FirebaseUser u = FirebaseAuth.getInstance().getCurrentUser();
-            if (u == null) {
-                useToken.accept(null);
-                return;
-            }
-            u.getIdToken(true).addOnCompleteListener(task -> {
-                if (!task.isSuccessful() || task.getResult() == null) {
-                    useToken.accept(null);
-                    return;
-                }
-                useToken.accept(task.getResult().getToken());
-            });
-        } catch (Exception e) {
-            useToken.accept(null);
-        }
     }
 }
