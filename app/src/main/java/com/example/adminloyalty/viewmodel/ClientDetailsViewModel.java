@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.adminloyalty.data.ClientDetailsRepository;
+import com.example.adminloyalty.data.api.ApiErrors;
 import com.example.adminloyalty.data.api.ApiResult;
 import com.example.adminloyalty.di.IoExecutor;
 import com.example.adminloyalty.fragments.ClientDetailsFragment.ActivityItem;
@@ -76,16 +77,8 @@ public class ClientDetailsViewModel extends ViewModel {
     }
 
     private String mapError(ApiResult r) {
-        if (r.code == null) return "Request failed";
-        switch (r.code) {
-            case "NETWORK_ERROR":  return "No connection. Check your network and retry.";
-            case "CLIENT_ERROR":   return "Could not build the request.";
-            case "USER_NOT_FOUND": return "User not found.";
-            case "FORBIDDEN":
-            case "HTTP_403":       return "Not authorized. Admin role required.";
-            case "RATE_LIMITED":   return "Too many requests. Try again shortly.";
-            default:               return r.message != null ? r.message : "Adjustment failed";
-        }
+        if ("USER_NOT_FOUND".equals(r.code)) return "User not found.";
+        return ApiErrors.message(r, "Not authorized. Admin role required.", "Adjustment failed");
     }
 
     public void clearAdjustStatus() {

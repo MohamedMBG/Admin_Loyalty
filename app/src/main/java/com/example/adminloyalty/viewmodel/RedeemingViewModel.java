@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.adminloyalty.data.RedeemingRepository;
+import com.example.adminloyalty.data.api.ApiErrors;
 import com.example.adminloyalty.data.api.ApiResult;
 import com.example.adminloyalty.di.IoExecutor;
 import com.example.adminloyalty.models.AdminUser;
@@ -12,6 +13,7 @@ import com.example.adminloyalty.models.RewardItem;
 import com.google.firebase.firestore.DocumentSnapshot;
 
 import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -122,12 +124,13 @@ public class RedeemingViewModel extends ViewModel {
             }
 
             JSONArray users = result.data != null ? result.data.optJSONArray("users") : null;
-            if (users == null || users.length() == 0) {
+            JSONObject first = users != null ? users.optJSONObject(0) : null;
+            if (first == null) { // empty, missing, or a non-object element — treat as no match
                 selectedUser.postValue(null);
                 error.postValue("No user found.");
                 return;
             }
-            selectedUser.postValue(AdminUser.fromJson(users.optJSONObject(0)));
+            selectedUser.postValue(AdminUser.fromJson(first));
         });
     }
 
@@ -158,29 +161,14 @@ public class RedeemingViewModel extends ViewModel {
     }
 
     private String mapSearchError(ApiResult r) {
-        if (r.code == null) return "Search failed";
-        switch (r.code) {
-            case "NETWORK_ERROR":            return "No connection. Check your network and retry.";
-            case "SEARCH_CRITERIA_REQUIRED": return "Enter an email or phone to search.";
-            case "FORBIDDEN":
-            case "HTTP_403":                 return "Not authorized. Admin role required.";
-            case "RATE_LIMITED":             return "Too many requests. Try again shortly.";
-            default:                         return r.message != null ? r.message : "Search failed";
-        }
+        if ("SEARCH_CRITERIA_REQUIRED".equals(r.code)) return "Enter an email or phone to search.";
+        return ApiErrors.message(r, "Not authorized. Admin role required.", "Search failed");
     }
 
     private String mapError(ApiResult r) {
-        if (r.code == null) return "Request failed";
-        switch (r.code) {
-            case "NETWORK_ERROR":     return "No connection. Check your network and retry.";
-            case "CLIENT_ERROR":      return "Could not build the request.";
-            case "REDEEM_NOT_FOUND":  return "Code not found. Ask the customer to reopen their reward.";
-            case "REDEEM_NOT_PENDING":return "This code is not pending — already used, canceled, or expired.";
-            case "FORBIDDEN":
-            case "HTTP_403":          return "Not authorized. Cashier role required.";
-            case "RATE_LIMITED":      return "Too many requests. Try again shortly.";
-            default:                  return r.message != null ? r.message : "Redemption failed";
-        }
+        if ("REDEEM_NOT_FOUND".equals(r.code)) return "Code not found. Ask the customer to reopen their reward.";
+        if ("REDEEM_NOT_PENDING".equals(r.code)) return "This code is not pending — already used, canceled, or expired.";
+        return ApiErrors.message(r, "Not authorized. Cashier role required.", "Redemption failed");
     }
 
     public void clearStatus() {
