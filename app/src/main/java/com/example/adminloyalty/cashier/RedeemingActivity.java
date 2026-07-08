@@ -1,6 +1,5 @@
 package com.example.adminloyalty.cashier;
 
-import android.annotation.SuppressLint;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -219,16 +218,14 @@ public class RedeemingActivity extends AppCompatActivity {
             }
         });
 
-        viewModel.getSelectedUser().observe(this, doc -> {
-            if (doc != null) {
+        viewModel.getSelectedUser().observe(this, user -> {
+            if (user != null) {
                 emptyStateCard.setVisibility(View.GONE);
                 clientCard.setVisibility(View.VISIBLE);
 
-                String name = doc.getString("fullName");
-                clientNameTv.setText(name != null ? name : "Unknown User");
+                clientNameTv.setText(user.displayName());
 
-                Long currentPts = doc.getLong("points");
-                int points = currentPts != null ? currentPts.intValue() : 0;
+                int points = user.points;
                 pointsChip.setText(points + " pts");
 
                 updateProgressUI(points);
@@ -236,18 +233,6 @@ public class RedeemingActivity extends AppCompatActivity {
                 updateRedeemButtonState();
             } else {
                 clearSelectedUserUI();
-            }
-        });
-
-        viewModel.getEligiblePromoTitle().observe(this, title -> {
-            if (title != null) {
-                tvOfferText.setText(title);
-                promoCard.setVisibility(View.VISIBLE);
-                setEligibilitySuccess("Eligible offer available");
-            } else {
-                promoCard.setVisibility(View.GONE);
-                tvOfferText.setText("");
-                setEligibilityNeutral();
             }
         });
 
@@ -336,8 +321,7 @@ public class RedeemingActivity extends AppCompatActivity {
 
         int points = 0;
         if (viewModel.getSelectedUser().getValue() != null) {
-            Long p = viewModel.getSelectedUser().getValue().getLong("points");
-            points = p != null ? p.intValue() : 0;
+            points = viewModel.getSelectedUser().getValue().points;
         }
 
         updateProgressUI(points);
@@ -435,14 +419,6 @@ public class RedeemingActivity extends AppCompatActivity {
         eligibilityChip.setChipStrokeWidth(1f);
         eligibilityChip.setChipStrokeColorResource(android.R.color.darker_gray);
         eligibilityChip.setTextColor(ContextCompat.getColor(this, android.R.color.black));
-    }
-
-    @SuppressLint("ResourceAsColor")
-    private void setEligibilitySuccess(String text) {
-        eligibilityChip.setText(text);
-        eligibilityChip.setChipStrokeWidth(0f);
-        eligibilityChip.setChipBackgroundColorResource(R.color.green_800);
-        eligibilityChip.setTextColor(ContextCompat.getColor(this, android.R.color.white));
     }
 
     private void showRedeemResultDialog(String payload) {
