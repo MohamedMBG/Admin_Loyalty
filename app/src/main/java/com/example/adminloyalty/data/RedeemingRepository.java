@@ -39,24 +39,23 @@ public class RedeemingRepository {
         return db.collection("users").document(uid).get();
     }
 
-    public Task<QuerySnapshot> searchUserByEmail(String email) {
-        return db.collection("users").whereEqualTo("email", email).limit(1).get();
+    /**
+     * Find a user by exact email or phone via the backend. Firestore rules deny admins any
+     * direct read of another user's profile, so search must route through the backend, which
+     * supports exact email OR phone only (no uid / name lookup, no fuzzy match).
+     * Blocking — call on a background thread. Pass exactly one of email/phone.
+     */
+    public ApiResult searchUser(String email, String phone) {
+        String param = email != null ? "email=" + enc(email) : "phone=" + enc(phone);
+        return api.get("/admin/users/search?" + param);
     }
 
-    public Task<QuerySnapshot> searchUserByPhone(String phone) {
-        return db.collection("users").whereEqualTo("phone", phone).limit(1).get();
-    }
-
-    public Task<QuerySnapshot> searchUserByUid(String uid) {
-        return db.collection("users").whereEqualTo("uid", uid).limit(1).get();
-    }
-
-    public Task<QuerySnapshot> searchUserByName(String name) {
-        return db.collection("users").whereEqualTo("fullName", name).limit(1).get();
-    }
-
-    public Task<QuerySnapshot> getActivePromotions() {
-        return db.collection("promotions").whereEqualTo("active", true).get();
+    private static String enc(String s) {
+        try {
+            return java.net.URLEncoder.encode(s, "UTF-8");
+        } catch (java.io.UnsupportedEncodingException e) {
+            return s; // UTF-8 always present on Android; unreachable
+        }
     }
 
     public Task<QuerySnapshot> getRewardsCatalog() {
