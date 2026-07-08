@@ -26,9 +26,9 @@ import okhttp3.Response;
 @Singleton
 public class AdminApiClient {
 
-    // ponytail: single hardcoded base URL. Move to BuildConfig flavors (dev/staging/prod) when
-    // real staging/prod URLs exist — see plan §6. TODO(owner): set the real backend base URL.
-    private static final String BASE_URL = "https://TODO-set-backend-base-url/api/v1";
+    // Configured via BuildConfig.API_BASE_URL (app/build.gradle.kts). Split per build flavor
+    // (dev/staging/prod) once those environments exist — see plan §6.
+    private static final String BASE_URL = com.example.adminloyalty.BuildConfig.API_BASE_URL;
 
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 

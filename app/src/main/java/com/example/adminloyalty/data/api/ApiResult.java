@@ -45,11 +45,11 @@ public class ApiResult {
                     root.optString("message", "Request failed"),
                     retryAfter);
         } catch (Exception e) {
-            // Non-JSON or empty body — synthesize an error from the HTTP status.
-            boolean ok = response.isSuccessful();
-            return new ApiResult(ok, status, ok ? new JSONObject() : null,
-                    ok ? null : "HTTP_" + status,
-                    ok ? null : "Unexpected response (" + status + ")",
+            // Body wasn't the expected JSON envelope. Treat as an error even on 2xx — a non-JSON
+            // "success" means the backend contract broke, don't mask it as an empty ok.
+            return new ApiResult(false, status, null,
+                    response.isSuccessful() ? "BAD_RESPONSE" : "HTTP_" + status,
+                    "Unexpected response format (" + status + ")",
                     retryAfter);
         }
     }

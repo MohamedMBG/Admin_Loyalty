@@ -10,6 +10,7 @@ android {
 
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 
     defaultConfig {
@@ -20,6 +21,10 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // TODO(owner): set the real backend base URL. Split per build flavor (dev/staging/prod)
+        // once those environments exist.
+        buildConfigField("String", "API_BASE_URL", "\"https://TODO-set-backend-base-url/api/v1\"")
     }
 
     buildTypes {
