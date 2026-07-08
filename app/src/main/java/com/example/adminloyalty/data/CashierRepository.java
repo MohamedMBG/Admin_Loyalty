@@ -47,7 +47,7 @@ public class CashierRepository {
         try {
             body.put("points", points);
         } catch (Exception e) {
-            return ApiResult.networkError("Failed to build request");
+            return ApiResult.clientError("Failed to build request");
         }
         return api.post("/admin/earn-codes", body, AdminApiClient.newIdempotencyKey());
     }

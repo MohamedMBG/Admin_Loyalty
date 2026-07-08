@@ -59,6 +59,11 @@ public class ApiResult {
         return new ApiResult(false, 0, null, "NETWORK_ERROR", message, 0);
     }
 
+    /** Client-side failure before the request left the device (e.g. request serialization). */
+    public static ApiResult clientError(String message) {
+        return new ApiResult(false, 0, null, "CLIENT_ERROR", message, 0);
+    }
+
     private static int parseInt(String s, int fallback) {
         if (s == null) return fallback;
         try {

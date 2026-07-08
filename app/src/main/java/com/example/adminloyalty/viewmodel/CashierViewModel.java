@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel;
 
 import com.example.adminloyalty.data.CashierRepository;
 import com.example.adminloyalty.data.api.ApiResult;
+import com.example.adminloyalty.di.IoExecutor;
 
 import java.util.concurrent.ExecutorService;
 
@@ -43,7 +44,7 @@ public class CashierViewModel extends ViewModel {
     private final int currentValidForSec = 120;
 
     @Inject
-    public CashierViewModel(CashierRepository repository, ExecutorService io) {
+    public CashierViewModel(CashierRepository repository, @IoExecutor ExecutorService io) {
         this.repository = repository;
         this.io = io;
         initCashierMeta();
