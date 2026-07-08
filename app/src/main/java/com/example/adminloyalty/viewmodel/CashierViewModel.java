@@ -10,7 +10,6 @@ import com.example.adminloyalty.data.CashierRepository;
 import com.example.adminloyalty.data.api.ApiResult;
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import javax.inject.Inject;
 
@@ -24,7 +23,7 @@ public class CashierViewModel extends ViewModel {
     private static final double POINTS_RATIO = 5.0;
 
     private final CashierRepository repository;
-    private final ExecutorService io = Executors.newSingleThreadExecutor();
+    private final ExecutorService io;
 
     private final MutableLiveData<String> cashierName = new MutableLiveData<>();
     private final MutableLiveData<String> cashierId = new MutableLiveData<>();
@@ -44,8 +43,9 @@ public class CashierViewModel extends ViewModel {
     private final int currentValidForSec = 120;
 
     @Inject
-    public CashierViewModel(CashierRepository repository) {
+    public CashierViewModel(CashierRepository repository, ExecutorService io) {
         this.repository = repository;
+        this.io = io;
         initCashierMeta();
     }
 
@@ -159,7 +159,13 @@ public class CashierViewModel extends ViewModel {
     public void cancelActive() {
         final String code = activeCode;
         if (code != null) {
-            io.execute(() -> repository.revokeEarnCode(code)); // best-effort revoke
+            io.execute(() -> {
+                ApiResult r = repository.revokeEarnCode(code); // best-effort revoke
+                if (!r.isOk()) {
+                    android.util.Log.w("CashierViewModel",
+                            "Revoke failed for " + code + ": " + r.code + " " + r.message);
+                }
+            });
         }
         teardownAndReset();
     }
@@ -201,6 +207,6 @@ public class CashierViewModel extends ViewModel {
     protected void onCleared() {
         super.onCleared();
         cancelTimer();
-        io.shutdown();
+        // io is app-scoped (shared @Singleton); do not shut it down here.
     }
 }
