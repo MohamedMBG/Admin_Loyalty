@@ -7,6 +7,8 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.adminloyalty.data.RedeemingRepository;
+import com.example.adminloyalty.data.api.ApiResult;
+import com.example.adminloyalty.di.IoExecutor;
 import com.example.adminloyalty.models.RewardItem;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -16,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 import javax.inject.Inject;
 
@@ -25,6 +28,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 public class RedeemingViewModel extends ViewModel {
 
     private final RedeemingRepository repository;
+    private final ExecutorService io;
 
     private final MutableLiveData<String> cashierId = new MutableLiveData<>();
     private final MutableLiveData<String> cashierName = new MutableLiveData<>();
@@ -41,8 +45,9 @@ public class RedeemingViewModel extends ViewModel {
     private final MutableLiveData<List<RewardItem>> rewardsList = new MutableLiveData<>();
 
     @Inject
-    public RedeemingViewModel(RedeemingRepository repository) {
+    public RedeemingViewModel(RedeemingRepository repository, @IoExecutor ExecutorService io) {
         this.repository = repository;
+        this.io = io;
         initCashierMeta();
         loadRewardsFromCatalog();
     }
@@ -260,44 +265,44 @@ public class RedeemingViewModel extends ViewModel {
         }
     }
 
-    public void redeemItem(String selectedItemDocId, String selectedItemName, int selectedItemCost) {
-        DocumentSnapshot userDoc = selectedUser.getValue();
-        if (userDoc == null) {
-            error.setValue("Select customer first");
+    /**
+     * Complete a customer's pending redemption from a scanned code via the backend.
+     * The cashier no longer picks the reward or deducts points — the customer created the
+     * pending redeem in their app; this just marks it fulfilled.
+     */
+    public void completeRedeem(String code) {
+        if (code == null || code.trim().isEmpty()) {
+            error.setValue("No code scanned");
             return;
         }
-
-        if (selectedItemName == null || selectedItemCost <= 0) {
-            error.setValue("Select a reward first");
-            return;
-        }
-
-        Long currentPts = userDoc.getLong("points");
-        int points = currentPts != null ? currentPts.intValue() : 0;
-
-        if (points < selectedItemCost) {
-            error.setValue("Not enough points");
-            return;
-        }
+        final String clean = code.trim();
 
         isLoading.setValue(true);
-
-        repository.createRedeemCode(
-                userDoc.getId(),
-                userDoc.getString("uid"),
-                userDoc.getString("fullName"),
-                selectedItemDocId,
-                selectedItemName,
-                eligiblePromoId.getValue(),
-                cashierId.getValue(),
-                cashierName.getValue()
-        ).addOnSuccessListener(payload -> {
-            isLoading.setValue(false);
-            success.setValue(payload);
-        }).addOnFailureListener(e -> {
-            isLoading.setValue(false);
-            error.setValue("Redemption failed: " + e.getMessage());
+        io.execute(() -> {
+            ApiResult result = repository.completeRedeem(clean);
+            isLoading.postValue(false);
+            if (result.isOk()) {
+                String rewardName = result.data != null ? result.data.optString("rewardName", "reward") : "reward";
+                String status = result.data != null ? result.data.optString("status", "completed") : "completed";
+                success.postValue(rewardName + " · " + status);
+            } else {
+                error.postValue(mapError(result));
+            }
         });
+    }
+
+    private String mapError(ApiResult r) {
+        if (r.code == null) return "Request failed";
+        switch (r.code) {
+            case "NETWORK_ERROR":     return "No connection. Check your network and retry.";
+            case "CLIENT_ERROR":      return "Could not build the request.";
+            case "REDEEM_NOT_FOUND":  return "Code not found. Ask the customer to reopen their reward.";
+            case "REDEEM_NOT_PENDING":return "This code is not pending — already used, canceled, or expired.";
+            case "FORBIDDEN":
+            case "HTTP_403":          return "Not authorized. Cashier role required.";
+            case "RATE_LIMITED":      return "Too many requests. Try again shortly.";
+            default:                  return r.message != null ? r.message : "Redemption failed";
+        }
     }
 
     public void clearStatus() {

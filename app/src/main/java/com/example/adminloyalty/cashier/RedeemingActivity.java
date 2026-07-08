@@ -1,7 +1,6 @@
 package com.example.adminloyalty.cashier;
 
 import android.annotation.SuppressLint;
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -16,6 +15,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
@@ -28,10 +28,8 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.WriterException;
-import com.google.zxing.common.BitMatrix;
-import com.google.zxing.qrcode.QRCodeWriter;
+import com.journeyapps.barcodescanner.ScanContract;
+import com.journeyapps.barcodescanner.ScanOptions;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -68,6 +66,13 @@ public class RedeemingActivity extends AppCompatActivity {
     private final Handler searchHandler = new Handler(Looper.getMainLooper());
     private Runnable searchRunnable;
     private static final long SEARCH_DEBOUNCE_MS = 350;
+
+    private final ActivityResultLauncher<ScanOptions> scanLauncher =
+            registerForActivityResult(new ScanContract(), result -> {
+                if (result.getContents() != null) {
+                    viewModel.completeRedeem(result.getContents());
+                }
+            });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -167,9 +172,17 @@ public class RedeemingActivity extends AppCompatActivity {
     }
 
     private void setupRedeemButton() {
-        btnRedeem.setOnClickListener(v -> {
-            createRedeemCode();
-        });
+        btnRedeem.setText("Scan to Complete");
+        btnRedeem.setOnClickListener(v -> launchScanner());
+    }
+
+    private void launchScanner() {
+        ScanOptions options = new ScanOptions()
+                .setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+                .setPrompt("Scan the customer's redemption code")
+                .setBeepEnabled(false)
+                .setOrientationLocked(false);
+        scanLauncher.launch(options);
     }
 
     private void observeViewModel() {
@@ -183,15 +196,7 @@ public class RedeemingActivity extends AppCompatActivity {
 
         viewModel.getSuccess().observe(this, payload -> {
             if (payload != null && !payload.isEmpty()) {
-                showToast("Success! Points deducted.");
-                try {
-                    Bitmap qr = generateQrCode(payload, 512);
-                    showQrDialog(qr, selectedItemName, selectedItemCost);
-                } catch (WriterException e) {
-                    showToast("QR generation failed");
-                }
-                triggerSearchNow();
-                updateRedeemButtonState();
+                showRedeemResultDialog(payload);
                 viewModel.clearStatus();
             }
         });
@@ -200,7 +205,7 @@ public class RedeemingActivity extends AppCompatActivity {
             if (loading != null) {
                 btnRedeem.setEnabled(!loading);
                 btnRedeem.setAlpha(loading ? 0.6f : 1f);
-                btnRedeem.setText(loading ? "Processing..." : "Redeem");
+                btnRedeem.setText(loading ? "Completing..." : "Scan to Complete");
             }
         });
 
@@ -416,30 +421,12 @@ public class RedeemingActivity extends AppCompatActivity {
         }
     }
 
+    // Completion now happens by scanning the customer's pending redeem code, so the button
+    // no longer depends on picking a reward here — only disabled while a call is in flight.
     private void updateRedeemButtonState() {
-        int points = 0;
-        if (viewModel.getSelectedUser().getValue() != null) {
-            Long p = viewModel.getSelectedUser().getValue().getLong("points");
-            points = p != null ? p.intValue() : 0;
-        }
-
-        boolean isSearchActive = Boolean.TRUE.equals(viewModel.getIsSearching().getValue());
         boolean isLoadActive = Boolean.TRUE.equals(viewModel.getIsLoading().getValue());
-
-        boolean canRedeem =
-                !isSearchActive
-                        && !isLoadActive
-                        && viewModel.getSelectedUser().getValue() != null
-                        && selectedItemName != null
-                        && selectedItemCost > 0
-                        && points >= selectedItemCost;
-
-        btnRedeem.setEnabled(canRedeem);
-        btnRedeem.setAlpha(canRedeem ? 1f : 0.6f);
-    }
-
-    private void createRedeemCode() {
-        viewModel.redeemItem(selectedItemDocId, selectedItemName, selectedItemCost);
+        btnRedeem.setEnabled(!isLoadActive);
+        btnRedeem.setAlpha(isLoadActive ? 0.6f : 1f);
     }
 
     private void setEligibilityNeutral() {
@@ -458,28 +445,10 @@ public class RedeemingActivity extends AppCompatActivity {
         eligibilityChip.setTextColor(ContextCompat.getColor(this, android.R.color.white));
     }
 
-    private Bitmap generateQrCode(String text, int size) throws WriterException {
-        QRCodeWriter writer = new QRCodeWriter();
-        BitMatrix bitMatrix = writer.encode(text, BarcodeFormat.QR_CODE, size, size);
-        Bitmap bmp = Bitmap.createBitmap(size, size, Bitmap.Config.RGB_565);
-        for (int x = 0; x < size; x++) {
-            for (int y = 0; y < size; y++) {
-                bmp.setPixel(x, y, bitMatrix.get(x, y) ? Color.BLACK : Color.WHITE);
-            }
-        }
-        return bmp;
-    }
-
-    private void showQrDialog(Bitmap bitmap, String name, int cost) {
-        View v = getLayoutInflater().inflate(R.layout.dialog_qr_redeem, null);
-        ImageView iv = v.findViewById(R.id.ivQrCode);
-        TextView tv = v.findViewById(R.id.tvRedeemInfo);
-
-        if (iv != null) iv.setImageBitmap(bitmap);
-        if (tv != null) tv.setText("Scan to confirm\n" + name + " (" + cost + " pts)");
-
+    private void showRedeemResultDialog(String payload) {
         new AlertDialog.Builder(this)
-                .setView(v)
+                .setTitle("Redemption complete")
+                .setMessage(payload)
                 .setPositiveButton("Done", null)
                 .show();
     }
