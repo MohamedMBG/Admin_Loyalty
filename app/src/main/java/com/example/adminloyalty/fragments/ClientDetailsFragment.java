@@ -4,13 +4,16 @@ import android.app.AlertDialog;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.text.InputType;
 import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -104,6 +107,8 @@ public class ClientDetailsFragment extends Fragment {
         // Setup Toolbar Action
         btnBack.setOnClickListener(v -> requireActivity().onBackPressed());
 
+        view.findViewById(R.id.btnAdjustPoints).setOnClickListener(v -> showAdjustPointsDialog());
+
         // Setup ViewModel
         viewModel = new ViewModelProvider(this).get(ClientDetailsViewModel.class);
         observeViewModel();
@@ -165,6 +170,13 @@ public class ClientDetailsFragment extends Fragment {
         viewModel.getError().observe(getViewLifecycleOwner(), error -> {
             if (error != null && !error.isEmpty()) {
                 Toast.makeText(getContext(), error, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        viewModel.getAdjustSuccess().observe(getViewLifecycleOwner(), msg -> {
+            if (msg != null && !msg.isEmpty()) {
+                Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
+                viewModel.clearAdjustStatus();
             }
         });
 
@@ -320,6 +332,44 @@ public class ClientDetailsFragment extends Fragment {
         adapter = new ActivityAdapter(items);
         rvHistory.setLayoutManager(new LinearLayoutManager(getContext()));
         rvHistory.setAdapter(adapter);
+    }
+
+    private void showAdjustPointsDialog() {
+        if (clientId == null) {
+            Toast.makeText(getContext(), "No client loaded", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        int pad = (int) (16 * getResources().getDisplayMetrics().density);
+        LinearLayout box = new LinearLayout(getContext());
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(pad, pad / 2, pad, 0);
+
+        EditText etDelta = new EditText(getContext());
+        etDelta.setHint("Amount (use - to deduct, e.g. -50)");
+        etDelta.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED);
+        box.addView(etDelta);
+
+        EditText etReason = new EditText(getContext());
+        etReason.setHint("Reason (required)");
+        etReason.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+        box.addView(etReason);
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Adjust Points")
+                .setView(box)
+                .setPositiveButton("Apply", (dialog, which) -> {
+                    int delta;
+                    try {
+                        delta = Integer.parseInt(etDelta.getText().toString().trim());
+                    } catch (NumberFormatException e) {
+                        Toast.makeText(getContext(), "Enter a valid whole number", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    viewModel.adjustPoints(clientId, delta, etReason.getText().toString());
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     private String capitalize(String str) {
