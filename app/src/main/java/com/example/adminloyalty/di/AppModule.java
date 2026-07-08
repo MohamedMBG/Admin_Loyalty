@@ -24,4 +24,11 @@ public class AppModule {
     public com.google.firebase.auth.FirebaseAuth provideFirebaseAuth() {
         return com.google.firebase.auth.FirebaseAuth.getInstance();
     }
+
+    @Provides
+    @Singleton
+    public com.example.adminloyalty.data.api.AuthInterceptor provideAuthInterceptor(
+            com.google.firebase.auth.FirebaseAuth auth) {
+        return new com.example.adminloyalty.data.api.AuthInterceptor(auth);
+    }
 }
