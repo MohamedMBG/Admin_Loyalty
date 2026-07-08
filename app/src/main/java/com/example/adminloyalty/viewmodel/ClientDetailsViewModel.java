@@ -7,6 +7,8 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.adminloyalty.data.ClientDetailsRepository;
+import com.example.adminloyalty.data.api.ApiResult;
+import com.example.adminloyalty.di.IoExecutor;
 import com.example.adminloyalty.fragments.ClientDetailsFragment.ActivityItem;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
@@ -17,6 +19,7 @@ import com.google.firebase.firestore.QuerySnapshot;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 import javax.inject.Inject;
 
@@ -26,6 +29,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 public class ClientDetailsViewModel extends ViewModel {
 
     private final ClientDetailsRepository repository;
+    private final ExecutorService io;
 
     private final MutableLiveData<DocumentSnapshot> userProfile = new MutableLiveData<>();
     private final MutableLiveData<Double> averageSpend = new MutableLiveData<>();
@@ -33,10 +37,12 @@ public class ClientDetailsViewModel extends ViewModel {
     private final MutableLiveData<List<String>> cashiers = new MutableLiveData<>();
     private final MutableLiveData<Boolean> loadingHistory = new MutableLiveData<>(false);
     private final MutableLiveData<String> error = new MutableLiveData<>();
+    private final MutableLiveData<String> adjustSuccess = new MutableLiveData<>();
 
     @Inject
-    public ClientDetailsViewModel(ClientDetailsRepository repository) {
+    public ClientDetailsViewModel(ClientDetailsRepository repository, @IoExecutor ExecutorService io) {
         this.repository = repository;
+        this.io = io;
     }
 
     public LiveData<DocumentSnapshot> getUserProfile() { return userProfile; }
@@ -45,11 +51,48 @@ public class ClientDetailsViewModel extends ViewModel {
     public LiveData<List<String>> getCashiers() { return cashiers; }
     public LiveData<Boolean> getLoadingHistory() { return loadingHistory; }
     public LiveData<String> getError() { return error; }
+    public LiveData<String> getAdjustSuccess() { return adjustSuccess; }
 
     public void loadClientData(String clientId) {
         if (clientId == null) return;
         loadUserProfile(clientId);
         loadHistory(clientId);
+    }
+
+    /** Apply a points adjustment through the backend, then refresh the profile on success. */
+    public void adjustPoints(String clientId, int delta, String reason) {
+        if (clientId == null) { error.setValue("No client loaded"); return; }
+        if (delta == 0) { error.setValue("Enter a non-zero amount"); return; }
+        if (reason == null || reason.trim().isEmpty()) { error.setValue("Reason is required"); return; }
+        final String cleanReason = reason.trim();
+
+        io.execute(() -> {
+            ApiResult result = repository.adjustPoints(clientId, delta, cleanReason);
+            if (result.isOk()) {
+                adjustSuccess.postValue((delta > 0 ? "+" : "") + delta + " pts applied");
+                loadUserProfile(clientId); // reflect the new balance
+            } else {
+                error.postValue(mapError(result));
+            }
+        });
+    }
+
+    private String mapError(ApiResult r) {
+        if (r.code == null) return "Request failed";
+        switch (r.code) {
+            case "NETWORK_ERROR":  return "No connection. Check your network and retry.";
+            case "CLIENT_ERROR":   return "Could not build the request.";
+            case "USER_NOT_FOUND": return "User not found.";
+            case "FORBIDDEN":
+            case "HTTP_403":       return "Not authorized. Admin role required.";
+            case "RATE_LIMITED":   return "Too many requests. Try again shortly.";
+            default:               return r.message != null ? r.message : "Adjustment failed";
+        }
+    }
+
+    public void clearAdjustStatus() {
+        adjustSuccess.setValue(null);
+        error.setValue(null);
     }
 
     private void loadUserProfile(String clientId) {

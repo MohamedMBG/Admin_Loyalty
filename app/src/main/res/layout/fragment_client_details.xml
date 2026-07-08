@@ -376,6 +376,16 @@
 
             </LinearLayout>
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAdjustPoints"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginBottom="8dp"
+                android:text="Adjust Points"
+                app:icon="@drawable/ic_star"
+                app:iconGravity="textStart" />
+
 
             <!-- 3. HISTORY SECTION WITH FILTERS -->
             <LinearLayout
