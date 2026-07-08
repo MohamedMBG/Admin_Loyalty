@@ -7,7 +7,10 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.adminloyalty.data.CashierRepository;
-import com.google.firebase.firestore.ListenerRegistration;
+import com.example.adminloyalty.data.api.ApiResult;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.inject.Inject;
 
@@ -16,7 +19,12 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 @HiltViewModel
 public class CashierViewModel extends ViewModel {
 
+    // ponytail: client-side MAD->points, ratio constant. Settings doc read isn't rules-allowed;
+    // switch to points-direct input, or a backend-owned ratio, if pricing needs to move server-side.
+    private static final double POINTS_RATIO = 5.0;
+
     private final CashierRepository repository;
+    private final ExecutorService io = Executors.newSingleThreadExecutor();
 
     private final MutableLiveData<String> cashierName = new MutableLiveData<>();
     private final MutableLiveData<String> cashierId = new MutableLiveData<>();
@@ -32,7 +40,7 @@ public class CashierViewModel extends ViewModel {
     private final MutableLiveData<Boolean> confirmDialogVisible = new MutableLiveData<>(false);
 
     private CountDownTimer countdown;
-    private ListenerRegistration voucherListener;
+    private String activeCode; // code minted by backend, needed to revoke
     private final int currentValidForSec = 120;
 
     @Inject
@@ -77,8 +85,8 @@ public class CashierViewModel extends ViewModel {
             return;
         }
 
-        if (orderNo.isEmpty() || amtStr.isEmpty()) {
-            error.setValue("Missing inputs");
+        if (amtStr.isEmpty()) {
+            error.setValue("Missing amount");
             return;
         }
 
@@ -91,62 +99,35 @@ public class CashierViewModel extends ViewModel {
             return;
         }
 
+        int points = (int) Math.max(1, Math.round(amountMAD / POINTS_RATIO));
+
         isIssuing.setValue(true);
-        statusMessage.setValue("Checking...");
+        statusMessage.setValue("Creating...");
 
-        repository.checkReceiptExists(orderNo)
-                .addOnSuccessListener(snap -> {
-                    if (!snap.isEmpty()) {
-                        isIssuing.setValue(false);
-                        statusMessage.setValue("Blocked");
-                        error.setValue("This receipt number already exists.");
-                        return;
-                    }
-
-                    statusMessage.setValue("Creating...");
-
-                    repository.createVoucherTransaction(orderNo, amountMAD, currentValidForSec, cashierId.getValue(), cashierName.getValue())
-                            .addOnSuccessListener(id -> {
-                                voucherIdLiveData.setValue(id);
-                                qrMetaMessage.setValue("Show to customer to scan");
-                                isIssuing.setValue(false);
-                                statusMessage.setValue("Active");
-
-                                startDocListener(id);
-                                startCountdown(currentValidForSec * 1000L);
-                            })
-                            .addOnFailureListener(e -> {
-                                isIssuing.setValue(false);
-                                statusMessage.setValue("Error");
-                                error.setValue("Transaction failed: " + e.getMessage());
-                            });
-                })
-                .addOnFailureListener(e -> {
-                    isIssuing.setValue(false);
-                    statusMessage.setValue("Error");
-                    error.setValue("Check failed: " + e.getMessage());
-                });
-    }
-
-    private void startDocListener(String voucherId) {
-        removeDocListener();
-        voucherListener = repository.getVoucherReference(voucherId).addSnapshotListener((snap, err) -> {
-            if (err != null || snap == null || !snap.exists()) return;
-            String status = snap.getString("status");
-            if (status == null) return;
-
-            statusMessage.setValue(status.toUpperCase());
-            switch (status) {
-                case "redeemed":
-                    qrMetaMessage.setValue("Customer scanned successfully!");
-                    voucherIdLiveData.setValue(null); // Clear QR
-                    break;
-                case "canceled":
-                    qrMetaMessage.setValue("Canceled");
-                    voucherIdLiveData.setValue(null); // Clear QR
-                    break;
-                default:
-                    break;
+        io.execute(() -> {
+            ApiResult result = repository.createEarnCode(points);
+            if (result.isOk()) {
+                String code = result.data != null
+                        ? result.data.optString("code", result.data.optString("id", null))
+                        : null;
+                if (code == null) {
+                    isIssuing.postValue(false);
+                    statusMessage.postValue("Error");
+                    error.postValue("Backend returned no code");
+                    return;
+                }
+                activeCode = code;
+                voucherIdLiveData.postValue(code);
+                qrMetaMessage.postValue("Show to customer to scan");
+                isIssuing.postValue(false);
+                statusMessage.postValue("Active");
+                // ponytail: local expiry timer for UX; backend enforces the real expiry. Wire the
+                // server's expiresAt here once its exact type (epoch ms vs ISO) is confirmed.
+                startCountdown(currentValidForSec * 1000L);
+            } else {
+                isIssuing.postValue(false);
+                statusMessage.postValue("Error");
+                error.postValue(mapError(result));
             }
         });
     }
@@ -155,34 +136,37 @@ public class CashierViewModel extends ViewModel {
         cancelTimer();
         if (durationMs < 0) durationMs = 0;
 
-        countdown = new CountDownTimer(durationMs, 1000) {
-            @Override public void onTick(long left) {
-                long s = left / 1000, m = s / 60, r = s % 60;
-                timerText.setValue(String.format("%02d:%02d", m, r));
-            }
+        final long dur = durationMs;
+        // CountDownTimer must be created on the main thread.
+        new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+            countdown = new CountDownTimer(dur, 1000) {
+                @Override public void onTick(long left) {
+                    long s = left / 1000, m = s / 60, r = s % 60;
+                    timerText.setValue(String.format("%02d:%02d", m, r));
+                }
 
-            @Override public void onFinish() {
-                statusMessage.setValue("Expired");
-                qrMetaMessage.setValue("QR expired. Generate a new one.");
-                timerText.setValue("00:00");
-                voucherIdLiveData.setValue(null); // Clear QR
-            }
-        }.start();
+                @Override public void onFinish() {
+                    statusMessage.setValue("Expired");
+                    qrMetaMessage.setValue("QR expired. Generate a new one.");
+                    timerText.setValue("00:00");
+                    voucherIdLiveData.setValue(null); // Clear QR
+                    activeCode = null;
+                }
+            }.start();
+        });
     }
 
     public void cancelActive() {
-        String vid = voucherIdLiveData.getValue();
-        if (vid != null) {
-            repository.cancelVoucherStatus(vid)
-                    .addOnCompleteListener(task -> teardownAndReset());
-        } else {
-            teardownAndReset();
+        final String code = activeCode;
+        if (code != null) {
+            io.execute(() -> repository.revokeEarnCode(code)); // best-effort revoke
         }
+        teardownAndReset();
     }
 
     public void teardownAndReset() {
-        removeDocListener();
         cancelTimer();
+        activeCode = null;
         isIssuing.setValue(false);
         voucherIdLiveData.setValue(null);
         qrMetaMessage.setValue("Generate a QR to begin");
@@ -190,17 +174,22 @@ public class CashierViewModel extends ViewModel {
         timerText.setValue("--:--");
     }
 
-    private void removeDocListener() {
-        if (voucherListener != null) {
-            voucherListener.remove();
-            voucherListener = null;
-        }
-    }
-
     private void cancelTimer() {
         if (countdown != null) {
             countdown.cancel();
             countdown = null;
+        }
+    }
+
+    /** Map the backend error envelope to a cashier-facing message. */
+    private String mapError(ApiResult r) {
+        if (r.code == null) return "Request failed";
+        switch (r.code) {
+            case "NETWORK_ERROR": return "No connection. Check your network and retry.";
+            case "FORBIDDEN":
+            case "HTTP_403":      return "Not authorized. Admin role required.";
+            case "RATE_LIMITED":  return "Too many requests. Try again shortly.";
+            default:              return r.message != null ? r.message : "Failed to create code";
         }
     }
 
@@ -211,7 +200,7 @@ public class CashierViewModel extends ViewModel {
     @Override
     protected void onCleared() {
         super.onCleared();
-        removeDocListener();
         cancelTimer();
+        io.shutdown();
     }
 }
