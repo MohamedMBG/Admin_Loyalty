@@ -126,7 +126,9 @@ public class DashboardRepository {
             for (Task<?> t : tasks) {
                 if (!t.isSuccessful()) {
                     anyFailed = true;
-                    break;
+                    if (t.getException() != null) {
+                        android.util.Log.e("DashboardRepository", "Task failed: " + t.getException().getMessage(), t.getException());
+                    }
                 }
             }
 
