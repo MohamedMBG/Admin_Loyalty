@@ -5,7 +5,6 @@ import com.example.adminloyalty.data.api.ApiResult;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QuerySnapshot;
 
 import org.json.JSONObject;
 
@@ -39,27 +38,19 @@ public class ClientDetailsRepository {
         return api.post("/admin/users/" + uid + "/points-adjustment", body, AdminApiClient.newIdempotencyKey());
     }
 
+    /**
+     * A user's recent activity feed via the backend. Blocking — call on a background thread.
+     * Replaces the old direct earn_codes/redeem_codes reads (both rules-denied). Returns the
+     * canonical activity schema: {@code {activities:[{type,pointsDelta,refId,balanceAfter,createdAt}]}}.
+     */
+    public ApiResult getUserActivity(String clientId, int limit) {
+        return api.get("/admin/users/" + clientId + "/activity?limit=" + limit);
+    }
+
+    // ponytail: BACKEND GAP — no endpoint returns another user's full profile (gender / address /
+    // lastVisit) by uid; Firestore rules deny the direct read once deployed. Kept as-is so the
+    // header still renders pre-cutover. Migrate to a GET /admin/users/{uid} endpoint when it exists.
     public Task<DocumentSnapshot> getUserProfile(String clientId) {
         return db.collection("users").document(clientId).get();
-    }
-
-    public Task<QuerySnapshot> getUserEarnCodes(String clientId) {
-        return db.collection("earn_codes")
-                .whereEqualTo("redeemedByUid", clientId)
-                .whereEqualTo("status", "redeemed")
-                .get();
-    }
-
-    public Task<QuerySnapshot> getUserRedeemCodes(String clientId) {
-        return db.collection("redeem_codes")
-                .whereEqualTo("userUid", clientId)
-                .whereEqualTo("status", "completed")
-                .get();
-    }
-
-    public Task<QuerySnapshot> getCashiers() {
-        return db.collection("users")
-                .whereEqualTo("role", "cashier")
-                .get();
     }
 }

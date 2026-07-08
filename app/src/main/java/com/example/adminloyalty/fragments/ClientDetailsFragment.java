@@ -179,26 +179,6 @@ public class ClientDetailsFragment extends Fragment {
                 viewModel.clearAdjustStatus();
             }
         });
-
-        viewModel.getCashiers().observe(getViewLifecycleOwner(), cashiers -> {
-            if (cashiers != null && !cashiers.isEmpty()) {
-                String[] cashierArray = cashiers.toArray(new String[0]);
-                new AlertDialog.Builder(getContext())
-                        .setTitle("Select Cashier")
-                        .setItems(cashierArray, (dialog, which) -> {
-                            String selectedCashier = cashierArray[which];
-                            filterListByCashier(selectedCashier);
-                        })
-                        .setNegativeButton("Cancel", null)
-                        .setNeutralButton("Show All", (dialog, which) -> {
-                            chipGroupFilters.check(R.id.filterAll);
-                            filterList("ALL");
-                        })
-                        .show();
-            } else if (cashiers != null && cashiers.isEmpty()) {
-                Toast.makeText(getContext(), "No cashiers found in database", Toast.LENGTH_SHORT).show();
-            }
-        });
     }
 
     private void setupFilters(View view) {
@@ -215,35 +195,16 @@ public class ClientDetailsFragment extends Fragment {
             }
         });
 
+        // ponytail: cashier filter removed — the backend activity feed carries no cashier
+        // attribution, so there is nothing to filter by. Chip hidden until/if the feed adds it.
         Chip chipCashier = view.findViewById(R.id.filterCashier);
-        chipCashier.setOnClickListener(v -> {
-            chipGroupFilters.check(R.id.filterCashier);
-            Toast.makeText(getContext(), "Loading cashier list...", Toast.LENGTH_SHORT).show();
-            viewModel.fetchCashiers();
-        });
+        chipCashier.setVisibility(View.GONE);
 
         Chip chipDate = view.findViewById(R.id.filterDate);
         chipDate.setOnClickListener(v -> {
             chipGroupFilters.check(R.id.filterDate);
             showDateRangePicker();
         });
-    }
-
-    private void filterListByCashier(String cashierName) {
-        if (allActivities == null || allActivities.isEmpty()) return;
-
-        List<ActivityItem> filtered = new ArrayList<>();
-        for (ActivityItem item : allActivities) {
-            String itemCashier = item.getCashierName() != null ? item.getCashierName() : "";
-            if (itemCashier.equalsIgnoreCase(cashierName)) {
-                filtered.add(item);
-            }
-        }
-        updateAdapter(filtered);
-
-        if (filtered.isEmpty()) {
-            Toast.makeText(getContext(), "No transactions found for " + cashierName, Toast.LENGTH_SHORT).show();
-        }
     }
 
     private void showDateRangePicker() {
