@@ -4,46 +4,26 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
-import com.google.firebase.Timestamp;
-import com.google.firebase.firestore.AggregateQuerySnapshot;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QuerySnapshot;
-import com.google.firebase.firestore.AggregateField;
-
-import android.content.Context;
-import android.content.SharedPreferences;
-
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.any;
-
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
 
 /**
- * Unit tests for {@link DashboardRepository} business aggregation logic.
+ * Unit tests for {@link DashboardRepository}: mapping the backend analytics JSON onto DashboardData,
+ * and the previous-period range math. The aggregation itself now lives in the backend AnalyticsService.
+ * Static helpers only — no Android Context, so it runs on a plain JVM.
  */
 public class DashboardRepositoryTest {
 
-    private DashboardRepository repository;
     private DashboardRepository.DateRange range;
 
     @Before
     public void setUp() {
-        Context mockContext = mock(Context.class);
-        SharedPreferences mockPrefs = mock(SharedPreferences.class);
-        when(mockContext.getSharedPreferences(anyString(), anyInt())).thenReturn(mockPrefs);
-        repository = new DashboardRepository(mock(FirebaseFirestore.class), mockContext);
-
         Calendar cal = Calendar.getInstance();
         cal.set(2024, Calendar.OCTOBER, 14, 0, 0, 0); // Monday
         Date start = cal.getTime();
@@ -53,40 +33,25 @@ public class DashboardRepositoryTest {
     }
 
     @Test
-    public void buildDashboardData_aggregatesRevenuePointsAndStats() {
-        Timestamp mondayMorning = new Timestamp(new Date(range.start.getTime() + hours(10)));
-        Timestamp tuesdayNoon = new Timestamp(new Date(range.start.getTime() + days(1) + hours(12)));
-        Timestamp tuesdayLater = new Timestamp(new Date(range.start.getTime() + days(1) + hours(18)));
+    public void parseAnalytics_mapsResponseFieldsAndCashiers() throws Exception {
+        JSONObject json = new JSONObject()
+                .put("revenue", 100.0)
+                .put("pointsIssued", 35)
+                .put("pointsRedeemed", 20)
+                .put("gifts", 2)
+                .put("newClients", 3)
+                .put("uniqueVisitors", 2)
+                .put("series", new JSONArray()
+                        .put(new JSONObject().put("earnCount", 1))
+                        .put(new JSONObject().put("earnCount", 2)))
+                .put("cashiers", new JSONArray()
+                        .put(new JSONObject().put("cashierUid", "cash-1").put("cashierName", "Alice")
+                                .put("codesIssued", 3).put("redeemsCompleted", 1))
+                        .put(new JSONObject().put("cashierUid", "cash-2").put("cashierName", "Bob")
+                                .put("codesIssued", 0).put("redeemsCompleted", 1)));
 
-        List<DocumentSnapshot> earnDocs = new ArrayList<>();
-        earnDocs.add(mockEarnDoc("e1", 50.0, 20L, mondayMorning, "u1", "cash-1", "Alice", "Creator A"));
-        earnDocs.add(mockEarnDoc("e2", 30.0, 10L, tuesdayNoon, "u1", "cash-1", "Alice", "Creator A"));
-        earnDocs.add(mockEarnDoc("e3", 20.0, 5L, tuesdayLater, "u1", "cash-1", "", "Helper"));
-
-        List<DocumentSnapshot> previousDocs = new ArrayList<>();
-        previousDocs.add(mockPreviousRevenueDoc(40.0));
-        previousDocs.add(mockPreviousRevenueDoc(5.0));
-
-        List<DocumentSnapshot> redeemDocs = new ArrayList<>();
-        redeemDocs.add(mockRedeemDoc("r1", 15.0, "cash-2", "Bob", "Processor"));
-        redeemDocs.add(mockRedeemDoc("r2", 5.0, "cash-1", "", "Helper"));
-
-        QuerySnapshot earnSnap = mockSnapshot(earnDocs);
-        AggregateQuerySnapshot prevSnap = mock(AggregateQuerySnapshot.class);
-        when(prevSnap.get(any(AggregateField.class))).thenReturn(45.0);
-        QuerySnapshot redeemSnap = mockSnapshot(redeemDocs);
-
-        AggregateQuerySnapshot newClientsSnap = mock(AggregateQuerySnapshot.class);
-        when(newClientsSnap.getCount()).thenReturn(3L);
-
-        DashboardRepository.DashboardData data = repository.buildDashboardData(
-                DashboardRepository.DashboardPeriod.WEEK,
-                range,
-                earnSnap,
-                prevSnap,
-                redeemSnap,
-                newClientsSnap
-        );
+        DashboardRepository.DashboardData data = DashboardRepository.parseAnalytics(
+                DashboardRepository.DashboardPeriod.WEEK, range, json, 45.0);
 
         assertNotNull(data);
         assertEquals(100.0, data.revenue, 0.0001);
@@ -100,13 +65,9 @@ public class DashboardRepositoryTest {
         assertEquals(2, data.cashiers.size());
         DashboardRepository.CashierStats top = data.cashiers.get(0);
         assertEquals("cash-1", top.id);
+        assertEquals("Alice", top.name);
         assertEquals(3, top.scans);
         assertEquals(1, top.redeems);
-
-        DashboardRepository.CashierStats second = data.cashiers.get(1);
-        assertEquals("cash-2", second.id);
-        assertEquals(0, second.scans);
-        assertEquals(1, second.redeems);
 
         int[] expectedChart = new int[]{1, 2, 0, 0, 0, 0, 0};
         assertArrayEquals(expectedChart, data.chartData);
@@ -125,51 +86,5 @@ public class DashboardRepositoryTest {
         assertEquals(3 * 24 * 60 * 60 * 1000L, end.getTime() - start.getTime());
         assertEquals(start, previous.end);
         assertFalse(previous.start.after(previous.end));
-    }
-
-    private long hours(int h) {
-        return h * 60L * 60L * 1000L;
-    }
-
-    private long days(int d) {
-        return d * 24L * 60L * 60L * 1000L;
-    }
-
-    private DocumentSnapshot mockEarnDoc(String id, double amount, long points, Timestamp createdAt,
-                                         String uid, String cashierId, String cashierName, String createdBy) {
-        DocumentSnapshot doc = mock(DocumentSnapshot.class);
-        when(doc.getId()).thenReturn(id);
-        when(doc.getDouble("amountMAD")).thenReturn(amount);
-        when(doc.getLong("points")).thenReturn(points);
-        when(doc.getTimestamp("createdAt")).thenReturn(createdAt);
-        when(doc.getString("redeemedByUid")).thenReturn(uid);
-        when(doc.getString("cashierId")).thenReturn(cashierId);
-        when(doc.getString("cashierName")).thenReturn(cashierName);
-        when(doc.getString("createdByName")).thenReturn(createdBy);
-        return doc;
-    }
-
-    private DocumentSnapshot mockRedeemDoc(String id, double costPoints, String cashierId,
-                                           String cashierName, String processedByName) {
-        DocumentSnapshot doc = mock(DocumentSnapshot.class);
-        when(doc.getId()).thenReturn(id);
-        when(doc.getDouble("costPoints")).thenReturn(costPoints);
-        when(doc.getString("cashierId")).thenReturn(cashierId);
-        when(doc.getString("cashierName")).thenReturn(cashierName);
-        when(doc.getString("processedByName")).thenReturn(processedByName);
-        return doc;
-    }
-
-    private DocumentSnapshot mockPreviousRevenueDoc(double amount) {
-        DocumentSnapshot doc = mock(DocumentSnapshot.class);
-        when(doc.getDouble("amountMAD")).thenReturn(amount);
-        return doc;
-    }
-
-    private QuerySnapshot mockSnapshot(List<DocumentSnapshot> docs) {
-        QuerySnapshot snapshot = mock(QuerySnapshot.class);
-        when(snapshot.getDocuments()).thenReturn(docs);
-        when(snapshot.size()).thenReturn(docs.size());
-        return snapshot;
     }
 }

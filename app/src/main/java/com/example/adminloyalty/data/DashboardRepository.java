@@ -1,20 +1,13 @@
 package com.example.adminloyalty.data;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 
-import com.google.android.gms.tasks.Task;
-import com.google.android.gms.tasks.Tasks;
-import com.google.firebase.Timestamp;
-import com.google.firebase.firestore.AggregateField;
-import com.google.firebase.firestore.AggregateQuery;
-import com.google.firebase.firestore.AggregateQuerySnapshot;
-import com.google.firebase.firestore.AggregateSource;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QuerySnapshot;
+import com.example.adminloyalty.data.api.AdminApiClient;
+import com.example.adminloyalty.data.api.ApiResult;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -23,52 +16,32 @@ import dagger.hilt.android.qualifiers.ApplicationContext;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Repository holding all Firestore calls for dashboard data.
- * Uses simple in-memory cache (per period) to avoid repeated reads when toggling tabs.
+ * Dashboard data via the backend analytics endpoint. Keeps the in-memory + disk cache so tab toggles
+ * don't re-fetch. Replaces the old direct earn_codes/redeem_codes/users aggregate queries (rules-denied)
+ * with two {@code GET /admin/analytics} calls — one for the current period, one for the previous
+ * (for the revenue delta).
  */
 @Singleton
 public class DashboardRepository {
 
-    private static final String COL_EARN = "earn_codes";
-    private static final String COL_REDEEM = "redeem_codes";
-    private static final String COL_USERS = "users";
-
-    private static final String FIELD_CREATED_AT = "createdAt";
-    private static final String FIELD_STATUS = "status";
-    private static final String STATUS_REDEEMED = "redeemed";
-    private static final String FIELD_AMOUNT_MAD = "amountMAD";
-    private static final String FIELD_POINTS = "points";
-    private static final String FIELD_COST_POINTS = "costPoints";
-    private static final String FIELD_REDEEMED_BY_UID = "redeemedByUid";
-    private static final String FIELD_CASHIER_NAME = "cashierName";
-    private static final String FIELD_CREATED_BY_NAME = "createdByName";
-    private static final String FIELD_PROCESSED_BY_NAME = "processedByName";
-
-    private final FirebaseFirestore db;
+    private final AdminApiClient api;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final Map<String, DashboardData> cache = new HashMap<>();
     private final SharedPreferences prefs;
 
     @Inject
-    public DashboardRepository(@NonNull FirebaseFirestore db, @ApplicationContext Context context) {
-        this.db = db;
+    public DashboardRepository(@NonNull AdminApiClient api, @ApplicationContext Context context) {
+        this.api = api;
         this.prefs = context.getSharedPreferences("dashboard_cache", Context.MODE_PRIVATE);
     }
 
@@ -91,207 +64,70 @@ public class DashboardRepository {
             }
         }
 
-        Task<QuerySnapshot> earnTask = db.collection(COL_EARN)
-                .whereEqualTo(FIELD_STATUS, STATUS_REDEEMED)
-                .whereGreaterThanOrEqualTo(FIELD_CREATED_AT, new Timestamp(range.start))
-                .whereLessThan(FIELD_CREATED_AT, new Timestamp(range.end))
-                .get();
-
         DateRange prevRange = DateRange.previousOf(range.start, range.end);
-        Task<AggregateQuerySnapshot> prevRevenueTask = db.collection(COL_EARN)
-                .whereEqualTo(FIELD_STATUS, STATUS_REDEEMED)
-                .whereGreaterThanOrEqualTo(FIELD_CREATED_AT, new Timestamp(prevRange.start))
-                .whereLessThan(FIELD_CREATED_AT, new Timestamp(prevRange.end))
-                .aggregate(AggregateField.sum(FIELD_AMOUNT_MAD))
-                .get(AggregateSource.SERVER);
-
-        Task<QuerySnapshot> redeemTask = db.collection(COL_REDEEM)
-                .whereGreaterThanOrEqualTo(FIELD_CREATED_AT, new Timestamp(range.start))
-                .whereLessThan(FIELD_CREATED_AT, new Timestamp(range.end))
-                .get();
-
-        Task<AggregateQuerySnapshot> newClientsTask = db.collection(COL_USERS)
-                .whereGreaterThanOrEqualTo(FIELD_CREATED_AT, new Timestamp(range.start))
-                .whereLessThan(FIELD_CREATED_AT, new Timestamp(range.end))
-                .count()
-                .get(AggregateSource.SERVER);
-
-        List<Task<?>> tasks = Arrays.asList(earnTask, prevRevenueTask, redeemTask, newClientsTask);
-        AtomicBoolean delivered = new AtomicBoolean(false);
-
-        Tasks.whenAllComplete(tasks).addOnCompleteListener(all -> {
-            if (delivered.get()) return;
-
-            boolean anyFailed = false;
-            for (Task<?> t : tasks) {
-                if (!t.isSuccessful()) {
-                    anyFailed = true;
-                    if (t.getException() != null) {
-                        android.util.Log.e("DashboardRepository", "Task failed: " + t.getException().getMessage(), t.getException());
-                    }
-                }
-            }
-
-            if (anyFailed) {
-                delivered.set(true);
+        executor.execute(() -> {
+            ApiResult current = api.get(analyticsPath(range));
+            if (!current.isOk() || current.data == null) {
                 callback.onError("Failed to load dashboard data");
                 return;
             }
+            // Previous period is only for the revenue delta — a failure there degrades to 0, not an error.
+            ApiResult prev = api.get(analyticsPath(prevRange));
+            double prevRevenue = (prev.isOk() && prev.data != null) ? prev.data.optDouble("revenue", 0.0) : 0.0;
 
-            executor.execute(() -> {
-                DashboardData data = buildDashboardData(period, range, earnTask.getResult(), prevRevenueTask.getResult(), redeemTask.getResult(), newClientsTask.getResult());
-                cache.put(cacheKey, data);
-                saveToPreferences(cacheKey, data);
-                delivered.set(true);
-                callback.onSuccess(data, false);
-            });
+            DashboardData data = parseAnalytics(period, range, current.data, prevRevenue);
+            cache.put(cacheKey, data);
+            saveToPreferences(cacheKey, data);
+            callback.onSuccess(data, false);
         });
     }
 
-    @androidx.annotation.VisibleForTesting
-    DashboardData buildDashboardData(@NonNull DashboardPeriod period,
-                                     @NonNull DateRange range,
-                                     @NonNull QuerySnapshot earnSnap,
-                                     @NonNull AggregateQuerySnapshot prevRevenueSnap,
-                                     @NonNull QuerySnapshot redeemSnap,
-                                     @NonNull AggregateQuerySnapshot newClientsSnap) {
-        double revenue = 0.0;
-        long points = 0L;
-        Set<String> uniqueVisits = new HashSet<>();
-        int[] chartData = new int[getChartSize(period)];
+    private static String analyticsPath(@NonNull DateRange range) {
+        return "/admin/analytics?from=" + range.start.getTime() + "&to=" + range.end.getTime();
+    }
 
-        SimpleDateFormat dayKeyFormat = new SimpleDateFormat("yyyyMMdd", Locale.US);
-        for (DocumentSnapshot doc : earnSnap.getDocuments()) {
-            revenue += safeDouble(doc, FIELD_AMOUNT_MAD);
-            points += safeLong(doc, FIELD_POINTS);
+    @VisibleForTesting
+    static DashboardData parseAnalytics(@NonNull DashboardPeriod period, @NonNull DateRange range,
+                                        @NonNull JSONObject d, double prevRevenue) {
+        double revenue = d.optDouble("revenue", 0.0);
+        long points = d.optLong("pointsIssued", 0);
+        double pointsRedeemed = d.optLong("pointsRedeemed", 0);
+        int gifts = (int) d.optLong("gifts", 0);
+        long newClients = d.optLong("newClients", 0);
+        int uniqueVisits = (int) d.optLong("uniqueVisitors", 0);
 
-            Timestamp ts = doc.getTimestamp(FIELD_CREATED_AT);
-            String uid = doc.getString(FIELD_REDEEMED_BY_UID);
-            if (ts != null && uid != null && !uid.trim().isEmpty()) {
-                uniqueVisits.add(uid + "_" + dayKeyFormat.format(ts.toDate()));
-                incrementChartBucket(period, ts, chartData);
+        int size = getChartSize(period);
+        int[] chartData = new int[size];
+        JSONArray series = d.optJSONArray("series");
+        if (series != null) {
+            // ponytail: per-day series mapped straight into the chart slots (backend has no hourly
+            // bucketing). Faithful for WEEK; TODAY/MONTH are approximate — accepted degrade.
+            for (int i = 0; i < series.length() && i < size; i++) {
+                JSONObject bucket = series.optJSONObject(i);
+                if (bucket != null) chartData[i] = (int) bucket.optLong("earnCount", 0);
             }
         }
 
-        double prevRevenue = 0.0;
-        Object sumObj = prevRevenueSnap.get(AggregateField.sum(FIELD_AMOUNT_MAD));
-        if (sumObj instanceof Number) {
-            prevRevenue = ((Number) sumObj).doubleValue();
-        }
-
-        double totalCostPoints = 0.0;
         List<CashierStats> cashiers = new ArrayList<>();
-        Map<String, CashierStats> cashierMap = new HashMap<>();
-        for (DocumentSnapshot doc : redeemSnap.getDocuments()) {
-            totalCostPoints += safeDouble(doc, FIELD_COST_POINTS);
-            CashierInfo info = extractCashierInfo(doc, FIELD_CASHIER_NAME, FIELD_PROCESSED_BY_NAME);
-            statsFor(cashierMap, info).redeems++;
+        JSONArray cs = d.optJSONArray("cashiers");
+        if (cs != null) {
+            for (int i = 0; i < cs.length(); i++) {
+                JSONObject c = cs.optJSONObject(i);
+                if (c == null) continue;
+                CashierStats stat = new CashierStats(c.optString("cashierUid", ""), c.optString("cashierName", ""));
+                stat.scans = (int) c.optLong("codesIssued", 0);
+                stat.redeems = (int) c.optLong("redeemsCompleted", 0);
+                cashiers.add(stat);
+            }
         }
 
-        for (DocumentSnapshot doc : earnSnap.getDocuments()) {
-            CashierInfo info = extractCashierInfo(doc, FIELD_CASHIER_NAME, FIELD_CREATED_BY_NAME);
-            statsFor(cashierMap, info).scans++;
-        }
-
-        cashiers.addAll(cashierMap.values());
-        Collections.sort(cashiers, (a, b) -> Integer.compare(b.getTotalActivity(), a.getTotalActivity()));
-
-        int gifts = redeemSnap.size();
-        long newClients = newClientsSnap.getCount();
-
-        return new DashboardData(period, range, revenue, prevRevenue, points, uniqueVisits.size(), chartData, totalCostPoints, gifts, newClients, cashiers);
+        return new DashboardData(period, range, revenue, prevRevenue, points, uniqueVisits, chartData,
+                pointsRedeemed, gifts, newClients, cashiers);
     }
 
-    private void incrementChartBucket(@NonNull DashboardPeriod period, @NonNull Timestamp ts, @NonNull int[] data) {
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(ts.toDate());
-        int index = -1;
-        switch (period) {
-            case TODAY:
-                int hour = cal.get(Calendar.HOUR_OF_DAY);
-                if (hour >= 8) index = Math.min((hour - 8) / 2, data.length - 1);
-                break;
-            case WEEK:
-                index = weekdayBucket(cal.get(Calendar.DAY_OF_WEEK));
-                break;
-            case MONTH:
-                index = monthBucket(cal.get(Calendar.DAY_OF_MONTH), data.length);
-                break;
-        }
-        if (index >= 0 && index < data.length) data[index]++;
-    }
-
-    private int weekdayBucket(int dayOfWeek) {
-        switch (dayOfWeek) {
-            case Calendar.MONDAY:
-                return 0;
-            case Calendar.TUESDAY:
-                return 1;
-            case Calendar.WEDNESDAY:
-                return 2;
-            case Calendar.THURSDAY:
-                return 3;
-            case Calendar.FRIDAY:
-                return 4;
-            case Calendar.SATURDAY:
-                return 5;
-            case Calendar.SUNDAY:
-                return 6;
-            default:
-                return -1;
-        }
-    }
-
-    private int monthBucket(int dayOfMonth, int size) {
-        if (dayOfMonth <= 0) return -1;
-        int index = (int) ((dayOfMonth - 1) / Math.ceil(31f / size));
-        return Math.min(index, size - 1);
-    }
-
-    private int getChartSize(@NonNull DashboardPeriod period) {
-        switch (period) {
-            case TODAY:
-            case WEEK:
-                return 7;
-            case MONTH:
-                return 7;
-            default:
-                return 7;
-        }
-    }
-
-    private double safeDouble(@NonNull DocumentSnapshot doc, @NonNull String field) {
-        Double d = doc.getDouble(field);
-        return d != null ? d : 0.0;
-    }
-
-    private long safeLong(@NonNull DocumentSnapshot doc, @NonNull String field) {
-        Long l = doc.getLong(field);
-        return l != null ? l : 0L;
-    }
-
-    private CashierInfo extractCashierInfo(@NonNull DocumentSnapshot doc, @NonNull String primaryField, @NonNull String fallbackField) {
-        String id = doc.getString("cashierId");
-        String name = doc.getString(primaryField);
-        if (name == null || name.trim().isEmpty()) {
-            name = doc.getString(fallbackField);
-        }
-        if (name == null || name.trim().isEmpty()) {
-            name = "Unknown Staff";
-        }
-        if (id == null || id.trim().isEmpty()) {
-            id = name;
-        }
-        return new CashierInfo(id, name);
-    }
-
-    private CashierStats statsFor(@NonNull Map<String, CashierStats> map, @NonNull CashierInfo info) {
-        CashierStats stats = map.get(info.id);
-        if (stats == null) {
-            stats = new CashierStats(info.id, info.name);
-            map.put(info.id, stats);
-        }
-        return stats;
+    private static int getChartSize(@NonNull DashboardPeriod period) {
+        // All periods render 7 chart slots in the old UI.
+        return 7;
     }
 
     private void saveToPreferences(String cacheKey, DashboardData data) {
@@ -334,7 +170,7 @@ public class DashboardRepository {
         try {
             JSONObject obj = new JSONObject(json);
             DashboardPeriod period = DashboardPeriod.valueOf(obj.getString("period"));
-            DateRange range = new DateRange(new java.util.Date(obj.getLong("rangeStart")), new java.util.Date(obj.getLong("rangeEnd")));
+            DateRange range = new DateRange(new Date(obj.getLong("rangeStart")), new Date(obj.getLong("rangeEnd")));
 
             JSONArray chartArr = obj.getJSONArray("chartData");
             int[] chartData = new int[chartArr.length()];
@@ -406,16 +242,6 @@ public class DashboardRepository {
             this.gifts = gifts;
             this.newClients = newClients;
             this.cashiers = cashiers;
-        }
-    }
-
-    public static final class CashierInfo {
-        public final String id;
-        public final String name;
-
-        public CashierInfo(String id, String name) {
-            this.id = id;
-            this.name = name;
         }
     }
 

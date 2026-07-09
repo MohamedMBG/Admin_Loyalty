@@ -61,6 +61,8 @@ dependencies {
     testImplementation(libs.mockito.core)
     testImplementation(libs.mockito.inline)
     testImplementation(libs.arch.core.testing)
+    // Real org.json on the unit-test classpath — the android.jar stub throws "not mocked".
+    testImplementation("org.json:json:20240303")
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
     // PieChart & LineChart
