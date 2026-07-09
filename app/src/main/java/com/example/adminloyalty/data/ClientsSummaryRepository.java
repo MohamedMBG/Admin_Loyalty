@@ -1,9 +1,7 @@
 package com.example.adminloyalty.data;
 
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.QuerySnapshot;
+import com.example.adminloyalty.data.api.AdminApiClient;
+import com.example.adminloyalty.data.api.ApiResult;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -11,25 +9,20 @@ import javax.inject.Singleton;
 @Singleton
 public class ClientsSummaryRepository {
 
-    private final FirebaseFirestore db;
+    private final AdminApiClient api;
 
     @Inject
-    public ClientsSummaryRepository(FirebaseFirestore db) {
-        this.db = db;
+    public ClientsSummaryRepository(AdminApiClient api) {
+        this.api = api;
     }
 
-    public Task<QuerySnapshot> getClients() {
-        return db.collection("users")
-                .orderBy("points", Query.Direction.DESCENDING)
-                .limit(100)
-                .get();
-    }
-
-    public Task<QuerySnapshot> getClientEarnActivities(String clientId) {
-        return db.collection("users")
-                .document(clientId)
-                .collection("activities")
-                .whereEqualTo("type", "earn")
-                .get();
+    /**
+     * The admin client roster via the backend. Blocking — call on a background thread.
+     * Replaces the direct `users` collection read (rules-denied) plus the per-row `activities`
+     * query that summed points: the roster already carries points/visits. Returns
+     * {@code {users:[{uid,fullName,email,phone,points,visits,createdAt}]}}.
+     */
+    public ApiResult listUsers(int limit) {
+        return api.get("/admin/users?limit=" + limit);
     }
 }
