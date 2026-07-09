@@ -165,18 +165,27 @@ would be rules-denied.)
 
 | Unit | What | Endpoint | Status |
 |------|------|----------|--------|
-| 9 | Dashboard / Logs / RewardLogs analytics | — (**backend gap:** analytics) | blocked — needs product decisions |
+| 9A | Earn codes priced in MAD (revenue data capture) | `POST /admin/earn-codes {amountMad}` | done — backend #47 / admin #13 |
+| 9B | Analytics endpoint (revenue / points / gifts / new clients / per-cashier) | — (to build) | next |
+| 9C | Migrate Dashboard / Logs / RewardLogs to the analytics endpoint | — | after 9B |
 | — | **Hard cutover:** deploy `firestore.rules` once both apps' economy paths route through the backend | — | pending |
 
 Units 1–8, 10, 11 done. Only the **analytics** surfaces (unit 9) remain, and they are not just an
 "add an endpoint" job — they read fields the backend no longer writes:
 
-- The dashboard's **revenue** comes from `earn_codes.amountMAD`; earn codes are points-direct now,
-  so there is no MAD amount. "Revenue" has to be redefined (points? a price set on the catalog?).
-- **Per-cashier scan/redeem stats** rely on `cashierName`/`createdByName` written onto codes; the
-  backend doesn't attribute codes to a cashier.
-- **Logs / RewardLogs** enumerate `earn_codes`/`redeem_codes` directly — no backend list endpoint,
-  and the canonical replacement is the per-user activity feed, not a global code dump.
+**Revenue — DECIDED (2026-07-09):** method (a) — the cashier enters a **MAD amount**, the backend
+converts at **50 points per 1 MAD** and stores `earn_codes.amountMAD`; revenue = `sum(amountMAD)`.
 
-Before building an analytics API + migrating these screens, the owner needs to decide what each
-metric means post-migration. Flagged rather than guessed.
+**Stage 9A — DONE** (backend #47 / admin #13): earn codes now capture the money amount. Pricing
+moved off the client (was a placeholder `/5` ratio) to backend-owned `POINTS_PER_MAD`.
+
+Remaining stages:
+
+- **9B — analytics endpoint.** `GET /admin/analytics?period=…` → revenue (`sum(amountMAD)`), points
+  issued/redeemed, gifts, new clients, time-bucketed chart, and (see below) per-cashier stats.
+- **9C — migrate the screens** `DashboardRepository` / `LogsRepository` / `RewardLogsRepository`
+  onto 9B. Logs/RewardLogs become aggregated summaries; no raw global code dump is reintroduced.
+
+**Per-cashier stats — open question for 9B.** Earn codes already store `createdBy`, so per-cashier
+**earn** attribution needs no new field. Attributing **redeem completions** to a cashier still needs
+a field on `redeem_codes` — decide whether that column is wanted before building the panel.
