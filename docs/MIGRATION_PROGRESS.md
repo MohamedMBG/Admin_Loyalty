@@ -20,6 +20,8 @@ records is denied and must route through the backend (Admin SDK bypasses rules).
 | 4 | Points adjustment | `POST /admin/users/{uid}/points-adjustment` | PR #8 (`ca70f22`) |
 | 5 | User search (cashier redeem screen) | `GET /admin/users/search?email=\|phone=` | *this change* |
 | 6 | Client details: activity history | `GET /admin/users/{uid}/activity` | *this change* |
+| 7 | Clients tab: client roster | `GET /admin/users?limit=` | *this change* |
+| 8 | Client details: header profile | `GET /admin/users/{uid}` | *this change* |
 
 ### Unit 5 detail — user search
 
@@ -70,6 +72,37 @@ history list with `GET /admin/users/{uid}/activity`. Files:
 3. **Average spend zeroed** — was derived from `earn_codes.amountMAD`, which the backend no
    longer exposes (earn codes are points-direct). No analytics endpoint for it.
 
+### Unit 7 detail — clients tab roster
+
+Backend PR #45 added `GET /admin/users`, so the Clients tab no longer needs to read the whole
+`users` collection directly. Files:
+
+- `data/ClientsSummaryRepository.java` — `getClients()` + `getClientEarnActivities()` (a per-row
+  N+1 activity query) removed; added blocking `listUsers(limit)` → `GET /admin/users?limit=`.
+- `viewmodel/ClientsSummaryViewModel.java` — parses `{users:[…]}` on the IO executor into `Client`
+  objects. The old two-pass load (list users, then one activities query per user to sum points)
+  collapses to a single call — the roster already carries `points`/`visits`.
+
+**Behaviour changes (intentional):**
+
+1. **Average spend zeroed** — the backend roster carries no spend metric (the old value was
+   `sumPoints / visits`, not real currency). The tile shows `0.00` until a real analytics field
+   exists.
+2. **Ordering** — backend returns an unordered capped page (was `orderBy(points desc).limit(100)`).
+   The client can sort locally if needed.
+
+### Unit 8 detail — client details header
+
+Backend PR #45 added `GET /admin/users/{uid}`, replacing the direct `users/{uid}` read that fed
+the client-details header (kept as a flagged direct read in unit 6). Files:
+
+- `data/ClientDetailsRepository.java` — `getUserProfile(uid)` now calls `GET /admin/users/{uid}`
+  (blocking) instead of Firestore; the `ponytail:` gap comment is removed.
+- `viewmodel/ClientDetailsViewModel.java` — `loadUserProfile` runs on the IO executor and parses
+  the detail JSON into a small `AdminUserDetail` holder instead of a Firestore `DocumentSnapshot`.
+- `fragments/ClientDetailsFragment.java` — header observer reads the holder's typed fields;
+  `lastVisit` now shows `lastEarnAt` (closest backend proxy).
+
 ### Audit — nothing to migrate
 
 The admin app has **no consumer** that reads the `audit` collection. `GET /admin/audit` has no
@@ -91,19 +124,10 @@ would be rules-denied.)
 
 ### New backend gaps found during unit 6 (block whole screens at cutover)
 
-The backend exposes users only via **search (email/phone)** and **activity (by uid)**. It has
-**no** "list all users" and **no** "get one user's full profile by uid". That leaves several
-admin surfaces with direct `users` reads and no endpoint to migrate to — they will break when
-`firestore.rules` deploys:
-
-- **Clients tab** (`ClientsSummaryRepository.getClients`) — reads the entire `users` collection
-  + each user's `activities`. Needs a **list-users** endpoint (ideally paginated, with points).
-- **Client details header** (`ClientDetailsRepository.getUserProfile`) — reads `users/{uid}` for
-  name / gender / address / lastVisit. Needs a **get-user-by-uid** endpoint (with those fields).
-  Kept as a direct read for now (flagged with a `ponytail:` comment) so the header renders
-  pre-cutover.
+- ~~**list-users**~~ and ~~**get-user-by-uid**~~ — **RESOLVED** by backend PR #45
+  (`GET /admin/users`, `GET /admin/users/{uid}`); migrated in units 7 + 8.
 - **Dashboard / Logs / RewardLogs** — read `earn_codes` / `redeem_codes` / `users` aggregates
-  directly. No analytics endpoints exist.
+  directly. No analytics endpoints exist. Still blocked.
 
 ---
 
@@ -111,12 +135,11 @@ admin surfaces with direct `users` reads and no endpoint to migrate to — they 
 
 | Unit | What | Endpoint | Status |
 |------|------|----------|--------|
-| 7 | Clients tab: list all users | — (**backend gap:** list-users) | blocked |
-| 8 | Client details header profile | — (**backend gap:** get-user-by-uid) | blocked |
 | 9 | Dashboard / Logs / RewardLogs analytics | — (**backend gap:** analytics) | blocked |
 | 10 | Rewards admin catalog CRUD | — (**backend gap**) | blocked |
 | 11 | Create-cashier provisioning | — (**backend gap:** set `role` claim) | blocked |
 | — | **Hard cutover:** deploy `firestore.rules` once both apps' economy paths route through the backend | — | pending |
 
-Everything migratable with today's backend is done (units 1–6). The remaining units all need
-new backend endpoints before the admin app can route them off direct Firestore.
+Everything migratable with today's backend is done (units 1–8). The remaining units all need
+new backend endpoints (analytics, catalog CRUD, cashier provisioning) before the admin app can
+route them off direct Firestore.

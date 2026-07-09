@@ -31,10 +31,10 @@ import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.firebase.Timestamp;
-import com.google.firebase.firestore.DocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -123,31 +123,23 @@ public class ClientDetailsFragment extends Fragment {
     }
 
     private void observeViewModel() {
-        viewModel.getUserProfile().observe(getViewLifecycleOwner(), document -> {
-            if (document != null && document.exists()) {
-                String name = document.getString("fullName");
-                String email = document.getString("email");
-                String phone = document.getString("phone");
-                String gender = document.getString("gender");
-                String address = document.getString("address");
+        viewModel.getUserProfile().observe(getViewLifecycleOwner(), user -> {
+            if (user != null) {
+                tvName.setText(user.fullName != null && !user.fullName.isEmpty() ? user.fullName : "Unknown");
+                tvEmail.setText(user.email != null ? user.email : "-");
+                tvPhone.setText(user.phone != null ? user.phone : "No Phone");
+                tvGender.setText(user.gender != null && !user.gender.isEmpty() ? capitalize(user.gender) : "-");
+                tvAddress.setText(user.address != null && !user.address.isEmpty() ? user.address : "No Address");
 
-                tvName.setText(name != null ? name : "Unknown");
-                tvEmail.setText(email != null ? email : "-");
-                tvPhone.setText(phone != null ? phone : "No Phone");
-                tvGender.setText(gender != null ? capitalize(gender) : "-");
-                tvAddress.setText(address != null ? address : "No Address");
-
-                Timestamp lastVisit = document.getTimestamp("lastVisitTimestamp");
-                String lastVisitStr = "Never";
-                if (lastVisit != null) {
-                    lastVisitStr = DateFormat.format("dd MMM yyyy", lastVisit.toDate()).toString();
-                }
+                // lastEarnAt is the backend's closest proxy for "last visit".
+                String lastVisitStr = user.lastEarnAt > 0
+                        ? DateFormat.format("dd MMM yyyy", new Date(user.lastEarnAt)).toString()
+                        : "Never";
                 if (tvLastVisit != null) {
                     tvLastVisit.setText(lastVisitStr);
                 }
 
-                Long points = document.getLong("points");
-                tvPoints.setText(String.format(Locale.US, "%,d", points != null ? points : 0));
+                tvPoints.setText(String.format(Locale.US, "%,d", user.points));
             }
         });
 
