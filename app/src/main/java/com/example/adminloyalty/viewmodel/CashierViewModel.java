@@ -19,10 +19,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 @HiltViewModel
 public class CashierViewModel extends ViewModel {
 
-    // ponytail: client-side MAD->points, ratio constant. Settings doc read isn't rules-allowed;
-    // switch to points-direct input, or a backend-owned ratio, if pricing needs to move server-side.
-    private static final double POINTS_RATIO = 5.0;
-
     private final CashierRepository repository;
     private final ExecutorService io;
 
@@ -100,13 +96,12 @@ public class CashierViewModel extends ViewModel {
             return;
         }
 
-        int points = (int) Math.max(1, Math.round(amountMAD / POINTS_RATIO));
-
         isIssuing.setValue(true);
         statusMessage.setValue("Creating...");
 
         io.execute(() -> {
-            ApiResult result = repository.createEarnCode(points);
+            // Send the raw MAD amount; the backend derives points at its owned ratio + stores the amount.
+            ApiResult result = repository.createEarnCode(amountMAD);
             if (result.isOk()) {
                 String code = result.data != null
                         ? result.data.optString("code", result.data.optString("id", null))
@@ -193,6 +188,7 @@ public class CashierViewModel extends ViewModel {
         if (r.code == null) return "Request failed";
         switch (r.code) {
             case "NETWORK_ERROR": return "No connection. Check your network and retry.";
+            case "INVALID_AMOUNT": return "Enter a valid purchase amount.";
             case "FORBIDDEN":
             case "HTTP_403":      return "Not authorized. Admin role required.";
             case "RATE_LIMITED":  return "Too many requests. Try again shortly.";

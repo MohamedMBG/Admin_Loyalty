@@ -39,13 +39,14 @@ public class CashierRepository {
     }
 
     /**
-     * Mint an earn code via the backend. Blocking — call on a background thread.
-     * Backend generates the code, points value, and expiry; response carries the code to show.
+     * Mint an earn code via the backend for a MAD purchase amount. Blocking — call on a background
+     * thread. The backend derives the points (pricing is backend-owned), generates the code + expiry,
+     * and stores the amount for revenue reporting; the response carries the code to show.
      */
-    public ApiResult createEarnCode(int points) {
+    public ApiResult createEarnCode(double amountMad) {
         JSONObject body = new JSONObject();
         try {
-            body.put("points", points);
+            body.put("amountMad", amountMad);
         } catch (Exception e) {
             return ApiResult.clientError("Failed to build request");
         }
