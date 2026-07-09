@@ -8,6 +8,10 @@ writes/reads and onto the Spring Boot backend (`/api/v1`). Source plan:
 activity and the public catalogs. Every admin read/write of *other* users, codes, or audit
 records is denied and must route through the backend (Admin SDK bypasses rules).
 
+**Status (2026-07-09):** units 1–8, 10, 11 done. Unit 9 (analytics) is decision-blocked, not
+code-blocked. Admin PRs #10 and #11 merged to `master`; admin PR #12 (units 10–11) open and
+depends on backend PRs #45 → #46. Merge order: backend #45 → #46 (deploy) → admin #12.
+
 ---
 
 ## Done
@@ -18,12 +22,12 @@ records is denied and must route through the backend (Admin SDK bypasses rules).
 | 2 | Cashier: create earn code | `POST /admin/earn-codes` | PR #6 (`f35815d`) |
 | 3 | Cashier: complete redeem | `POST /cashier/redeem/complete` | PR #7 (`789344b`) |
 | 4 | Points adjustment | `POST /admin/users/{uid}/points-adjustment` | PR #8 (`ca70f22`) |
-| 5 | User search (cashier redeem screen) | `GET /admin/users/search?email=\|phone=` | *this change* |
-| 6 | Client details: activity history | `GET /admin/users/{uid}/activity` | *this change* |
-| 7 | Clients tab: client roster | `GET /admin/users?limit=` | *this change* |
-| 8 | Client details: header profile | `GET /admin/users/{uid}` | *this change* |
-| 10 | Rewards admin: catalog create/update/delete | `POST/PUT/DELETE /admin/rewards` | *this change* |
-| 11 | Create-cashier provisioning | `POST /admin/cashiers` | *this change* |
+| 5 | User search (cashier redeem screen) | `GET /admin/users/search?email=\|phone=` | PR #10 (merged) |
+| 6 | Client details: activity history | `GET /admin/users/{uid}/activity` | PR #10 (merged) |
+| 7 | Clients tab: client roster | `GET /admin/users?limit=` | PR #11 (merged) |
+| 8 | Client details: header profile | `GET /admin/users/{uid}` | PR #11 (merged) |
+| 10 | Rewards admin: catalog create/update/delete | `POST/PUT/DELETE /admin/rewards` | PR #12 (open) · backend #46 |
+| 11 | Create-cashier provisioning | `POST /admin/cashiers` | PR #12 (open) · backend #46 |
 
 ### Unit 5 detail — user search
 
@@ -149,8 +153,9 @@ would be rules-denied.)
   Admin role required.")
 - **Promo eligibility** in the cashier screen is gone — restore needs a backend endpoint
   (`promotions` read + user profile fields).
-- Backend gaps from the plan still open: catalog CRUD endpoint, cashier-provisioning endpoint
-  (set `role` claim), device unregister on logout.
+- ~~catalog CRUD endpoint~~ and ~~cashier-provisioning endpoint~~ — **RESOLVED** by backend PR #46
+  (`POST/PUT/DELETE /admin/rewards`, `POST /admin/cashiers`); migrated in units 10 + 11.
+- Backend gap still open (customer-app side): device unregister on logout.
 
 ### New backend gaps found during unit 6 (block whole screens at cutover)
 
@@ -168,15 +173,28 @@ would be rules-denied.)
 | 9 | Dashboard / Logs / RewardLogs analytics | — (**backend gap:** analytics) | blocked — needs product decisions |
 | — | **Hard cutover:** deploy `firestore.rules` once both apps' economy paths route through the backend | — | pending |
 
-Units 1–8, 10, 11 done. Only the **analytics** surfaces (unit 9) remain, and they are not just an
-"add an endpoint" job — they read fields the backend no longer writes:
+Units 1–8, 10, 11 done. Only the **analytics** surfaces (unit 9) remain. They are not an
+"add an endpoint" job — they read fields the backend no longer writes, and there are **two
+different kinds of blocker**:
 
-- The dashboard's **revenue** comes from `earn_codes.amountMAD`; earn codes are points-direct now,
-  so there is no MAD amount. "Revenue" has to be redefined (points? a price set on the catalog?).
-- **Per-cashier scan/redeem stats** rely on `cashierName`/`createdByName` written onto codes; the
-  backend doesn't attribute codes to a cashier.
-- **Logs / RewardLogs** enumerate `earn_codes`/`redeem_codes` directly — no backend list endpoint,
-  and the canonical replacement is the per-user activity feed, not a global code dump.
+**(A) Product decision — "revenue".** The dashboard's revenue is `sum(earn_codes.amountMAD)`;
+earn codes are points-direct now, so there is no money amount. Revenue must be redefined before
+anything is built. Options put to the owner:
 
-Before building an analytics API + migrating these screens, the owner needs to decide what each
-metric means post-migration. Flagged rather than guessed.
+1. **Points-based** — points issued / redeemed / gifts / visits / new clients. Buildable now from
+   existing backend data; no schema change. *(recommended default)*
+2. **Add a price field** — put `priceMAD` on the catalog/earn so real revenue can be summed. Larger:
+   backend schema + admin editor input.
+3. **Defer** — leave Dashboard/Logs/RewardLogs on direct Firestore; they break at the cutover.
+
+**(B) Backend field gap — cashier attribution (not fixable by a decision).** Per-cashier
+scan/redeem stats relied on `cashierName`/`createdByName` written onto each code. The backend does
+**not** record which cashier created an earn code or completed a redeem. Rebuilding that panel
+needs a **new backend field** (e.g. `earn_codes.createdByUid`, `redeem_codes.completedByUid`) +
+an aggregation endpoint — no client-side or decision-only workaround exists.
+
+**Also:** Logs / RewardLogs enumerate `earn_codes`/`redeem_codes` globally — no backend list
+endpoint, and the canonical replacement is the per-user activity feed, not a global code dump.
+
+Flagged rather than guessed. Once (A) is chosen (and (B) scoped in or out), unit 9 = one analytics
+endpoint + migrating `DashboardRepository` / `LogsRepository` / `RewardLogsRepository`.
