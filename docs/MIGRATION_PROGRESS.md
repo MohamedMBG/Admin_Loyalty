@@ -22,6 +22,8 @@ records is denied and must route through the backend (Admin SDK bypasses rules).
 | 6 | Client details: activity history | `GET /admin/users/{uid}/activity` | *this change* |
 | 7 | Clients tab: client roster | `GET /admin/users?limit=` | *this change* |
 | 8 | Client details: header profile | `GET /admin/users/{uid}` | *this change* |
+| 10 | Rewards admin: catalog create/update/delete | `POST/PUT/DELETE /admin/rewards` | *this change* |
+| 11 | Create-cashier provisioning | `POST /admin/cashiers` | *this change* |
 
 ### Unit 5 detail — user search
 
@@ -103,6 +105,34 @@ the client-details header (kept as a flagged direct read in unit 6). Files:
 - `fragments/ClientDetailsFragment.java` — header observer reads the holder's typed fields;
   `lastVisit` now shows `lastEarnAt` (closest backend proxy).
 
+### Unit 10 detail — rewards catalog CRUD
+
+Backend PR added `POST/PUT/DELETE /admin/rewards`. Only the **writes** move — reading
+`rewards_catalog` stays a direct Firestore read (rules allow any signed-in user), so the live
+list keeps its snapshot listener. Files:
+
+- `data/api/AdminApiClient.java` — added `put()` + `delete()` (were POST/GET only).
+- `data/RewardsAdminRepository.java` — `getRewardsQuery()` (live read) kept; `addReward`/
+  `updateReward`/`deleteReward` now hit the backend. Maps the admin `RewardItem`
+  (`costPoints`/`isVisible`) onto the backend catalog schema (`cost`/`active`).
+- `viewmodel/RewardsAdminViewModel.java` — writes run on the IO executor; errors mapped via
+  `ApiErrors` (+ `INVALID_REWARD`/`REWARD_NOT_FOUND`).
+
+### Unit 11 detail — cashier provisioning
+
+Backend PR added `POST /admin/cashiers`. The old client flow was both insecure and rules-broken:
+it spun up a **secondary FirebaseApp** to create the auth user and wrote `users/{uid}` with
+`role: cashier` directly (a client can neither set custom claims nor write another user's doc).
+The backend now does all three (create auth user → set `role: cashier` claim → write the doc),
+with rollback of the orphaned auth user if the claim step fails. Files:
+
+- `data/CreateCashierRepository.java` — the secondary-FirebaseApp + Firestore write replaced by a
+  single `POST /admin/cashiers {email,password,name}` call. Password is sent once over HTTPS, never
+  stored.
+- `viewmodel/CreateCashierViewModel.java` — the two-step create collapses to one IO-thread call;
+  errors mapped (`INVALID_CASHIER`/`CASHIER_EMAIL_EXISTS`). Public method signature unchanged, so
+  the fragment is untouched.
+
 ### Audit — nothing to migrate
 
 The admin app has **no consumer** that reads the `audit` collection. `GET /admin/audit` has no
@@ -135,11 +165,18 @@ would be rules-denied.)
 
 | Unit | What | Endpoint | Status |
 |------|------|----------|--------|
-| 9 | Dashboard / Logs / RewardLogs analytics | — (**backend gap:** analytics) | blocked |
-| 10 | Rewards admin catalog CRUD | — (**backend gap**) | blocked |
-| 11 | Create-cashier provisioning | — (**backend gap:** set `role` claim) | blocked |
+| 9 | Dashboard / Logs / RewardLogs analytics | — (**backend gap:** analytics) | blocked — needs product decisions |
 | — | **Hard cutover:** deploy `firestore.rules` once both apps' economy paths route through the backend | — | pending |
 
-Everything migratable with today's backend is done (units 1–8). The remaining units all need
-new backend endpoints (analytics, catalog CRUD, cashier provisioning) before the admin app can
-route them off direct Firestore.
+Units 1–8, 10, 11 done. Only the **analytics** surfaces (unit 9) remain, and they are not just an
+"add an endpoint" job — they read fields the backend no longer writes:
+
+- The dashboard's **revenue** comes from `earn_codes.amountMAD`; earn codes are points-direct now,
+  so there is no MAD amount. "Revenue" has to be redefined (points? a price set on the catalog?).
+- **Per-cashier scan/redeem stats** rely on `cashierName`/`createdByName` written onto codes; the
+  backend doesn't attribute codes to a cashier.
+- **Logs / RewardLogs** enumerate `earn_codes`/`redeem_codes` directly — no backend list endpoint,
+  and the canonical replacement is the per-user activity feed, not a global code dump.
+
+Before building an analytics API + migrating these screens, the owner needs to decide what each
+metric means post-migration. Flagged rather than guessed.

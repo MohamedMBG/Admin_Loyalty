@@ -61,6 +61,21 @@ public class AdminApiClient {
         return execute(builder.build());
     }
 
+    /** PUT a JSON body. Pass idempotencyKey for writes; null to omit the header. */
+    public ApiResult put(String path, @Nullable JSONObject body, @Nullable String idempotencyKey) {
+        RequestBody rb = RequestBody.create(body == null ? "{}" : body.toString(), JSON);
+        Request.Builder builder = new Request.Builder().url(BASE_URL + path).put(rb);
+        if (idempotencyKey != null) builder.header("Idempotency-Key", idempotencyKey);
+        return execute(builder.build());
+    }
+
+    /** DELETE. Pass idempotencyKey for writes; null to omit the header. */
+    public ApiResult delete(String path, @Nullable String idempotencyKey) {
+        Request.Builder builder = new Request.Builder().url(BASE_URL + path).delete();
+        if (idempotencyKey != null) builder.header("Idempotency-Key", idempotencyKey);
+        return execute(builder.build());
+    }
+
     private ApiResult execute(Request req) {
         try (Response response = http.newCall(req).execute()) {
             String body = response.body() != null ? response.body().string() : "";

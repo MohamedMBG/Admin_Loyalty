@@ -1,58 +1,39 @@
 package com.example.adminloyalty.data;
 
-import android.content.Context;
+import com.example.adminloyalty.data.api.AdminApiClient;
+import com.example.adminloyalty.data.api.ApiResult;
 
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.FirebaseApp;
-import com.google.firebase.FirebaseOptions;
-import com.google.firebase.auth.AuthResult;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.FirebaseFirestore;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.json.JSONObject;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import dagger.hilt.android.qualifiers.ApplicationContext;
-
 @Singleton
 public class CreateCashierRepository {
 
-    private final FirebaseFirestore db;
-    private final Context context;
+    private final AdminApiClient api;
 
     @Inject
-    public CreateCashierRepository(FirebaseFirestore db, @ApplicationContext Context context) {
-        this.db = db;
-        this.context = context;
+    public CreateCashierRepository(AdminApiClient api) {
+        this.api = api;
     }
 
-    public Task<AuthResult> createCashierAuth(String email, String password) {
-        String appName = "SecondaryCashierApp";
-        FirebaseApp secondaryApp;
+    /**
+     * Provision a cashier via the backend. Blocking — call on a background thread. Replaces the old
+     * client-side flow (a secondary FirebaseApp to create the auth user + a direct users-doc write):
+     * the backend now creates the auth account, sets the {@code role: cashier} custom claim (which the
+     * client SDK cannot do), and writes the profile doc. Not idempotency-keyed — email uniqueness is
+     * the guard.
+     */
+    public ApiResult createCashier(String name, String email, String password) {
+        JSONObject body = new JSONObject();
         try {
-            FirebaseOptions options = FirebaseApp.getInstance().getOptions();
-            secondaryApp = FirebaseApp.initializeApp(context, options, appName);
-        } catch (IllegalStateException e) {
-            secondaryApp = FirebaseApp.getInstance(appName);
+            body.put("email", email);
+            body.put("password", password);
+            body.put("name", name);
+        } catch (Exception e) {
+            return ApiResult.clientError("Failed to build request");
         }
-
-        FirebaseAuth secondaryAuth = FirebaseAuth.getInstance(secondaryApp);
-        return secondaryAuth.createUserWithEmailAndPassword(email, password)
-                .addOnCompleteListener(task -> secondaryAuth.signOut());
-    }
-
-    public Task<Void> saveCashierToFirestore(String uid, String name, String email) {
-        Map<String, Object> cashierData = new HashMap<>();
-        cashierData.put("uid", uid);
-        cashierData.put("name", name);
-        cashierData.put("email", email);
-        cashierData.put("role", "cashier");
-        cashierData.put("createdAt", com.google.firebase.firestore.FieldValue.serverTimestamp());
-        cashierData.put("isActive", true);
-
-        return db.collection("users").document(uid).set(cashierData);
+        return api.post("/admin/cashiers", body, null);
     }
 }

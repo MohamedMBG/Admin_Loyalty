@@ -5,12 +5,16 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.adminloyalty.data.RewardsAdminRepository;
+import com.example.adminloyalty.data.api.ApiErrors;
+import com.example.adminloyalty.data.api.ApiResult;
+import com.example.adminloyalty.di.IoExecutor;
 import com.example.adminloyalty.models.RewardItem;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.ListenerRegistration;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 import javax.inject.Inject;
 
@@ -20,14 +24,16 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 public class RewardsAdminViewModel extends ViewModel {
 
     private final RewardsAdminRepository repository;
+    private final ExecutorService io;
     private ListenerRegistration listener;
 
     private final MutableLiveData<List<RewardItem>> rewards = new MutableLiveData<>();
     private final MutableLiveData<String> actionStatus = new MutableLiveData<>();
 
     @Inject
-    public RewardsAdminViewModel(RewardsAdminRepository repository) {
+    public RewardsAdminViewModel(RewardsAdminRepository repository, @IoExecutor ExecutorService io) {
         this.repository = repository;
+        this.io = io;
         loadRewards();
     }
 
@@ -50,15 +56,30 @@ public class RewardsAdminViewModel extends ViewModel {
     }
 
     public void addReward(RewardItem item) {
-        repository.addReward(item).addOnSuccessListener(ref -> actionStatus.setValue("Reward Added"));
+        io.execute(() -> {
+            ApiResult r = repository.addReward(item);
+            actionStatus.postValue(r.isOk() ? "Reward Added" : mapError(r));
+        });
     }
 
     public void updateReward(String id, RewardItem item) {
-        repository.updateReward(id, item).addOnSuccessListener(aVoid -> actionStatus.setValue("Reward Updated"));
+        io.execute(() -> {
+            ApiResult r = repository.updateReward(id, item);
+            actionStatus.postValue(r.isOk() ? "Reward Updated" : mapError(r));
+        });
     }
 
     public void deleteReward(String id) {
-        repository.deleteReward(id).addOnSuccessListener(aVoid -> actionStatus.setValue("Reward Deleted"));
+        io.execute(() -> {
+            ApiResult r = repository.deleteReward(id);
+            actionStatus.postValue(r.isOk() ? "Reward Deleted" : mapError(r));
+        });
+    }
+
+    private String mapError(ApiResult r) {
+        if ("INVALID_REWARD".equals(r.code)) return "Check the reward name and points.";
+        if ("REWARD_NOT_FOUND".equals(r.code)) return "That reward no longer exists.";
+        return ApiErrors.message(r, "Not authorized. Admin role required.", "Action failed");
     }
 
     public void resetStatus() {
