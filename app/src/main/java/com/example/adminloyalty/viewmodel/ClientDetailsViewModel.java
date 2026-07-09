@@ -9,8 +9,8 @@ import com.example.adminloyalty.data.api.ApiErrors;
 import com.example.adminloyalty.data.api.ApiResult;
 import com.example.adminloyalty.di.IoExecutor;
 import com.example.adminloyalty.fragments.ClientDetailsFragment.ActivityItem;
+import com.example.adminloyalty.models.AdminUserDetail;
 import com.google.firebase.Timestamp;
-import com.google.firebase.firestore.DocumentSnapshot;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -32,7 +32,7 @@ public class ClientDetailsViewModel extends ViewModel {
     private final ClientDetailsRepository repository;
     private final ExecutorService io;
 
-    private final MutableLiveData<DocumentSnapshot> userProfile = new MutableLiveData<>();
+    private final MutableLiveData<AdminUserDetail> userProfile = new MutableLiveData<>();
     private final MutableLiveData<Double> averageSpend = new MutableLiveData<>();
     private final MutableLiveData<List<ActivityItem>> allActivities = new MutableLiveData<>();
     private final MutableLiveData<Boolean> loadingHistory = new MutableLiveData<>(false);
@@ -45,7 +45,7 @@ public class ClientDetailsViewModel extends ViewModel {
         this.io = io;
     }
 
-    public LiveData<DocumentSnapshot> getUserProfile() { return userProfile; }
+    public LiveData<AdminUserDetail> getUserProfile() { return userProfile; }
     public LiveData<Double> getAverageSpend() { return averageSpend; }
     public LiveData<List<ActivityItem>> getAllActivities() { return allActivities; }
     public LiveData<Boolean> getLoadingHistory() { return loadingHistory; }
@@ -87,13 +87,18 @@ public class ClientDetailsViewModel extends ViewModel {
     }
 
     private void loadUserProfile(String clientId) {
-        repository.getUserProfile(clientId).addOnSuccessListener(document -> {
-            if (document.exists()) {
-                userProfile.postValue(document);
-            } else {
-                error.postValue("User not found");
+        io.execute(() -> {
+            ApiResult result = repository.getUser(clientId);
+            if (!result.isOk()) {
+                error.postValue(mapError(result));
+                return;
             }
-        }).addOnFailureListener(e -> error.postValue("Error loading profile"));
+            if (result.data == null) {
+                error.postValue("User not found");
+                return;
+            }
+            userProfile.postValue(AdminUserDetail.fromJson(result.data));
+        });
 
         // ponytail: avg spend was derived from earn_codes.amountMAD — a field the backend no longer
         // exposes (earn codes are points-direct now). No backend analytics endpoint for it, so it's

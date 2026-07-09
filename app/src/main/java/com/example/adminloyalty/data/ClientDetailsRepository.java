@@ -2,9 +2,6 @@ package com.example.adminloyalty.data;
 
 import com.example.adminloyalty.data.api.AdminApiClient;
 import com.example.adminloyalty.data.api.ApiResult;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
 
 import org.json.JSONObject;
 
@@ -14,12 +11,10 @@ import javax.inject.Singleton;
 @Singleton
 public class ClientDetailsRepository {
 
-    private final FirebaseFirestore db;
     private final AdminApiClient api;
 
     @Inject
-    public ClientDetailsRepository(FirebaseFirestore db, AdminApiClient api) {
-        this.db = db;
+    public ClientDetailsRepository(AdminApiClient api) {
         this.api = api;
     }
 
@@ -47,10 +42,12 @@ public class ClientDetailsRepository {
         return api.get("/admin/users/" + clientId + "/activity?limit=" + limit);
     }
 
-    // ponytail: BACKEND GAP — no endpoint returns another user's full profile (gender / address /
-    // lastVisit) by uid; Firestore rules deny the direct read once deployed. Kept as-is so the
-    // header still renders pre-cutover. Migrate to a GET /admin/users/{uid} endpoint when it exists.
-    public Task<DocumentSnapshot> getUserProfile(String clientId) {
-        return db.collection("users").document(clientId).get();
+    /**
+     * A user's full profile for the client-details header via the backend. Blocking — call on a
+     * background thread. Replaces the direct {@code users/{uid}} read (rules-denied for admins).
+     * Returns {@code {uid,fullName,email,phone,gender,address,birthday,points,visits,createdAt,lastEarnAt}}.
+     */
+    public ApiResult getUser(String clientId) {
+        return api.get("/admin/users/" + clientId);
     }
 }
