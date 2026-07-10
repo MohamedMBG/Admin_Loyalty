@@ -23,16 +23,21 @@ import java.util.concurrent.Executors;
 
 import javax.inject.Inject;
 
+import dagger.hilt.android.scopes.FragmentScoped;
+
 /**
  * Scan logs via {@code GET /admin/earn-codes}. Admins can't read {@code earn_codes} directly
  * (Firestore rules), so the log reads through the backend, which resolves cashier + client names
  * inline — the old client-side users batch-fetch join is gone.
  */
+@FragmentScoped
 public class LogsRepository {
 
     // Backend caps at 200 and exposes no pagination cursor yet, so we load a single page.
     // ponytail: a 200-row cap will eventually hide older records; add backend cursor paging then.
-    private static final int PAGE_LIMIT = 200;
+    // Centralized current backend contract. Cursor paging can replace this default when supported.
+    private static final String SCANNED_STATUS = "used";
+    private static final int MAX_LOGS_PER_REQUEST = 200;
 
     private final AdminApiClient api;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -50,7 +55,7 @@ public class LogsRepository {
     /** Loads recent scanned (status {@code used}) earn codes, newest scan first. Callback on main. */
     public void loadLogs(@NonNull RepoCallback callback) {
         executor.execute(() -> {
-            ApiResult result = api.get("/admin/earn-codes?limit=" + PAGE_LIMIT);
+            ApiResult result = api.get("/admin/earn-codes?limit=" + MAX_LOGS_PER_REQUEST);
             if (!result.isOk() || result.data == null) {
                 String msg = result.message != null ? result.message : "Failed to load records";
                 post(callback, new ArrayList<>(), new Exception(msg));
@@ -64,7 +69,7 @@ public class LogsRepository {
                     JSONObject item = items.optJSONObject(i);
                     if (item == null) continue;
                     // Scan-log screen shows redeemed codes only; backend returns all statuses.
-                    if (!"used".equals(item.optString("status"))) continue;
+                    if (!SCANNED_STATUS.equals(item.optString("status"))) continue;
                     logs.add(mapItem(item));
                 }
             }
@@ -85,7 +90,9 @@ public class LogsRepository {
 
         String clientName = cleanName(item.optString("clientName", ""));
         if (clientName.isEmpty()) {
-            clientName = "Client: " + shortId(clientUid);
+            clientName = clientUid.isEmpty()
+                    ? "Unknown Client"
+                    : "Client: " + shortId(clientUid);
         }
         String cashierName = cleanName(item.optString("cashierName", ""));
         if (cashierName.isEmpty()) {

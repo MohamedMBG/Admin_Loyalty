@@ -78,11 +78,11 @@ public class ScanLogsFragment extends Fragment {
     }
 
     @Override
-    public void onDestroyView() {
-        super.onDestroyView();
+    public void onDestroy() {
         if (logsRepository != null) {
             logsRepository.shutdown();
         }
+        super.onDestroy();
     }
 
     private void bindViews(@NonNull View view) {
