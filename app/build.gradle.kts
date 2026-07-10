@@ -22,9 +22,8 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // TODO(owner): set the real backend base URL. Split per build flavor (dev/staging/prod)
-        // once those environments exist.
-        buildConfigField("String", "API_BASE_URL", "\"https://TODO-set-backend-base-url/api/v1\"")
+        // Split per build flavor (dev/staging/prod) once those environments exist.
+        buildConfigField("String", "API_BASE_URL", "\"https://bean-backend-ejzg.onrender.com/api/v1\"")
     }
 
     buildTypes {
