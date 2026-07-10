@@ -21,13 +21,10 @@ import com.example.adminloyalty.R;
 import com.example.adminloyalty.adapters.ScanLogAdapter;
 import com.example.adminloyalty.data.LogsRepository;
 import com.example.adminloyalty.models.ScanLog;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.firebase.Timestamp;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,9 +34,13 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class ScanLogsFragment extends Fragment {
 
-    private static final int PAGE_SIZE = 50;
     private static final String TAG_DATE_PICKER = "DATE_PICKER";
 
     private RecyclerView recyclerViewLogs;
@@ -53,8 +54,8 @@ public class ScanLogsFragment extends Fragment {
     private final List<ScanLog> displayedLogs = new ArrayList<>();
     private final List<ScanLog> allLogs = new ArrayList<>();
 
-    private LogsRepository logsRepository;
-    private DocumentSnapshot lastSnapshot;
+    @Inject
+    LogsRepository logsRepository;
     private boolean isLoading = false;
     private boolean hasMore = true;
 
@@ -71,7 +72,6 @@ public class ScanLogsFragment extends Fragment {
         setupRecycler();
         setupBack();
         setupFilters(view);
-        logsRepository = new LogsRepository();
 
         loadNextPage();
         return view;
@@ -251,40 +251,24 @@ public class ScanLogsFragment extends Fragment {
         isLoading = true;
         showLoading(true);
 
-        Task<QuerySnapshot> task = logsRepository.loadPage(lastSnapshot, PAGE_SIZE);
-        task.addOnCompleteListener(this::handlePageResult);
-    }
-
-    private void handlePageResult(@NonNull Task<QuerySnapshot> task) {
-        showLoading(false);
-        isLoading = false;
-
-        if (!task.isSuccessful() || task.getResult() == null) {
-            toast("Failed to load records");
-            return;
-        }
-
-        QuerySnapshot snapshot = task.getResult();
-        if (snapshot.isEmpty()) {
-            hasMore = false;
-            return;
-        }
-
-        logsRepository.mapDocuments(snapshot, (logs, error) -> {
-            if (error != null) {
-                toast("Partial data loaded");
-            }
+        logsRepository.loadLogs((logs, error) -> {
             if (!isAdded()) return;
+            showLoading(false);
+            isLoading = false;
+            // Backend has no pagination cursor yet — one page (cap 200), so no further loads.
+            hasMore = false;
 
+            if (error != null) {
+                toast("Failed to load records");
+                return;
+            }
+
+            allLogs.clear();
             allLogs.addAll(logs);
             displayedLogs.clear();
             displayedLogs.addAll(allLogs);
             adapter.submitList(new ArrayList<>(displayedLogs));
             refreshHeader();
-
-            List<DocumentSnapshot> docs = snapshot.getDocuments();
-            lastSnapshot = docs.get(docs.size() - 1);
-            hasMore = docs.size() >= PAGE_SIZE;
         });
     }
 
