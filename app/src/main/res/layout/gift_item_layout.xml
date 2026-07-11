@@ -83,7 +83,7 @@
             android:id="@+id/cardPoints"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:cardBackgroundColor="#1AF59E0B"
+            app:cardBackgroundColor="@color/colorWarningContainer"
             app:cardCornerRadius="10dp"
             app:cardElevation="0dp"
             app:strokeWidth="0dp"
@@ -100,7 +100,7 @@
                 android:paddingHorizontal="10dp"
                 android:paddingVertical="6dp"
                 android:text="350 pts"
-                android:textColor="#F59E0B"
+                android:textColor="@color/colorWarning"
                 android:textSize="13sp"
                 android:textStyle="bold"/>
         </com.google.android.material.card.MaterialCardView>
@@ -113,7 +113,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:padding="6dp"
             android:src="@android:drawable/ic_menu_delete"
-            app:tint="#EF4444"
+            app:tint="@color/colorError"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />

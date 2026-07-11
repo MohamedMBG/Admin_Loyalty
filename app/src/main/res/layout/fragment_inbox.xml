@@ -54,7 +54,7 @@
             android:layout_marginStart="16dp"
             android:layout_marginTop="4dp"
             android:text="Reach your users instantly"
-            android:textColor="#E0E7FF"
+            android:textColor="@color/colorPrimaryContainer"
             android:textSize="14sp"
             app:layout_constraintStart_toStartOf="@id/tvScreenTitle"
             app:layout_constraintTop_toBottomOf="@id/tvScreenTitle" />
@@ -100,10 +100,10 @@
                     app:boxCornerRadiusBottomStart="12dp"
                     app:boxCornerRadiusTopEnd="12dp"
                     app:boxCornerRadiusTopStart="12dp"
-                    app:boxStrokeColor="#4F46E5"
+                    app:boxStrokeColor="@color/colorPrimary"
                     app:counterEnabled="true"
                     app:counterMaxLength="50"
-                    app:hintTextColor="#4F46E5">
+                    app:hintTextColor="@color/colorPrimary">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/et_title"
@@ -127,10 +127,10 @@
                     app:boxCornerRadiusBottomStart="12dp"
                     app:boxCornerRadiusTopEnd="12dp"
                     app:boxCornerRadiusTopStart="12dp"
-                    app:boxStrokeColor="#4F46E5"
+                    app:boxStrokeColor="@color/colorPrimary"
                     app:counterEnabled="true"
                     app:counterMaxLength="200"
-                    app:hintTextColor="#4F46E5">
+                    app:hintTextColor="@color/colorPrimary">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/et_message"
@@ -232,7 +232,7 @@
                             android:layout_height="wrap_content"
                             android:text="Male"
                             android:textColor="?android:attr/textColorPrimary"
-                            app:chipBackgroundColor="#10000000" />
+                            app:chipBackgroundColor="@color/colorSurfaceVariant" />
 
                         <com.google.android.material.chip.Chip
                             android:id="@+id/chip_female"
@@ -241,7 +241,7 @@
                             android:layout_height="wrap_content"
                             android:text="Female"
                             android:textColor="?android:attr/textColorPrimary"
-                            app:chipBackgroundColor="#10000000" />
+                            app:chipBackgroundColor="@color/colorSurfaceVariant" />
 
                     </com.google.android.material.chip.ChipGroup>
 
@@ -267,7 +267,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="18 - 65"
-                            android:textColor="#4F46E5"
+                            android:textColor="@color/colorPrimary"
                             android:textSize="14sp"
                             android:textStyle="bold" />
                     </LinearLayout>
@@ -280,9 +280,9 @@
                         android:stepSize="1"
                         android:valueFrom="18"
                         android:valueTo="100"
-                        app:thumbColor="#4F46E5"
-                        app:trackColorActive="#4F46E5"
-                        app:trackColorInactive="#E0E7FF" />
+                        app:thumbColor="@color/colorPrimary"
+                        app:trackColorActive="@color/colorPrimary"
+                        app:trackColorInactive="@color/colorPrimaryContainer" />
 
                     <TextView
                         android:id="@+id/btn_reset_age"
@@ -316,7 +316,7 @@
                             android:layout_height="wrap_content"
                             android:text="Hassan"
                             android:textColor="?android:attr/textColorPrimary"
-                            app:chipBackgroundColor="#10000000" />
+                            app:chipBackgroundColor="@color/colorSurfaceVariant" />
 
                         <com.google.android.material.chip.Chip
                             android:id="@+id/chip_loc_rabat"
@@ -325,7 +325,7 @@
                             android:layout_height="wrap_content"
                             android:text="Agdal"
                             android:textColor="?android:attr/textColorPrimary"
-                            app:chipBackgroundColor="#10000000" />
+                            app:chipBackgroundColor="@color/colorSurfaceVariant" />
 
                         <com.google.android.material.chip.Chip
                             android:id="@+id/chip_loc_marrakech"
@@ -334,7 +334,7 @@
                             android:layout_height="wrap_content"
                             android:text="Al Irfane"
                             android:textColor="?android:attr/textColorPrimary"
-                            app:chipBackgroundColor="#10000000" />
+                            app:chipBackgroundColor="@color/colorSurfaceVariant" />
 
                         <com.google.android.material.chip.Chip
                             android:id="@+id/chip_loc_other"
@@ -343,7 +343,7 @@
                             android:layout_height="wrap_content"
                             android:text="Other"
                             android:textColor="?android:attr/textColorPrimary"
-                            app:chipBackgroundColor="#10000000" />
+                            app:chipBackgroundColor="@color/colorSurfaceVariant" />
                     </com.google.android.material.chip.ChipGroup>
 
                     <!-- 4. Last Visit Filter -->
@@ -369,7 +369,7 @@
                             android:layout_height="wrap_content"
                             android:text="Last 3 days"
                             android:textColor="?android:attr/textColorPrimary"
-                            app:chipBackgroundColor="#10000000" />
+                            app:chipBackgroundColor="@color/colorSurfaceVariant" />
 
                         <com.google.android.material.chip.Chip
                             android:id="@+id/chip_visit_week"
@@ -378,7 +378,7 @@
                             android:layout_height="wrap_content"
                             android:text="Last Week"
                             android:textColor="?android:attr/textColorPrimary"
-                            app:chipBackgroundColor="#10000000" />
+                            app:chipBackgroundColor="@color/colorSurfaceVariant" />
 
                         <com.google.android.material.chip.Chip
                             android:id="@+id/chip_visit_month"
@@ -387,7 +387,7 @@
                             android:layout_height="wrap_content"
                             android:text="Last Month"
                             android:textColor="?android:attr/textColorPrimary"
-                            app:chipBackgroundColor="#10000000" />
+                            app:chipBackgroundColor="@color/colorSurfaceVariant" />
                     </com.google.android.material.chip.ChipGroup>
 
                     <!-- 5. Birthday Filter -->
@@ -397,7 +397,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
                         android:background="@drawable/birthday_filter_background"
-                        android:backgroundTint="#FFF1F2"
+                        android:backgroundTint="@color/colorErrorContainer"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
                         android:padding="12dp">
@@ -407,7 +407,7 @@
                             android:layout_height="24dp"
                             android:contentDescription="Birthday"
                             android:src="@drawable/ic_cake"
-                            app:tint="#E11D48" />
+                            app:tint="@color/colorError" />
 
                         <TextView
                             android:layout_width="0dp"
@@ -415,7 +415,7 @@
                             android:layout_marginStart="12dp"
                             android:layout_weight="1"
                             android:text="Target users with birthday today"
-                            android:textColor="#BE123C"
+                            android:textColor="@color/colorError"
                             android:textSize="14sp"
                             android:textStyle="bold" />
 
@@ -423,8 +423,8 @@
                             android:id="@+id/switch_birthday_today"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            app:thumbTint="#E11D48"
-                            app:trackTint="#FECDD3" />
+                            app:thumbTint="@color/colorError"
+                            app:trackTint="@color/colorErrorContainer" />
                     </LinearLayout>
 
                 </LinearLayout>
@@ -436,7 +436,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="24dp"
                     android:background="@drawable/birthday_filter_background"
-                    android:backgroundTint="#F3F4F6"
+                    android:backgroundTint="@color/colorSurfaceVariant"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
                     android:padding="12dp">
@@ -445,7 +445,7 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:src="@android:drawable/ic_menu_myplaces"
-                        app:tint="#6B7280" />
+                        app:tint="@color/colorTextSecondary" />
 
                     <LinearLayout
                         android:layout_width="0dp"
@@ -458,7 +458,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Estimated Reach"
-                            android:textColor="#6B7280"
+                            android:textColor="@color/colorTextSecondary"
                             android:textSize="12sp" />
 
                         <TextView
@@ -466,7 +466,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="1,234 Users"
-                            android:textColor="#1F2937"
+                            android:textColor="@color/colorTextPrimary"
                             android:textSize="16sp"
                             android:textStyle="bold" />
                     </LinearLayout>
@@ -476,7 +476,7 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:src="@android:drawable/ic_popup_sync"
-                        app:tint="#4F46E5" />
+                        app:tint="@color/colorPrimary" />
 
                 </LinearLayout>
 
@@ -495,9 +495,9 @@
                         android:layout_marginEnd="8dp"
                         android:layout_weight="1"
                         android:text="Preview"
-                        android:textColor="#4F46E5"
+                        android:textColor="@color/colorPrimary"
                         app:cornerRadius="12dp"
-                        app:strokeColor="#4F46E5" />
+                        app:strokeColor="@color/colorPrimary" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_send"
@@ -505,13 +505,13 @@
                         android:layout_height="56dp"
                         android:layout_marginStart="8dp"
                         android:layout_weight="1"
-                        android:backgroundTint="#4F46E5"
+                        android:backgroundTint="@color/colorPrimary"
                         android:text="Send Now"
-                        android:textColor="#FFFFFF"
+                        android:textColor="@color/colorOnPrimary"
                         app:cornerRadius="12dp"
                         app:icon="@android:drawable/ic_menu_send"
                         app:iconGravity="textEnd"
-                        app:iconTint="#FFFFFF" />
+                        app:iconTint="@color/colorOnPrimary" />
                 </LinearLayout>
 
             </LinearLayout>

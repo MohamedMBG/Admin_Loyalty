@@ -89,7 +89,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:backgroundTint="#D50B01"
+            android:backgroundTint="@color/colorError"
             android:text="Delete Promotion"
             android:textColor="@color/white"
             android:textStyle="bold"

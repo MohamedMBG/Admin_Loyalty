@@ -6,14 +6,14 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:id="@+id/cashier_main"
-    android:background="@color/white" >
+    android:background="@color/colorBackground" >
 
     <!-- Enhanced Header Section -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/header_card"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:backgroundTint="#F8F9FA"
+        android:backgroundTint="@color/colorSurfaceVariant"
         android:layout_margin="15dp"
         app:cardCornerRadius="16dp"
         app:cardElevation="0dp"
@@ -34,7 +34,7 @@
                 android:layout_height="wrap_content"
                 android:letterSpacing="0.005"
                 android:text="QR Generating"
-                android:textColor="#1A1A1A"
+                android:textColor="@color/colorTextPrimary"
                 android:textSize="32sp"
                 android:textStyle="bold" />
 
@@ -50,7 +50,7 @@
         app:cardCornerRadius="20dp"
         app:cardElevation="2dp"
         app:strokeWidth="0dp"
-        android:backgroundTint="@color/white"
+        android:backgroundTint="@color/colorSurface"
         app:layout_constraintTop_toBottomOf="@id/header_card"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@id/card_qr"
@@ -70,7 +70,7 @@
                 android:text="Payment Details"
                 android:textSize="20sp"
                 android:textStyle="bold"
-                android:textColor="#1A1A1A"
+                android:textColor="@color/colorTextPrimary"
                 android:layout_marginBottom="24dp"/>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -84,8 +84,8 @@
                 app:boxCornerRadiusBottomStart="12dp"
                 app:boxCornerRadiusBottomEnd="12dp"
                 app:startIconDrawable="@android:drawable/ic_menu_sort_by_size"
-                app:startIconTint="#6B7280"
-                app:hintTextColor="#6B7280">
+                app:startIconTint="@color/colorTextSecondary"
+                app:hintTextColor="@color/colorTextSecondary">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/et_receipt"
@@ -111,8 +111,8 @@
                 app:boxCornerRadiusBottomEnd="12dp"
                 app:prefixText="MAD "
                 app:startIconDrawable="@android:drawable/ic_menu_info_details"
-                app:startIconTint="#6B7280"
-                app:hintTextColor="#6B7280">
+                app:startIconTint="@color/colorTextSecondary"
+                app:hintTextColor="@color/colorTextSecondary">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/et_amount"
@@ -159,7 +159,7 @@
                     android:textSize="14sp"
                     app:chipIcon="@android:drawable/ic_lock_idle_alarm"
                     app:chipIconVisible="true"
-                    app:chipBackgroundColor="#F3F4F6"/>
+                    app:chipBackgroundColor="@color/colorSurfaceVariant"/>
 
                 <Space
                     android:layout_width="0dp"
@@ -173,7 +173,7 @@
                     android:text="● Ready"
                     android:textSize="15sp"
                     android:textStyle="bold"
-                    android:textColor="#10B981"
+                    android:textColor="@color/colorSuccess"
                     android:layout_marginEnd="12dp"/>
 
                 <com.google.android.material.button.MaterialButton
@@ -201,7 +201,7 @@
         app:cardCornerRadius="24dp"
         app:cardElevation="4dp"
         app:strokeWidth="0dp"
-        android:backgroundTint="@color/white"
+        android:backgroundTint="@color/colorSurface"
         app:layout_constraintTop_toBottomOf="@id/header_card"
         app:layout_constraintStart_toEndOf="@id/input_card"
         app:layout_constraintEnd_toEndOf="parent"
@@ -220,7 +220,7 @@
                 android:text="QR Code Display"
                 android:textSize="22sp"
                 android:textStyle="bold"
-                android:textColor="#1A1A1A"
+                android:textColor="@color/colorTextPrimary"
                 android:layout_marginBottom="32dp"/>
 
             <com.google.android.material.card.MaterialCardView
@@ -229,7 +229,7 @@
                 app:cardCornerRadius="24dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="2dp"
-                app:strokeColor="#E5E7EB">
+                app:strokeColor="@color/colorOutlineVariant">
 
                 <ImageView
                     android:id="@+id/img_qr"
@@ -247,7 +247,7 @@
                 android:layout_height="wrap_content"
                 android:text="Scan QR code to pay"
                 android:textSize="18sp"
-                android:textColor="#6B7280"
+                android:textColor="@color/colorTextSecondary"
                 android:textStyle="bold"
                 android:gravity="center"
                 android:layout_marginTop="28dp"/>
@@ -269,7 +269,7 @@
         android:layout_height="wrap_content"
         android:visibility="gone"
         android:layout_marginTop="16dp"
-        android:backgroundTint="@color/white"
+        android:backgroundTint="@color/colorSurface"
         app:cardCornerRadius="20dp"
         app:cardElevation="8dp"
         app:strokeWidth="0dp"
@@ -297,7 +297,7 @@
                     android:text="✓ Payment Received"
                     android:textStyle="bold"
                     android:textSize="22sp"
-                    android:textColor="#1A1A1A"/>
+                    android:textColor="@color/colorTextPrimary"/>
 
                 <com.google.android.material.textview.MaterialTextView
                     android:id="@+id/tv_confirm_details"
@@ -306,7 +306,7 @@
                     android:text="Receipt #— · MAD —"
                     android:layout_marginTop="8dp"
                     android:textSize="16sp"
-                    android:textColor="#6B7280"/>
+                    android:textColor="@color/colorTextSecondary"/>
             </LinearLayout>
 
             <com.google.android.material.chip.Chip
@@ -320,7 +320,7 @@
                 android:layout_marginEnd="20dp"
                 app:chipIcon="@android:drawable/ic_lock_idle_alarm"
                 app:chipIconVisible="true"
-                app:chipBackgroundColor="#FEF3C7"/>
+                app:chipBackgroundColor="@color/colorWarningContainer"/>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_cancel"

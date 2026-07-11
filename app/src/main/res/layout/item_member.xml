@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="5dp"
-    android:backgroundTint="@color/white"
+    android:backgroundTint="@color/colorSurface"
     android:layout_marginBottom="10dp"
     app:cardCornerRadius="18dp"
     app:cardElevation="3dp"
@@ -34,7 +34,7 @@
                 android:text="Mohamed"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                android:textColor="#111111"
+                android:textColor="@color/colorTextPrimary"
                 android:letterSpacing="0.01" />
 
             <TextView
@@ -44,10 +44,10 @@
                 android:text="Verified"
                 android:textSize="11sp"
                 android:textStyle="bold"
-                android:textColor="#1B5E20"
+                android:textColor="@color/colorOnSuccessContainer"
                 android:paddingHorizontal="10dp"
                 android:paddingVertical="4dp"
-                android:background="#E8F5E9"
+                android:background="@color/colorSuccessContainer"
                 android:layout_marginStart="8dp" />
         </LinearLayout>
 
@@ -59,7 +59,7 @@
             android:layout_marginTop="2dp"
             android:text="user@email.com"
             android:textSize="13sp"
-            android:textColor="#757575"
+            android:textColor="@color/colorTextSecondary"
             android:maxLines="1"
             android:ellipsize="end" />
 
@@ -69,7 +69,7 @@
             android:layout_height="1dp"
             android:layout_marginTop="10dp"
             android:layout_marginBottom="8dp"
-            android:background="#F0F0F0" />
+            android:background="@color/colorSurfaceVariant" />
 
         <!-- Stats row -->
         <LinearLayout
@@ -92,7 +92,7 @@
                     android:text="POINTS"
                     android:textSize="11sp"
                     android:textStyle="bold"
-                    android:textColor="#9E9E9E" />
+                    android:textColor="@color/colorTextSecondary" />
 
                 <TextView
                     android:id="@+id/tv_member_points"
@@ -102,7 +102,7 @@
                     android:text="0"
                     android:textSize="20sp"
                     android:textStyle="bold"
-                    android:textColor="#2962FF" />
+                    android:textColor="@color/colorPrimary" />
             </LinearLayout>
 
             <!-- Visits -->
@@ -120,7 +120,7 @@
                     android:layout_marginEnd="10dp"
                     android:textSize="11sp"
                     android:textStyle="bold"
-                    android:textColor="#9E9E9E" />
+                    android:textColor="@color/colorTextSecondary" />
 
                 <TextView
                     android:id="@+id/tv_member_visits"
@@ -130,7 +130,7 @@
                     android:text="0"
                     android:textSize="20sp"
                     android:textStyle="bold"
-                    android:textColor="#00ACC1" />
+                    android:textColor="@color/colorInfo" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>

@@ -5,7 +5,7 @@
     android:gravity="center_horizontal"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="#FFFFFF">
+    android:background="@color/colorSurface">
 
     <!-- QR Code Container with Card Effect -->
     <androidx.cardview.widget.CardView
@@ -15,7 +15,7 @@
         android:layout_marginBottom="24dp"
         android:elevation="8dp"
         android:radius="16dp"
-        android:backgroundTint="#F8F9FA">
+        android:backgroundTint="@color/colorSurfaceVariant">
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -43,7 +43,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:textSize="15sp"
-        android:textColor="#424242"
+        android:textColor="@color/colorTextSecondary"
         android:gravity="center"
         android:lineSpacingExtra="4dp"
         android:alpha="0.9" />
@@ -53,7 +53,7 @@
         android:layout_width="60dp"
         android:layout_height="3dp"
         android:layout_marginTop="20dp"
-        android:background="#E3F2FD"
+        android:background="@color/colorInfoContainer"
         android:radius="2dp" />
 
 </LinearLayout>
