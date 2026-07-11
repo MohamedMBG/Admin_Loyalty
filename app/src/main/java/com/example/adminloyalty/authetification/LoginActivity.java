@@ -2,6 +2,8 @@ package com.example.adminloyalty.authetification;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Patterns;
+import android.view.inputmethod.EditorInfo;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -27,28 +29,53 @@ public class LoginActivity extends AppCompatActivity {
 
         auth = FirebaseAuth.getInstance();
 
-        binding.loginButton.setOnClickListener(v -> {
-            String email = binding.emailInput.getText().toString().trim();
-            String password = binding.passwordInput.getText().toString().trim();
-
-            if (email.isEmpty() || password.isEmpty()) {
-                showSnack("Please fill all the fields!");
-                return;
+        binding.loginButton.setOnClickListener(v -> attemptLogin());
+        binding.passwordInput.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                attemptLogin();
+                return true;
             }
-
-            loginWithFirebase(email, password);
+            return false;
         });
+    }
+
+    private void attemptLogin() {
+        String email = binding.emailInput.getText() == null
+                ? "" : binding.emailInput.getText().toString().trim();
+        String password = binding.passwordInput.getText() == null
+                ? "" : binding.passwordInput.getText().toString();
+
+        binding.emailLayout.setError(null);
+        binding.passwordLayout.setError(null);
+
+        if (email.isEmpty()) {
+            binding.emailLayout.setError("Enter your email address");
+            binding.emailInput.requestFocus();
+            return;
+        }
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            binding.emailLayout.setError("Enter a valid email address");
+            binding.emailInput.requestFocus();
+            return;
+        }
+        if (password.isEmpty()) {
+            binding.passwordLayout.setError("Enter your password");
+            binding.passwordInput.requestFocus();
+            return;
+        }
+
+        loginWithFirebase(email, password);
     }
 
     private void loginWithFirebase(String email, String password) {
         binding.loginButton.setEnabled(false);
-        binding.loginButton.setText("Logging in...");
+        binding.loginButton.setText("Signing in…");
 
         auth.signInWithEmailAndPassword(email, password)
                 .addOnSuccessListener(authResult -> {
                     FirebaseUser user = auth.getCurrentUser();
                     if (user == null) {
-                        showSnack("Login failed, please try again.");
+                        showSnack("Sign-in failed. Please try again.");
                         resetButton();
                         return;
                     }
@@ -79,14 +106,15 @@ public class LoginActivity extends AppCompatActivity {
                             });
                 })
                 .addOnFailureListener(e -> {
-                    showSnack("Login failed: " + e.getMessage());
+                    binding.passwordLayout.setError("Email or password is incorrect");
+                    showSnack("Could not sign in. Check your details and try again.");
                     resetButton();
                 });
     }
 
     private void resetButton() {
         binding.loginButton.setEnabled(true);
-        binding.loginButton.setText("Login");
+        binding.loginButton.setText("Sign in");
     }
 
     private void showSnack(String message) {

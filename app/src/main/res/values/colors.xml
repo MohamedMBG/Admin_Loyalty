@@ -1,64 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
+    <!-- BeanLoyal: warm neutrals with one espresso brand accent. -->
+    <color name="black">#FF171311</color>
     <color name="white">#FFFFFFFF</color>
-
-    <!-- 🎨 Brand / Primary Colors -->
-    <color name="colorPrimary">#1976D2</color>           <!-- Deep blue (buttons, icons, highlights) -->
-    <color name="colorOnPrimary">#FFFFFF</color>         <!-- Text/icons on primary -->
-    <color name="colorPrimaryContainer">#E3F2FD</color>
-
-    <color name="green_100">#D1FAE5</color>
-    <color name="green_800">#065F46</color>
-    <color name="red_100">#FEE2E2</color>
-    <color name="red_800">#991B1B</color>
-    <color name="gray_100">#F3F4F6</color>
-    <color name="gray_800">#1F2937</color>
-    <!-- Light blue background for cards/chips -->
-
-    <!-- 🎨 Secondary / Accent Colors -->
-    <color name="colorSecondary">#FF6B35</color>         <!-- Warm orange accent -->
-    <color name="colorOnSecondary">#FFFFFF</color>       <!-- Text/icons on orange -->
-    <color name="colorSecondaryContainer">#FFE9E1</color>
-
-    <!-- 🎨 Backgrounds & Surfaces -->
-    <color name="colorBackground">#F5F5F5</color>        <!-- App background (light gray) -->
-    <color name="colorSurface">#FFFFFF</color>           <!-- Cards, Navigation Drawer, AppBar -->
-    <color name="colorOnSurface">#212121</color>         <!-- Default dark text -->
-    <color name="colorOutline">#E0E0E0</color>           <!-- Borders, dividers -->
-
-    <!-- 🧭 Navigation Drawer -->
-    <color name="navDrawerBackground">@color/colorSurface</color>  <!-- White drawer -->
-    <color name="navItemSelected">#1976D2</color>                 <!-- Blue selected text/icon -->
-    <color name="navItemUnselected">#444444</color>               <!-- Dark gray unselected -->
-    <color name="navItemSelectedBackground">#E3F2FD</color>       <!-- Light blue highlight -->
-
-    <!-- ✅ States / Alerts -->
-    <color name="colorSuccess">#4CAF50</color>         <!-- Green success -->
-    <color name="colorWarning">#FFC107</color>         <!-- Amber warning -->
-    <color name="colorError">#F44336</color>           <!-- Red error -->
-    <color name="colorInfo">#0288D1</color>            <!-- Info blue -->
-
-    <!-- ⚪️ Neutrals -->
-    <color name="colorTextPrimary">#212121</color>
-    <color name="colorTextSecondary">#757575</color>
-    <color name="colorDisabled">#BDBDBD</color>
-    <color name="light_grey">#EBEBEB</color>
-
-    <!-- 🟢 Commonly Used UI Colors -->
+    <color name="colorPrimary">#684536</color>
+    <color name="colorOnPrimary">#FFFFFFFF</color>
+    <color name="colorPrimaryContainer">#F1E1D7</color>
+    <color name="colorOnPrimaryContainer">#2A1710</color>
+    <color name="colorSecondary">#684536</color>
+    <color name="colorOnSecondary">#FFFFFFFF</color>
+    <color name="colorSecondaryContainer">#F1E1D7</color>
+    <color name="colorOnSecondaryContainer">#2A1710</color>
+    <color name="colorBackground">#F8F6F3</color>
+    <color name="colorSurface">#FFFCFA</color>
+    <color name="colorSurfaceVariant">#F0ECE8</color>
+    <color name="colorSurfaceRaised">#FFFFFFFF</color>
+    <color name="colorOnSurface">#241E1B</color>
+    <color name="colorOnSurfaceVariant">#706661</color>
+    <color name="colorOutline">#DED6D1</color>
+    <color name="colorOutlineVariant">#ECE6E2</color>
+    <color name="colorTextPrimary">#241E1B</color>
+    <color name="colorTextSecondary">#706661</color>
+    <color name="colorTextTertiary">#988D87</color>
+    <color name="colorDisabled">#B8AEA9</color>
+    <color name="light_grey">#F0ECE8</color>
+    <color name="colorSuccess">#3F6B57</color>
+    <color name="colorSuccessContainer">#E3EFE8</color>
+    <color name="colorOnSuccessContainer">#244735</color>
+    <color name="colorWarning">#946A2C</color>
+    <color name="colorWarningContainer">#F8ECD7</color>
+    <color name="colorError">#B44D49</color>
+    <color name="colorErrorContainer">#F8E2E0</color>
+    <color name="colorInfo">#526B78</color>
+    <color name="colorInfoContainer">#E3EBEF</color>
+    <color name="navDrawerBackground">@color/colorSurface</color>
+    <color name="navItemSelected">@color/colorPrimary</color>
+    <color name="navItemUnselected">@color/colorOnSurfaceVariant</color>
+    <color name="navItemSelectedBackground">@color/colorPrimaryContainer</color>
     <color name="cardBackground">@color/colorSurface</color>
-    <color name="dividerColor">@color/colorOutline</color>
-    <color name="chipBackground">@color/colorPrimaryContainer</color>
-
-    <!-- Light mode: very light grey (not pure white) -->
-    <color name="statusBarLight">#FAFAFA</color>
-
-    <!-- Dark mode: almost black, like Instagram -->
-    <color name="statusBarDark">#121212</color>
-
-    <color name="purple_700">#7C3AED</color>
-    <color name="green_500">#10B981</color>
-    <color name="blue_500">#3B82F6</color>
-    <color name="yellow_500">#F59E0B</color>
-    <color name="gray_500">#6B7280</color>
+    <color name="dividerColor">@color/colorOutlineVariant</color>
+    <color name="chipBackground">@color/colorSurfaceVariant</color>
+    <color name="statusBarLight">@color/colorBackground</color>
+    <color name="statusBarDark">#1D1917</color>
+    <color name="green_100">@color/colorSuccessContainer</color>
+    <color name="green_800">@color/colorOnSuccessContainer</color>
+    <color name="red_100">@color/colorErrorContainer</color>
+    <color name="red_800">@color/colorError</color>
+    <color name="gray_100">@color/colorSurfaceVariant</color>
+    <color name="gray_800">@color/colorOnSurface</color>
+    <color name="purple_700">@color/colorPrimary</color>
+    <color name="green_500">@color/colorSuccess</color>
+    <color name="blue_500">@color/colorInfo</color>
+    <color name="yellow_500">@color/colorWarning</color>
+    <color name="gray_500">@color/colorOnSurfaceVariant</color>
 </resources>

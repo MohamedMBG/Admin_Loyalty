@@ -1,17 +1,36 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
+<resources>
     <style name="Base.Theme.AdminLoyalty" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Primary brand color. -->
-        <item name="colorPrimary">@android:color/darker_gray</item>
-        <item name="colorOnPrimary">@color/white</item>
-        <!-- Secondary brand color. -->
-        <item name="colorSecondary">@android:color/darker_gray</item>
-        <item name="colorOnSecondary">@color/black</item>
-        <!-- Status bar, navigation bar, background, etc. -->
-        <item name="android:statusBarColor">@android:color/darker_gray</item>
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorOnPrimary">@color/colorOnPrimary</item>
+        <item name="colorPrimaryContainer">@color/colorPrimaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/colorOnPrimaryContainer</item>
+        <item name="colorSecondary">@color/colorSecondary</item>
+        <item name="colorOnSecondary">@color/colorOnSecondary</item>
+        <item name="colorSecondaryContainer">@color/colorSecondaryContainer</item>
+        <item name="colorOnSecondaryContainer">@color/colorOnSecondaryContainer</item>
+        <item name="colorSurface">@color/colorSurface</item>
+        <item name="colorOnSurface">@color/colorOnSurface</item>
+        <item name="colorSurfaceVariant">@color/colorSurfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/colorOnSurfaceVariant</item>
+        <item name="colorOutline">@color/colorOutline</item>
+        <item name="colorError">@color/colorError</item>
+        <item name="colorOnError">@color/white</item>
+        <item name="android:colorBackground">@color/colorBackground</item>
+        <item name="android:windowBackground">@color/colorBackground</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="fontFamily">sans-serif</item>
+        <item name="android:statusBarColor">@color/colorBackground</item>
+        <item name="android:navigationBarColor">@color/colorBackground</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="materialCardViewStyle">@style/Widget.BeanLoyal.Card</item>
+        <item name="materialButtonStyle">@style/Widget.BeanLoyal.Button.Primary</item>
+        <item name="textInputStyle">@style/Widget.BeanLoyal.TextInputLayout</item>
+        <item name="chipStyle">@style/Widget.BeanLoyal.Chip.Filter</item>
     </style>
 
     <style name="Theme.AdminLoyalty" parent="Base.Theme.AdminLoyalty" />
+
     <style name="AppBarBottomCorners">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSizeBottomLeft">24dp</item>
