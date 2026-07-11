@@ -4,7 +4,7 @@
     android:orientation="vertical"
     android:padding="24dp"
     android:gravity="bottom"
-    android:background="#F0F0F0"
+    android:background="@color/colorSurfaceVariant"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
@@ -12,12 +12,12 @@
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:src="@drawable/ic_person"
-        app:tint="#474747" />
+        app:tint="@color/colorTextSecondary" />
 
     <TextView
         android:text="Admin Panel"
         android:textSize="18sp"
-        android:textColor="#474747"
+        android:textColor="@color/colorTextSecondary"
         android:textStyle="bold"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"/>
@@ -25,7 +25,7 @@
     <TextView
         android:text="admin@loyalty.com"
         android:textSize="14sp"
-        android:textColor="#474747"
+        android:textColor="@color/colorTextSecondary"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"/>
 </LinearLayout>

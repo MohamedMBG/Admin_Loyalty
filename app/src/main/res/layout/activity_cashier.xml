@@ -34,7 +34,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Issue Points &amp; Process Payments"
-        android:textColor="#E0E7FF"
+        android:textColor="@color/colorPrimaryContainer"
         android:textSize="14sp"
         app:layout_constraintStart_toStartOf="@id/tvAppTitle"
         app:layout_constraintTop_toBottomOf="@id/tvAppTitle" />
@@ -49,7 +49,7 @@
         android:textColor="?android:attr/textColorPrimary"
         app:chipBackgroundColor="#30FFFFFF"
         app:chipIcon="@android:drawable/presence_online"
-        app:chipIconTint="#10B981"
+        app:chipIconTint="@color/colorSuccess"
         app:chipStrokeWidth="0dp"
         app:layout_constraintBottom_toBottomOf="@id/tvAppSubtitle"
         app:layout_constraintEnd_toEndOf="parent"
@@ -85,8 +85,8 @@
                 app:boxCornerRadiusBottomStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
                 app:boxCornerRadiusTopStart="12dp"
-                app:boxStrokeColor="#4F46E5"
-                app:hintTextColor="#4F46E5"
+                app:boxStrokeColor="@color/colorPrimary"
+                app:hintTextColor="@color/colorPrimary"
                 app:startIconDrawable="@android:drawable/ic_menu_sort_by_size"
                 app:startIconTint="?android:attr/textColorSecondary">
 
@@ -113,8 +113,8 @@
                 app:boxCornerRadiusBottomStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
                 app:boxCornerRadiusTopStart="12dp"
-                app:boxStrokeColor="#4F46E5"
-                app:hintTextColor="#4F46E5"
+                app:boxStrokeColor="@color/colorPrimary"
+                app:hintTextColor="@color/colorPrimary"
                 app:prefixText="MAD "
                 app:prefixTextColor="?android:attr/textColorPrimary"
                 app:startIconDrawable="@android:drawable/ic_menu_info_details"
@@ -144,13 +144,13 @@
                     android:layout_width="0dp"
                     android:layout_height="56dp"
                     android:layout_weight="1"
-                    android:backgroundTint="#4F46E5"
+                    android:backgroundTint="@color/colorPrimary"
                     android:text="Generate QR"
                     android:textSize="12sp"
-                    android:textColor="#FFFFFF"
+                    android:textColor="@color/colorOnPrimary"
                     app:cornerRadius="16dp"
                     app:icon="@android:drawable/ic_menu_view"
-                    app:iconTint="#FFFFFF" />
+                    app:iconTint="@color/colorOnPrimary" />
 
                 <Space
                     android:layout_width="12dp"
@@ -283,7 +283,7 @@
             android:layout_height="wrap_content"
             android:text="Ready"
             android:layout_marginEnd="12dp"
-            android:textColor="#10B981"
+            android:textColor="@color/colorSuccess"
             android:textStyle="bold" />
 
         <com.google.android.material.button.MaterialButton
@@ -292,9 +292,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Reset"
-            android:textColor="#EF4444"
+            android:textColor="@color/colorError"
             app:icon="@android:drawable/ic_menu_revert"
-            app:iconTint="#EF4444" />
+            app:iconTint="@color/colorError" />
     </LinearLayout>
 
     <!-- 5. CONFIRMATION POPUP -->
@@ -304,7 +304,7 @@
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
         android:visibility="gone"
-        app:cardBackgroundColor="#ECFDF5"
+        app:cardBackgroundColor="@color/colorSuccessContainer"
         app:cardCornerRadius="20dp"
         app:cardElevation="16dp"
         app:layout_constraintBottom_toBottomOf="parent">
@@ -326,7 +326,7 @@
                     android:layout_height="32dp"
                     android:padding="6dp"
                     android:src="@android:drawable/checkbox_on_background"
-                    app:tint="#059669" />
+                    app:tint="@color/colorSuccess" />
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -340,7 +340,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Payment Detected"
-                        android:textColor="#065F46"
+                        android:textColor="@color/colorOnSuccessContainer"
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
@@ -349,7 +349,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="RCP-8839 • 125.00 AED"
-                        android:textColor="#047857" />
+                        android:textColor="@color/colorSuccess" />
                 </LinearLayout>
 
                 <com.google.android.material.chip.Chip
@@ -373,8 +373,8 @@
                     android:layout_weight="1"
                     android:layout_marginEnd="8dp"
                     android:text="Cancel"
-                    android:textColor="#065F46"
-                    app:strokeColor="#065F46" />
+                    android:textColor="@color/colorOnSuccessContainer"
+                    app:strokeColor="@color/colorOnSuccessContainer" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_confirm"
@@ -382,7 +382,7 @@
                     android:layout_height="56dp"
                     android:layout_weight="1"
                     android:layout_marginStart="8dp"
-                    android:backgroundTint="#059669"
+                    android:backgroundTint="@color/colorSuccess"
                     android:text="Confirm"
                     android:textColor="#FFFFFF" />
             </LinearLayout>

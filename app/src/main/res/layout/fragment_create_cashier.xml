@@ -48,7 +48,7 @@
         android:layout_marginStart="16dp"
         android:layout_marginTop="4dp"
         android:text="Create account for staff member"
-        android:textColor="#E0E7FF"
+        android:textColor="@color/colorPrimaryContainer"
         android:textSize="14sp"
         app:layout_constraintStart_toStartOf="@id/tvTitle"
         app:layout_constraintTop_toBottomOf="@id/tvTitle" />
@@ -154,13 +154,13 @@
                 android:text="Create Account"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="#FFFFFF"
-                app:backgroundTint="#312E81"
+                android:textColor="@color/colorPrimaryContainer"
+                app:backgroundTint="@color/colorOnPrimaryContainer"
                 app:cornerRadius="16dp"
                 app:elevation="4dp"
                 app:icon="@android:drawable/ic_input_add"
                 app:iconGravity="textStart"
-                app:iconTint="#FFFFFF" />
+                app:iconTint="@color/colorPrimaryContainer" />
 
             <ProgressBar
                 android:id="@+id/progressBar"

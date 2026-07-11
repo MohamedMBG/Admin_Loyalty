@@ -244,7 +244,7 @@
                             android:layout_width="24dp"
                             android:layout_height="24dp"
                             android:background="@drawable/bg_circle"
-                            android:backgroundTint="#1A4F46E5"
+                            android:backgroundTint="@color/colorPrimaryContainer"
                             android:padding="5dp"
                             android:src="@drawable/ic_calendar"
                             app:tint="?attr/colorPrimary" />
@@ -302,17 +302,17 @@
                                 android:layout_width="28dp"
                                 android:layout_height="28dp"
                                 android:background="@drawable/bg_circle"
-                                android:backgroundTint="#26F59E0B"
+                                android:backgroundTint="@color/colorWarningContainer"
                                 android:padding="6dp"
                                 android:src="@drawable/ic_star"
-                                app:tint="#F59E0B" />
+                                app:tint="@color/colorWarning" />
 
                             <TextView
                                 android:id="@+id/tvDetailPoints"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="12dp"
-                                android:textColor="#F59E0B"
+                                android:textColor="@color/colorWarning"
                                 android:textSize="24sp"
                                 android:textStyle="bold"
                                 tools:text="1,250" />
@@ -349,17 +349,17 @@
                                 android:layout_width="28dp"
                                 android:layout_height="28dp"
                                 android:background="@drawable/bg_circle"
-                                android:backgroundTint="#2610B981"
+                                android:backgroundTint="@color/colorSuccessContainer"
                                 android:padding="6dp"
                                 android:src="@android:drawable/ic_menu_rotate"
-                                app:tint="#10B981" />
+                                app:tint="@color/colorSuccess" />
 
                             <TextView
                                 android:id="@+id/tvDetailSpend"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="12dp"
-                                android:textColor="#10B981"
+                                android:textColor="@color/colorSuccess"
                                 android:textSize="24sp"
                                 android:textStyle="bold"
                                 tools:text="45.50" />
@@ -438,7 +438,7 @@
                             android:textColor="?android:attr/textColorPrimary"
                             app:chipBackgroundColor="?attr/colorSurface"
                             app:chipIcon="@android:drawable/btn_star_big_on"
-                            app:chipIconTint="#10B981" />
+                            app:chipIconTint="@color/colorSuccess" />
 
                         <com.google.android.material.chip.Chip
                             android:id="@+id/filterGifts"
@@ -449,7 +449,7 @@
                             android:textColor="?android:attr/textColorPrimary"
                             app:chipBackgroundColor="?attr/colorSurface"
                             app:chipIcon="@android:drawable/ic_menu_send"
-                            app:chipIconTint="#EF4444" />
+                            app:chipIconTint="@color/colorError" />
 
                         <!-- Action Chips -->
                         <com.google.android.material.chip.Chip
