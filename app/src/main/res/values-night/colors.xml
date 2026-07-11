@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#E4BDA8</color>
+    <color name="colorOnPrimary">#3C2117</color>
+    <color name="colorPrimaryContainer">#523225</color>
+    <color name="colorOnPrimaryContainer">#F6DED1</color>
+    <color name="colorSecondary">#E4BDA8</color>
+    <color name="colorOnSecondary">#3C2117</color>
+    <color name="colorSecondaryContainer">#523225</color>
+    <color name="colorOnSecondaryContainer">#F6DED1</color>
+    <color name="colorBackground">#1D1917</color>
+    <color name="colorSurface">#241F1C</color>
+    <color name="colorSurfaceVariant">#302A27</color>
+    <color name="colorSurfaceRaised">#2A2421</color>
+    <color name="colorOnSurface">#EEE7E3</color>
+    <color name="colorOnSurfaceVariant">#C9BEB8</color>
+    <color name="colorOutline">#554B46</color>
+    <color name="colorOutlineVariant">#3A332F</color>
+    <color name="colorTextPrimary">#EEE7E3</color>
+    <color name="colorTextSecondary">#C9BEB8</color>
+    <color name="colorTextTertiary">#A99D97</color>
+    <color name="colorDisabled">#756A65</color>
+    <color name="light_grey">#302A27</color>
+    <color name="colorSuccessContainer">#263D32</color>
+    <color name="colorOnSuccessContainer">#BFE1CE</color>
+    <color name="colorWarningContainer">#493A24</color>
+    <color name="colorErrorContainer">#4B2927</color>
+    <color name="colorInfoContainer">#2A383F</color>
+</resources>
