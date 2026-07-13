@@ -74,11 +74,8 @@ public class RedeemingViewModel extends ViewModel {
                 .addOnSuccessListener(snapshots -> {
                     List<RewardItem> items = new ArrayList<>();
                     for (DocumentSnapshot doc : snapshots.getDocuments()) {
-                        RewardItem item = doc.toObject(RewardItem.class);
-                        if (item != null) {
-                            item.setId(doc.getId());
-                            items.add(item);
-                        }
+                        RewardItem item = RewardItem.fromDoc(doc);
+                        if (item != null) items.add(item);
                     }
                     rewardsList.setValue(items);
                 })

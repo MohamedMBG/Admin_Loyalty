@@ -45,11 +45,8 @@ public class RewardsAdminViewModel extends ViewModel {
             if (e != null || snapshots == null) return;
             List<RewardItem> list = new ArrayList<>();
             for (DocumentSnapshot doc : snapshots) {
-                RewardItem item = doc.toObject(RewardItem.class);
-                if (item != null) {
-                    item.setId(doc.getId());
-                    list.add(item);
-                }
+                RewardItem item = RewardItem.fromDoc(doc);
+                if (item != null) list.add(item);
             }
             rewards.setValue(list);
         });

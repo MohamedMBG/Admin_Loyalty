@@ -33,6 +33,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // The APK distributed on the website is debug-key signed; keep the same key so
+            // installed devices can upgrade in place. Swap for a real keystore before Play release.
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
@@ -58,7 +61,6 @@ dependencies {
     implementation(libs.firebase.auth)
     testImplementation(libs.junit)
     testImplementation(libs.mockito.core)
-    testImplementation(libs.mockito.inline)
     testImplementation(libs.arch.core.testing)
     // Real org.json on the unit-test classpath — the android.jar stub throws "not mocked".
     testImplementation("org.json:json:20240303")

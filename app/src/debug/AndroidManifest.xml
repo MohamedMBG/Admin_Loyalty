@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <application>
+        <!-- Debug-only: allow launching screens directly from adb for testing -->
+        <activity
+            android:name=".cashier.RedeemingActivity"
+            android:exported="true"
+            tools:replace="android:exported" />
+        <activity
+            android:name=".cashier.CashierActivity"
+            android:exported="true"
+            tools:replace="android:exported" />
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            tools:replace="android:exported" />
+    </application>
+</manifest>

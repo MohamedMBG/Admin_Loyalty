@@ -141,6 +141,17 @@
                 app:cornerRadius="14dp"
                 android:elevation="0dp"/>
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_redeeming"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:layout_marginTop="12dp"
+                android:text="Redeem"
+                android:textSize="18sp"
+                app:cornerRadius="14dp"
+                app:icon="@android:drawable/ic_menu_gallery" />
+
             <!-- Status Section in Input Card -->
             <LinearLayout
                 android:layout_width="match_parent"

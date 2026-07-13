@@ -44,10 +44,14 @@ public class PromotionsViewModel extends ViewModel {
             }
             List<Promotion> list = new ArrayList<>();
             for (DocumentSnapshot doc : snapshots) {
-                Promotion p = doc.toObject(Promotion.class);
-                if (p != null) {
-                    p.setId(doc.getId());
-                    list.add(p);
+                try {
+                    Promotion p = doc.toObject(Promotion.class);
+                    if (p != null) {
+                        p.setId(doc.getId());
+                        list.add(p);
+                    }
+                } catch (RuntimeException ignored) {
+                    // Skip a malformed doc instead of crashing the screen.
                 }
             }
             promotions.setValue(list);
