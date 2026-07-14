@@ -171,12 +171,18 @@ public class CashierActivity extends AppCompatActivity {
             BitMatrix matrix = new QRCodeWriter()
                     .encode(value, BarcodeFormat.QR_CODE, size, size);
 
-            Bitmap bmp = Bitmap.createBitmap(size, size, Bitmap.Config.RGB_565);
-            for (int x = 0; x < size; x++) {
-                for (int y = 0; y < size; y++) {
-                    bmp.setPixel(x, y, matrix.get(x, y) ? Color.BLACK : Color.WHITE);
+            // Fill a row-major int[] and blit it in one setPixels() call. Per-pixel setPixel()
+            // over a 720x720 grid is ~518k individually locked writes on the UI thread; the
+            // batched write is dramatically faster for the same output.
+            int[] pixels = new int[size * size];
+            for (int y = 0; y < size; y++) {
+                int offset = y * size;
+                for (int x = 0; x < size; x++) {
+                    pixels[offset + x] = matrix.get(x, y) ? Color.BLACK : Color.WHITE;
                 }
             }
+            Bitmap bmp = Bitmap.createBitmap(size, size, Bitmap.Config.RGB_565);
+            bmp.setPixels(pixels, 0, size, 0, 0, size, size);
             imgQr.setVisibility(View.VISIBLE);
             imgQr.setAlpha(1f);
             imgQr.setImageBitmap(bmp);
