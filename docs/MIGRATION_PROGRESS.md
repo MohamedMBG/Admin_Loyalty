@@ -189,3 +189,24 @@ Remaining stages:
 **Per-cashier stats — open question for 9B.** Earn codes already store `createdBy`, so per-cashier
 **earn** attribution needs no new field. Attributing **redeem completions** to a cashier still needs
 a field on `redeem_codes` — decide whether that column is wanted before building the panel.
+
+---
+
+## Unit 12 — Segmented push campaigns (2026-07-18)
+
+Status: implemented; compilation and feature-specific tests verified.
+
+- `InboxRepository` now uses the authenticated `AdminApiClient` and backend
+  `/admin/push/preview` + `/admin/push/send` routes. The prior unrelated Vercel email/push service
+  has been removed from this flow.
+- Every send has a client idempotency key; authorization is enforced again by the backend's admin
+  role check.
+- Inbox filters now include gender, inclusive age, birthday today, neighborhood, top interest
+  (coffee, tea, pastries, breakfast, lunch), recent visit (3/7/30 days), and lapsed visit
+  (30/90 days).
+- The preview displays unique reachable customers. The send result reports reachable customers,
+  successful device deliveries, and failures.
+- Verification: `compileDebugJavaWithJavac --no-daemon --max-workers=1` and
+  `InboxRepositoryTest` passed. The full suite still has three unrelated pre-existing
+  `DashboardViewModelTest` failures caused by Mockito inline initialization on Java 21. A staging
+  FCM send is still required after backend deployment.

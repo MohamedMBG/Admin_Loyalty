@@ -346,7 +346,73 @@
                             app:chipBackgroundColor="@color/colorSurfaceVariant" />
                     </com.google.android.material.chip.ChipGroup>
 
-                    <!-- 4. Last Visit Filter -->
+                    <!-- 4. Behavioral interest filter -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="4dp"
+                        android:text="@string/push_interest_title"
+                        android:textColor="?android:attr/textColorSecondary"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
+                        android:text="@string/push_interest_description"
+                        android:textColor="?android:attr/textColorSecondary"
+                        android:textSize="12sp" />
+
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/chip_group_interest"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        app:singleSelection="false">
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_interest_coffee"
+                            style="@style/Widget.MaterialComponents.Chip.Filter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/category_coffee"
+                            app:chipBackgroundColor="@color/colorSurfaceVariant" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_interest_tea"
+                            style="@style/Widget.MaterialComponents.Chip.Filter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/category_tea"
+                            app:chipBackgroundColor="@color/colorSurfaceVariant" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_interest_pastries"
+                            style="@style/Widget.MaterialComponents.Chip.Filter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/category_pastries"
+                            app:chipBackgroundColor="@color/colorSurfaceVariant" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_interest_breakfast"
+                            style="@style/Widget.MaterialComponents.Chip.Filter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/category_breakfast"
+                            app:chipBackgroundColor="@color/colorSurfaceVariant" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_interest_lunch"
+                            style="@style/Widget.MaterialComponents.Chip.Filter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/category_lunch"
+                            app:chipBackgroundColor="@color/colorSurfaceVariant" />
+                    </com.google.android.material.chip.ChipGroup>
+
+                    <!-- 5. Last Visit Filter -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -388,9 +454,27 @@
                             android:text="Last Month"
                             android:textColor="?android:attr/textColorPrimary"
                             app:chipBackgroundColor="@color/colorSurfaceVariant" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_visit_inactive_month"
+                            style="@style/Widget.MaterialComponents.Chip.Choice"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/push_inactive_30_days"
+                            android:textColor="?android:attr/textColorPrimary"
+                            app:chipBackgroundColor="@color/colorSurfaceVariant" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_visit_inactive_3months"
+                            style="@style/Widget.MaterialComponents.Chip.Choice"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/push_inactive_90_days"
+                            android:textColor="?android:attr/textColorPrimary"
+                            app:chipBackgroundColor="@color/colorSurfaceVariant" />
                     </com.google.android.material.chip.ChipGroup>
 
-                    <!-- 5. Birthday Filter -->
+                    <!-- 6. Birthday Filter -->
                     <LinearLayout
                         android:id="@+id/ll_birthday_filter"
                         android:layout_width="match_parent"

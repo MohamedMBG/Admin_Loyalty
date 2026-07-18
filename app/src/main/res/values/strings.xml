@@ -16,4 +16,13 @@
     <string name="content_description">Content description</string>
     <string name="staff">Staff</string>
     <string name="manage_reward">Manage Reward</string>
+    <string name="push_interest_title">Most interested in</string>
+    <string name="push_interest_description">Based on the customer’s menu category selections.</string>
+    <string name="category_coffee">Coffee</string>
+    <string name="category_tea">Tea</string>
+    <string name="category_pastries">Pastries</string>
+    <string name="category_breakfast">Breakfast</string>
+    <string name="category_lunch">Lunch</string>
+    <string name="push_inactive_30_days">No visit in 30 days</string>
+    <string name="push_inactive_90_days">No visit in 90 days</string>
 </resources>
