@@ -123,12 +123,13 @@ list keeps its snapshot listener. Files:
 Backend PR added `POST /admin/cashiers`. The old client flow was both insecure and rules-broken:
 it spun up a **secondary FirebaseApp** to create the auth user and wrote `users/{uid}` with
 `role: cashier` directly (a client can neither set custom claims nor write another user's doc).
-The backend now does all three (create auth user → set `role: cashier` claim → write the doc),
-with rollback of the orphaned auth user if the claim step fails. Files:
+The backend now uses a resumable, idempotent workflow: reserve the operation, create/reuse a
+deterministic unprivileged Auth user, atomically write the profile plus audit entry, then grant
+`role: cashier`. A retry with the same key resumes the last durable stage. Files:
 
 - `data/CreateCashierRepository.java` — the secondary-FirebaseApp + Firestore write replaced by a
-  single `POST /admin/cashiers {email,password,name}` call. Password is sent once over HTTPS, never
-  stored.
+  single idempotency-keyed `POST /admin/cashiers {email,password,name}` call. Password is sent once
+  over HTTPS and included only in the backend's request hash, never stored.
 - `viewmodel/CreateCashierViewModel.java` — the two-step create collapses to one IO-thread call;
   errors mapped (`INVALID_CASHIER`/`CASHIER_EMAIL_EXISTS`). Public method signature unchanged, so
   the fragment is untouched.
