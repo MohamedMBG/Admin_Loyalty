@@ -61,7 +61,10 @@ public class InboxFragment extends Fragment {
     private ImageView btnRefreshCount, btnBack;
     private Chip chipMale, chipFemale;
     private Chip chipLocHassan, chipLocAgdal, chipLocIrfane, chipLocOther;
-    private Chip chipVisit3days, chipVisitWeek, chipVisitMonth;
+    private Chip chipInterestCoffee, chipInterestTea, chipInterestPastries,
+            chipInterestBreakfast, chipInterestLunch;
+    private Chip chipVisit3days, chipVisitWeek, chipVisitMonth,
+            chipVisitInactiveMonth, chipVisitInactive3Months;
     private MaterialButton btnPreview, btnSend;
 
     // ──────────────────────────────────────────────
@@ -245,10 +248,19 @@ public class InboxFragment extends Fragment {
         chipLocIrfane = v.findViewById(R.id.chip_loc_marrakech);
         chipLocOther  = v.findViewById(R.id.chip_loc_other);
 
+        // --- Behavioral interest chips ---
+        chipInterestCoffee = v.findViewById(R.id.chip_interest_coffee);
+        chipInterestTea = v.findViewById(R.id.chip_interest_tea);
+        chipInterestPastries = v.findViewById(R.id.chip_interest_pastries);
+        chipInterestBreakfast = v.findViewById(R.id.chip_interest_breakfast);
+        chipInterestLunch = v.findViewById(R.id.chip_interest_lunch);
+
         // --- Last visit chips ---
         chipVisit3days = v.findViewById(R.id.chip_visit_3days);
         chipVisitWeek  = v.findViewById(R.id.chip_visit_week);
         chipVisitMonth = v.findViewById(R.id.chip_visit_month);
+        chipVisitInactiveMonth = v.findViewById(R.id.chip_visit_inactive_month);
+        chipVisitInactive3Months = v.findViewById(R.id.chip_visit_inactive_3months);
 
         // --- Action buttons ---
         btnRefreshCount = v.findViewById(R.id.btn_refresh_count);
@@ -267,6 +279,9 @@ public class InboxFragment extends Fragment {
         // ── Age slider: update the label text as the user drags ──
         if (sliderAge != null && tvAgeRange != null) {
             // Set initial label from XML defaults
+            if (sliderAge.getValues() == null || sliderAge.getValues().size() < 2) {
+                sliderAge.setValues(18f, 65f);
+            }
             if (sliderAge.getValues() != null && sliderAge.getValues().size() >= 2) {
                 int min = Math.round(sliderAge.getValues().get(0));
                 int max = Math.round(sliderAge.getValues().get(1));
@@ -350,12 +365,26 @@ public class InboxFragment extends Fragment {
             if (chipLocOther != null && chipLocOther.isChecked())     locations.put("Other");
             if (locations.length() > 0) filters.put("locations", locations);
 
-            // Last visit — mutually exclusive chips → single "lastVisitDays" value
+            // Top behavioral category collected from customer menu selections.
+            JSONArray interests = new JSONArray();
+            if (chipInterestCoffee != null && chipInterestCoffee.isChecked()) interests.put("coffee");
+            if (chipInterestTea != null && chipInterestTea.isChecked()) interests.put("tea");
+            if (chipInterestPastries != null && chipInterestPastries.isChecked()) interests.put("pastries");
+            if (chipInterestBreakfast != null && chipInterestBreakfast.isChecked()) interests.put("breakfast");
+            if (chipInterestLunch != null && chipInterestLunch.isChecked()) interests.put("lunch");
+            if (interests.length() > 0) filters.put("interests", interests);
+
+            // Last visit chips target either recent visitors or lapsed/never-visited members.
             int lastVisitDays = -1;
             if (chipVisit3days != null && chipVisit3days.isChecked())      lastVisitDays = 3;
             else if (chipVisitWeek != null && chipVisitWeek.isChecked())   lastVisitDays = 7;
             else if (chipVisitMonth != null && chipVisitMonth.isChecked()) lastVisitDays = 30;
-            if (lastVisitDays > 0) filters.put("lastVisitDays", lastVisitDays);
+            if (lastVisitDays > 0) filters.put("lastVisitWithinDays", lastVisitDays);
+            if (chipVisitInactiveMonth != null && chipVisitInactiveMonth.isChecked()) {
+                filters.put("lastVisitBeforeDays", 30);
+            } else if (chipVisitInactive3Months != null && chipVisitInactive3Months.isChecked()) {
+                filters.put("lastVisitBeforeDays", 90);
+            }
 
             // Birthday today switch
             if (switchBirthdayToday != null && switchBirthdayToday.isChecked()) {
@@ -391,9 +420,17 @@ public class InboxFragment extends Fragment {
         if (chipLocIrfane != null)      chipLocIrfane.setChecked(false);
         if (chipLocOther != null)       chipLocOther.setChecked(false);
 
+        if (chipInterestCoffee != null) chipInterestCoffee.setChecked(false);
+        if (chipInterestTea != null) chipInterestTea.setChecked(false);
+        if (chipInterestPastries != null) chipInterestPastries.setChecked(false);
+        if (chipInterestBreakfast != null) chipInterestBreakfast.setChecked(false);
+        if (chipInterestLunch != null) chipInterestLunch.setChecked(false);
+
         if (chipVisit3days != null)     chipVisit3days.setChecked(false);
         if (chipVisitWeek != null)      chipVisitWeek.setChecked(false);
         if (chipVisitMonth != null)     chipVisitMonth.setChecked(false);
+        if (chipVisitInactiveMonth != null) chipVisitInactiveMonth.setChecked(false);
+        if (chipVisitInactive3Months != null) chipVisitInactive3Months.setChecked(false);
 
         if (switchBirthdayToday != null) switchBirthdayToday.setChecked(false);
     }
