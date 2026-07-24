@@ -38,7 +38,7 @@ Note: detailed business logic is intentionally not documented publicly.
 ## Run locally
 
 1. Open the project in Android Studio.
-2. Add your Firebase config (`google-services.json`) to the `app/` module.
+2. Add your Firebase config (`google-services.json`) to the `app/` module. This file is **not** committed (it is git-ignored because it carries API keys) — download it from the Firebase console for the `loyalty-de0e1` project.
 3. Sync Gradle dependencies.
 4. Build and run on an emulator/device (min SDK 24).
 
