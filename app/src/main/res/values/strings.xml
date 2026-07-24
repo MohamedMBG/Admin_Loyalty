@@ -25,4 +25,18 @@
     <string name="category_lunch">Lunch</string>
     <string name="push_inactive_30_days">No visit in 30 days</string>
     <string name="push_inactive_90_days">No visit in 90 days</string>
+    <string name="redemption_title">Redeem</string>
+    <string name="redemption_subtitle">Scan the customer\'s reward QR to complete.</string>
+    <string name="search_customer">Scan ID / phone / name</string>
+    <string name="back">Back</string>
+    <string name="redeem_ready_title">Complete a redemption</string>
+    <string name="redeem_scan_hint">Ask the customer to open their reward, then scan the QR code.</string>
+    <string name="scan_reward_qr">Scan Reward QR</string>
+    <string name="client_name">Client Name</string>
+    <string name="points">%1$d pts</string>
+    <string name="zero_points">0 pts</string>
+    <string name="completing">Completing…</string>
+    <string name="scan_redemption_code">Scan the customer’s redemption code</string>
+    <string name="redemption_complete">Redemption complete</string>
+    <string name="done">Done</string>
 </resources>

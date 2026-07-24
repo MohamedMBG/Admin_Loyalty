@@ -211,3 +211,22 @@ Status: implemented; compilation and feature-specific tests verified.
   `InboxRepositoryTest` passed. The full suite still has three unrelated pre-existing
   `DashboardViewModelTest` failures caused by Mockito inline initialization on Java 21. A staging
   FCM send is still required after backend deployment.
+
+---
+
+## Redeeming screen UI/UX simplification (2026-07-24)
+
+Status: implemented; debug build passed and change verified on the emulator.
+
+- The reward catalog (five expandable categories, item selection, progress bar, eligibility chip,
+  promo box, and the "Select a reward" bottom bar) fed nothing: `RedeemingViewModel.completeRedeem`
+  marks the customer's own pending redemption fulfilled from a scanned QR, so the cashier does not
+  pick a reward. The catalog buried the one real action.
+- Redesigned `activity_redeeming.xml` around that reality: on-brand brown header
+  (`bg_header_gradient`), optional customer-lookup card, and a single scan hero (`ic_qr_scan` +
+  "Scan Reward QR"). Fixed the search-card/list overlap and switched off the off-brand blue header.
+- Slimmed `RedeemingActivity` to search + scan + result dialog and wired the previously-dead back
+  button. Removed the unused catalog load from `RedeemingViewModel` (drops a Firestore read on every
+  open). Deleted dead resources `bg_redeem_header.xml` and `item_reward_row.xml`.
+- Verification: `assembleDebug` passed; installed on the Pixel 7 emulator and confirmed the new
+  layout renders for a signed-in cashier. Scanner launch not exercised (camera-permission dialog).
