@@ -108,8 +108,8 @@ public class RedeemingViewModel extends ViewModel {
         } else {
             email = null;
             String temp = cleanQuery.replace(" ", "");
-            if (temp.matches("^0[567]\\d{8}$")) phone = "+212 " + temp.substring(1);
-            else if (temp.matches("^[567]\\d{8}$")) phone = "+212 " + temp;
+            if (temp.matches("^0[567]\\d{8}$")) phone = "+212" + temp.substring(1);
+            else if (temp.matches("^[567]\\d{8}$")) phone = "+212" + temp;
             else phone = cleanQuery;
         }
 
