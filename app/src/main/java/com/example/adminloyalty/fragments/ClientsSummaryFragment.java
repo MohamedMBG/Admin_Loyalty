@@ -48,6 +48,9 @@ public class ClientsSummaryFragment extends Fragment {
         rvClients          = view.findViewById(R.id.rvClients);
         layoutEmpty        = view.findViewById(R.id.layoutEmptyClients);
 
+        view.findViewById(R.id.btnBack).setOnClickListener(v ->
+                requireActivity().getOnBackPressedDispatcher().onBackPressed());
+
         rvClients.setLayoutManager(new LinearLayoutManager(getContext()));
         clientAdapter = new ClientAdapter();
         rvClients.setAdapter(clientAdapter);

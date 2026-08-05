@@ -51,7 +51,7 @@
                 android:layout_marginTop="18dp"
                 android:fontFamily="sans-serif-medium"
                 android:letterSpacing="-0.02"
-                android:text="BeanLoyal"
+                android:text="@string/brand_name"
                 android:textColor="@color/colorOnSurface"
                 android:textSize="30sp" />
 
@@ -60,7 +60,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 android:gravity="center"
-                android:text="Your coffee shop, clearly managed."
+                android:text="@string/login_tagline"
                 android:textAppearance="@style/TextAppearance.BeanLoyal.Body" />
         </LinearLayout>
 
@@ -84,14 +84,14 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Welcome back"
+                    android:text="@string/login_welcome"
                     android:textAppearance="@style/TextAppearance.BeanLoyal.Headline" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:text="Sign in to open your workspace."
+                    android:text="@string/login_description"
                     android:textAppearance="@style/TextAppearance.BeanLoyal.Body" />
 
                 <com.google.android.material.textfield.TextInputLayout
@@ -100,7 +100,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="28dp"
-                    android:hint="Email address"
+                    android:hint="@string/email_address"
                     app:startIconDrawable="@android:drawable/ic_dialog_email">
 
                     <com.google.android.material.textfield.TextInputEditText
@@ -121,7 +121,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
-                    android:hint="Password"
+                    android:hint="@string/password"
                     app:endIconMode="password_toggle"
                     app:startIconDrawable="@android:drawable/ic_lock_lock">
 
@@ -138,12 +138,20 @@
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.button.MaterialButton
+                    android:id="@+id/forgotPasswordButton"
+                    style="@style/Widget.BeanLoyal.Button.Text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
+                    android:layout_gravity="end"
+                    android:text="@string/forgot_password" />
+
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/loginButton"
                     style="@style/Widget.BeanLoyal.Button.Primary"
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
-                    android:layout_marginTop="24dp"
-                    android:text="Sign in"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/sign_in"
                     android:textSize="15sp" />
 
                 <LinearLayout
@@ -165,7 +173,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="7dp"
-                        android:text="Secure staff access"
+                        android:text="@string/secure_staff_access"
                         android:textAppearance="@style/TextAppearance.BeanLoyal.Label" />
                 </LinearLayout>
             </LinearLayout>
@@ -176,7 +184,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:text="Bean &amp; Brew · Admin workspace"
+            android:text="@string/admin_workspace"
             android:textAppearance="@style/TextAppearance.BeanLoyal.Label"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"

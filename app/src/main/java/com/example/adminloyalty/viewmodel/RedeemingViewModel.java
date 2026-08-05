@@ -9,14 +9,10 @@ import com.example.adminloyalty.data.api.ApiErrors;
 import com.example.adminloyalty.data.api.ApiResult;
 import com.example.adminloyalty.di.IoExecutor;
 import com.example.adminloyalty.models.AdminUser;
-import com.example.adminloyalty.models.RewardItem;
-import com.google.firebase.firestore.DocumentSnapshot;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 import javax.inject.Inject;
@@ -39,14 +35,11 @@ public class RedeemingViewModel extends ViewModel {
 
     private final MutableLiveData<AdminUser> selectedUser = new MutableLiveData<>();
 
-    private final MutableLiveData<List<RewardItem>> rewardsList = new MutableLiveData<>();
-
     @Inject
     public RedeemingViewModel(RedeemingRepository repository, @IoExecutor ExecutorService io) {
         this.repository = repository;
         this.io = io;
         initCashierMeta();
-        loadRewardsFromCatalog();
     }
 
     public LiveData<String> getError() { return error; }
@@ -54,7 +47,6 @@ public class RedeemingViewModel extends ViewModel {
     public LiveData<Boolean> getIsLoading() { return isLoading; }
     public LiveData<Boolean> getIsSearching() { return isSearching; }
     public LiveData<AdminUser> getSelectedUser() { return selectedUser; }
-    public LiveData<List<RewardItem>> getRewardsList() { return rewardsList; }
 
     private void initCashierMeta() {
         String uid = repository.getCurrentUserId();
@@ -67,22 +59,6 @@ public class RedeemingViewModel extends ViewModel {
                 if (s.exists() && s.getString("fullName") != null) cashierName.setValue(s.getString("fullName"));
             });
         }
-    }
-
-    private void loadRewardsFromCatalog() {
-        repository.getRewardsCatalog()
-                .addOnSuccessListener(snapshots -> {
-                    List<RewardItem> items = new ArrayList<>();
-                    for (DocumentSnapshot doc : snapshots.getDocuments()) {
-                        RewardItem item = doc.toObject(RewardItem.class);
-                        if (item != null) {
-                            item.setId(doc.getId());
-                            items.add(item);
-                        }
-                    }
-                    rewardsList.setValue(items);
-                })
-                .addOnFailureListener(e -> error.setValue("Failed to load rewards"));
     }
 
     /**
@@ -108,8 +84,8 @@ public class RedeemingViewModel extends ViewModel {
         } else {
             email = null;
             String temp = cleanQuery.replace(" ", "");
-            if (temp.matches("^0[567]\\d{8}$")) phone = "+212 " + temp.substring(1);
-            else if (temp.matches("^[567]\\d{8}$")) phone = "+212 " + temp;
+            if (temp.matches("^0[567]\\d{8}$")) phone = "+212" + temp.substring(1);
+            else if (temp.matches("^[567]\\d{8}$")) phone = "+212" + temp;
             else phone = cleanQuery;
         }
 

@@ -1,10 +1,13 @@
 package com.example.adminloyalty.fragments;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -74,6 +77,9 @@ public class DashboardFragment extends Fragment {
         setupViewModel();
 
         viewModel.selectPeriod(DashboardPeriod.TODAY);
+
+        // Show the first-run button tour once the dashboard is laid out.
+        binding.getRoot().post(this::maybeShowOnboarding);
 
         return binding.getRoot();
     }
@@ -158,6 +164,8 @@ public class DashboardFragment extends Fragment {
         binding.btnActionScans.setOnClickListener(v -> navigateToFragment(new ScanLogsFragment()));
         binding.btnActionClients.setOnClickListener(v -> navigateToFragment(new CreateCashierFragment()));
         binding.btnActionOffers.setOnClickListener(v -> navigateToFragment(new PromotionsAdminFragment()));
+        binding.btnNotifications.setOnClickListener(v -> navigateToFragment(new InboxFragment()));
+        binding.btnHelp.setOnClickListener(v -> showOnboarding());
     }
 
     private void setupLogout() {
@@ -307,6 +315,91 @@ public class DashboardFragment extends Fragment {
         if (previous <= 0) return "--%";
         double delta = ((current - previous) / previous) * 100.0;
         return String.format(Locale.US, "%.1f%%", delta);
+    }
+
+    // ──────────────────────────────────────────────
+    // FIRST-RUN ONBOARDING
+    //    A one-time overlay that walks the admin through every
+    //    dashboard button. Shown once, then remembered in prefs.
+    // ──────────────────────────────────────────────
+
+    private static final String ONB_PREFS = "beanloyal_admin_prefs";
+    private static final String ONB_KEY = "dashboard_onboarding_done";
+
+    private void maybeShowOnboarding() {
+        if (!isAdded() || binding == null) return;
+        SharedPreferences prefs =
+                requireContext().getSharedPreferences(ONB_PREFS, Context.MODE_PRIVATE);
+        if (prefs.getBoolean(ONB_KEY, false)) return;
+        showOnboarding();
+    }
+
+    private void showOnboarding() {
+        if (!isAdded() || binding == null) return;
+
+        SharedPreferences prefs =
+                requireContext().getSharedPreferences(ONB_PREFS, Context.MODE_PRIVATE);
+
+        ViewGroup parent = requireActivity().findViewById(R.id.fragment_container);
+        if (parent == null) return;
+        if (parent.findViewById(R.id.onboarding_root) != null) return; // already showing
+
+        View overlay = LayoutInflater.from(requireContext())
+                .inflate(R.layout.view_onboarding, parent, false);
+        parent.addView(overlay);
+
+        final int[] icons = {
+                R.drawable.ic_people, R.drawable.ic_dashboard, R.drawable.ic_gift,
+                R.drawable.ic_star, R.drawable.ic_add_circle, R.drawable.ic_person,
+                R.drawable.ic_send, R.drawable.ic_notifications, R.drawable.ic_logout
+        };
+        final String[] titles = {
+                "Clients", "Orders", "Redemptions", "Promotions", "Reward catalog",
+                "Staff access", "Export report", "Notifications", "Sign out"
+        };
+        final String[] descs = {
+                "Browse your members, their points, tier and profile details.",
+                "Review the scan and order logs recorded by your cashiers.",
+                "See which rewards customers have redeemed, and when.",
+                "Create and manage promotional offers for your customers.",
+                "Add, edit or remove the rewards customers can claim.",
+                "Create cashier accounts and control staff access.",
+                "Export your dashboard data as a CSV report.",
+                "Compose and send push notifications to your users.",
+                "Log out of the admin app securely."
+        };
+
+        ImageView icon = overlay.findViewById(R.id.iv_onb_icon);
+        TextView title = overlay.findViewById(R.id.tv_onb_title);
+        TextView desc = overlay.findViewById(R.id.tv_onb_desc);
+        TextView step = overlay.findViewById(R.id.tv_onb_step);
+        View skip = overlay.findViewById(R.id.btn_onb_skip);
+        MaterialButton next = overlay.findViewById(R.id.btn_onb_next);
+
+        final int[] idx = {0};
+        final Runnable render = () -> {
+            icon.setImageResource(icons[idx[0]]);
+            title.setText(titles[idx[0]]);
+            desc.setText(descs[idx[0]]);
+            step.setText((idx[0] + 1) + " / " + icons.length);
+            next.setText(idx[0] == icons.length - 1 ? "Got it" : "Next");
+        };
+        render.run();
+
+        final Runnable finish = () -> {
+            parent.removeView(overlay);
+            prefs.edit().putBoolean(ONB_KEY, true).apply();
+        };
+
+        next.setOnClickListener(v -> {
+            if (idx[0] < icons.length - 1) {
+                idx[0]++;
+                render.run();
+            } else {
+                finish.run();
+            }
+        });
+        skip.setOnClickListener(v -> finish.run());
     }
 
     private void performLogout() {

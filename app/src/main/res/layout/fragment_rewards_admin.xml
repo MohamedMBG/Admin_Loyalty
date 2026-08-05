@@ -53,7 +53,7 @@
                     android:background="@android:color/transparent"
                     android:drawableStart="@android:drawable/ic_menu_search"
                     android:drawablePadding="12dp"
-                    android:hint="Search items..."
+        android:hint="@string/search_items"
                     android:paddingHorizontal="16dp"
                     android:textSize="14sp"
                     android:drawableTint="?android:attr/textColorSecondary"/>
@@ -79,7 +79,7 @@
                         style="@style/Widget.MaterialComponents.Chip.Choice"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="All Items"
+        android:text="@string/all_items"
                         android:checked="true"
                         app:chipBackgroundColor="?attr/colorSurface"/>
 
@@ -88,7 +88,7 @@
                         style="@style/Widget.MaterialComponents.Chip.Choice"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Coffee"
+        android:text="@string/category_coffee"
                         app:chipBackgroundColor="?attr/colorSurface"/>
 
                     <com.google.android.material.chip.Chip
@@ -96,7 +96,7 @@
                         style="@style/Widget.MaterialComponents.Chip.Choice"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Pastries"
+        android:text="@string/category_pastries"
                         app:chipBackgroundColor="?attr/colorSurface"/>
 
                     <com.google.android.material.chip.Chip
@@ -104,7 +104,7 @@
                         style="@style/Widget.MaterialComponents.Chip.Choice"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Merch"
+        android:text="@string/merchandise"
                         app:chipBackgroundColor="?attr/colorSurface"/>
 
                 </com.google.android.material.chip.ChipGroup>
@@ -142,7 +142,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="No rewards found"
+        android:text="@string/no_rewards_found"
             android:layout_marginTop="8dp"
             android:textColor="?android:attr/textColorSecondary"/>
     </LinearLayout>
@@ -154,7 +154,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="24dp"
-        android:text="New Reward"
+        android:text="@string/new_reward"
         android:textColor="?android:attr/colorBackground"
         app:icon="@android:drawable/ic_input_add"
         app:iconTint="?android:attr/colorBackground"

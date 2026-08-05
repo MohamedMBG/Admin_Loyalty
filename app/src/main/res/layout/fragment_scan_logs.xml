@@ -31,7 +31,7 @@
         android:id="@+id/tvTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Scan History"
+        android:text="@string/scan_history"
         android:textColor="#FFFFFF"
         android:textSize="24sp"
         android:textStyle="bold"
@@ -61,7 +61,7 @@
                 android:id="@+id/tvLogCount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Loading records..."
+        android:text="@string/loading_records"
                 android:textColor="?android:attr/textColorSecondary"
                 android:textSize="12sp"
                 android:layout_marginBottom="4dp"/>
@@ -83,7 +83,7 @@
                     android:id="@+id/TotalEarning"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Total Earned: -- MAD"
+        android:text="@string/total_earned_placeholder"
                     android:textColor="?android:attr/textColorPrimary"
                     android:textSize="18sp"
                     android:textStyle="bold"/>
@@ -116,7 +116,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:checked="true"
-                android:text="All"
+        android:text="@string/all"
                 android:textColor="?android:attr/textColorPrimary"  />
 
             <com.google.android.material.chip.Chip
@@ -124,7 +124,7 @@
                 style="@style/Widget.MaterialComponents.Chip.Action"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Date"
+        android:text="@string/date"
                 android:textColor="?android:attr/textColorPrimary" />
 
             <com.google.android.material.chip.Chip
@@ -132,7 +132,7 @@
                 style="@style/Widget.MaterialComponents.Chip.Action"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Cashier"
+        android:text="@string/cashier"
                 android:textColor="?android:attr/textColorPrimary" />
 
         </com.google.android.material.chip.ChipGroup>

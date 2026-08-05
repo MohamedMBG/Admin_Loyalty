@@ -1,7 +1,9 @@
 package com.example.adminloyalty.fragments;
 
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -57,15 +59,16 @@ public class InboxFragment extends Fragment {
     private SwitchMaterial switchAll, switchBirthdayToday;
     private RangeSlider sliderAge;
     private TextView tvAgeRange, tvTargetCount, btnResetAge;
-    private View filtersContainer, sendAllRow;
-    private ImageView btnRefreshCount, btnBack;
+    private TextView tvPreviewTitle, tvPreviewMessage;
+    private View filtersContainer, sendAllRow, btnRefreshCount;
+    private ImageView btnBack;
     private Chip chipMale, chipFemale;
     private Chip chipLocHassan, chipLocAgdal, chipLocIrfane, chipLocOther;
     private Chip chipInterestCoffee, chipInterestTea, chipInterestPastries,
             chipInterestBreakfast, chipInterestLunch;
     private Chip chipVisit3days, chipVisitWeek, chipVisitMonth,
             chipVisitInactiveMonth, chipVisitInactive3Months;
-    private MaterialButton btnPreview, btnSend;
+    private MaterialButton btnSend;
 
     // ──────────────────────────────────────────────
     // 2. VIEWMODEL REFERENCE
@@ -136,7 +139,7 @@ public class InboxFragment extends Fragment {
         viewModel.getIsSending().observe(getViewLifecycleOwner(), sending -> {
             if (btnSend != null) {
                 btnSend.setEnabled(!Boolean.TRUE.equals(sending));
-                btnSend.setText(Boolean.TRUE.equals(sending) ? "Sending..." : "Send");
+                btnSend.setText(Boolean.TRUE.equals(sending) ? R.string.sending : R.string.send);
             }
         });
 
@@ -176,25 +179,6 @@ public class InboxFragment extends Fragment {
             );
         }
 
-        // Preview dialog: purely local UI — no network call needed
-        if (btnPreview != null) {
-            btnPreview.setOnClickListener(x -> {
-                String title = safeText(etTitle);
-                String message = safeText(etMessage);
-
-                if (TextUtils.isEmpty(title) || TextUtils.isEmpty(message)) {
-                    Toast.makeText(getContext(), "Please enter a title and a message first.", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                new MaterialAlertDialogBuilder(requireContext())
-                        .setTitle("Preview")
-                        .setMessage("Title:\n" + title + "\n\nMessage:\n" + message)
-                        .setPositiveButton("OK", null)
-                        .show();
-            });
-        }
-
         // Send push: validate inputs → read filters → delegate to ViewModel
         if (btnSend != null) {
             btnSend.setOnClickListener(x -> {
@@ -202,11 +186,11 @@ public class InboxFragment extends Fragment {
                 String message = safeText(etMessage);
 
                 if (TextUtils.isEmpty(title) || TextUtils.isEmpty(message)) {
-                    Toast.makeText(getContext(), "Title and message are required", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), R.string.title_and_message_required, Toast.LENGTH_SHORT).show();
                     return;
                 }
 
-                viewModel.sendPush(title, message, buildFilters());
+                confirmAndSend(title, message);
             });
         }
     }
@@ -222,6 +206,11 @@ public class InboxFragment extends Fragment {
         // --- Text inputs ---
         etTitle   = v.findViewById(R.id.et_title);
         etMessage = v.findViewById(R.id.et_message);
+
+        // --- Live notification preview ---
+        tvPreviewTitle   = v.findViewById(R.id.tv_preview_title);
+        tvPreviewMessage = v.findViewById(R.id.tv_preview_message);
+        setupLivePreview();
 
         // --- Switches ---
         switchAll           = v.findViewById(R.id.switch_send_all);
@@ -264,7 +253,6 @@ public class InboxFragment extends Fragment {
 
         // --- Action buttons ---
         btnRefreshCount = v.findViewById(R.id.btn_refresh_count);
-        btnPreview      = v.findViewById(R.id.btn_preview);
         btnSend         = v.findViewById(R.id.btn_send);
         btnBack         = v.findViewById(R.id.btnBack);
         sendAllRow      = v.findViewById(R.id.ll_send_all);
@@ -439,5 +427,50 @@ public class InboxFragment extends Fragment {
     private String safeText(TextInputEditText et) {
         if (et == null || et.getText() == null) return "";
         return et.getText().toString().trim();
+    }
+
+    // ──────────────────────────────────────────────
+    // 10. LIVE PREVIEW
+    //    Mirror the title/message into the mock notification card
+    //    so the admin sees exactly what users will receive.
+    // ──────────────────────────────────────────────
+
+    private void setupLivePreview() {
+        TextWatcher watcher = new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) { }
+            @Override public void onTextChanged(CharSequence s, int a, int b, int c) { updatePreview(); }
+            @Override public void afterTextChanged(Editable s) { }
+        };
+        if (etTitle != null)   etTitle.addTextChangedListener(watcher);
+        if (etMessage != null) etMessage.addTextChangedListener(watcher);
+        updatePreview();
+    }
+
+    private void updatePreview() {
+        String title = safeText(etTitle);
+        String message = safeText(etMessage);
+        if (tvPreviewTitle != null) {
+            tvPreviewTitle.setText(TextUtils.isEmpty(title) ? getString(R.string.notification_preview_title) : title);
+        }
+        if (tvPreviewMessage != null) {
+            tvPreviewMessage.setText(TextUtils.isEmpty(message) ? getString(R.string.notification_preview_message) : message);
+        }
+    }
+
+    // ──────────────────────────────────────────────
+    // 11. SEND CONFIRMATION
+    //    Sending a push is irreversible and outward-facing, so we
+    //    confirm the audience before firing.
+    // ──────────────────────────────────────────────
+
+    private void confirmAndSend(@NonNull String title, @NonNull String message) {
+        boolean toAll = switchAll != null && switchAll.isChecked();
+        String audience = toAll ? "all users" : "the selected segment";
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Send this notification?")
+                .setMessage("\"" + title + "\"\n\nThis will be sent to " + audience + ". This can't be undone.")
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Send", (d, w) -> viewModel.sendPush(title, message, buildFilters()))
+                .show();
     }
 }

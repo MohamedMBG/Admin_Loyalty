@@ -10,7 +10,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="New Promotion"
+        android:text="@string/new_promotion"
         android:textAppearance="?attr/textAppearanceHeadline5"
         android:textStyle="bold"
         android:layout_marginBottom="20dp"/>
@@ -20,7 +20,7 @@
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Promo Title (e.g. Free Cookie)"
+        android:hint="@string/promo_title_hint"
         android:layout_marginBottom="16dp">
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/inputPromoTitle"
@@ -33,14 +33,14 @@
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Eligibility Rule"
+        android:hint="@string/eligibility_rule"
         android:layout_marginBottom="16dp">
         <AutoCompleteTextView
             android:id="@+id/inputCriteria"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="none"
-            android:text="All Clients"
+        android:text="@string/all_clients"
             android:completionThreshold="1"/>
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -50,7 +50,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
-        android:hint="Priority">
+        android:hint="@string/priority">
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/inputPriority"
             android:layout_width="match_parent"
@@ -65,7 +65,7 @@
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Condition Value (e.g. 25)"
+        android:hint="@string/condition_value_hint"
         android:visibility="gone"
         android:layout_marginBottom="16dp">
         <com.google.android.material.textfield.TextInputEditText
@@ -86,7 +86,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="Start Date"
+        android:hint="@string/start_date"
             android:layout_marginEnd="8dp">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/inputStartDate"
@@ -102,7 +102,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="End Date"
+        android:hint="@string/end_date"
             android:layout_marginStart="8dp">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/inputEndDate"
@@ -119,7 +119,7 @@
         android:id="@+id/btnSavePromo"
         android:layout_width="match_parent"
         android:layout_height="56dp"
-        android:text="Launch Promo"
+        android:text="@string/launch_promo"
         android:textStyle="bold"
         app:cornerRadius="12dp"/>
 

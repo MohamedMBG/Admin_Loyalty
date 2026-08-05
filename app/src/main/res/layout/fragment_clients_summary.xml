@@ -33,7 +33,7 @@
         android:id="@+id/tvTitleClients"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Client Management"
+        android:text="@string/client_management"
         android:textColor="#FFFFFF"
         android:textSize="24sp"
         android:textStyle="bold"
@@ -64,7 +64,7 @@
             <ImageView
                 android:layout_width="40dp"
                 android:layout_height="40dp"
-                android:contentDescription="Search"
+        android:contentDescription="@string/content_desc_search"
                 android:padding="10dp"
                 android:src="@android:drawable/ic_menu_search"
                 app:tint="?android:attr/textColorSecondary" />
@@ -75,7 +75,7 @@
                 android:layout_height="48dp"
                 android:layout_weight="1"
                 android:background="@null"
-                android:hint="Search by name, email, or ID..."
+        android:hint="@string/search_clients"
                 android:inputType="text"
                 android:maxLines="1"
                 android:paddingEnd="12dp"
@@ -88,7 +88,7 @@
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Clear"
+        android:contentDescription="@string/content_desc_clear"
                 android:padding="10dp"
                 android:src="@android:drawable/ic_menu_close_clear_cancel"
                 app:tint="?android:attr/textColorSecondary"
@@ -139,7 +139,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="No Clients Found"
+        android:text="@string/no_clients_found"
             android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="?android:attr/textColorSecondary" />
@@ -148,7 +148,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Try adjusting your search or check connection."
+        android:text="@string/no_clients_found_hint"
             android:gravity="center"
             android:textSize="14sp"
             android:textColor="?android:attr/textColorTertiary" />

@@ -97,7 +97,7 @@
                         <ImageView
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
-                            android:contentDescription="Avatar"
+                        android:contentDescription="@string/content_desc_avatar"
                             android:padding="20dp"
                             android:src="@drawable/ic_person"
                             app:tint="?attr/colorPrimary" />
@@ -264,7 +264,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Last Visit"
+                                android:text="@string/last_visit_label"
                             android:textColor="?android:attr/textColorSecondary"
                             android:textSize="11sp" />
                     </LinearLayout>
@@ -320,7 +320,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Loyalty Points"
+                                android:text="@string/loyalty_points"
                                 android:textColor="?android:attr/textColorSecondary"
                                 android:textSize="12sp" />
                         </LinearLayout>
@@ -367,7 +367,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Avg Spend (MAD)"
+                                android:text="@string/average_spend"
                                 android:textColor="?android:attr/textColorSecondary"
                                 android:textSize="12sp" />
                         </LinearLayout>
@@ -382,7 +382,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="20dp"
                 android:layout_marginBottom="8dp"
-                android:text="Adjust Points"
+                android:text="@string/adjust_points"
                 app:icon="@drawable/ic_star"
                 app:iconGravity="textStart" />
 
@@ -398,7 +398,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Activity History"
+                    android:text="@string/activity_history"
                     android:textAppearance="?attr/textAppearanceHeadline6"
                     android:textColor="?android:attr/textColorPrimary"
                     android:textStyle="bold"
@@ -425,7 +425,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:checked="true"
-                            android:text="All"
+                            android:text="@string/all"
                             android:textColor="?android:attr/textColorPrimary"
                             app:chipBackgroundColor="?attr/colorSurface" />
 
@@ -434,7 +434,7 @@
                             style="@style/Widget.MaterialComponents.Chip.Choice"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Scans"
+                            android:text="@string/scans"
                             android:textColor="?android:attr/textColorPrimary"
                             app:chipBackgroundColor="?attr/colorSurface"
                             app:chipIcon="@android:drawable/btn_star_big_on"
@@ -445,7 +445,7 @@
                             style="@style/Widget.MaterialComponents.Chip.Choice"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Gifts"
+                            android:text="@string/gifts"
                             android:textColor="?android:attr/textColorPrimary"
                             app:chipBackgroundColor="?attr/colorSurface"
                             app:chipIcon="@android:drawable/ic_menu_send"
@@ -457,7 +457,7 @@
                             style="@style/Widget.MaterialComponents.Chip.Action"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Cashier"
+                            android:text="@string/cashier"
                             android:textColor="?android:attr/textColorPrimary"
                             app:chipBackgroundColor="?attr/colorSurface" />
 
@@ -466,7 +466,7 @@
                             style="@style/Widget.MaterialComponents.Chip.Action"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Date"
+                            android:text="@string/date"
                             android:textColor="?android:attr/textColorPrimary"
                             app:chipBackgroundColor="?attr/colorSurface" />
 
@@ -498,7 +498,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:padding="30dp"
-                android:text="No activity recorded yet."
+                android:text="@string/no_activity"
                 android:textColor="?android:attr/textColorSecondary"
                 android:visibility="gone" />
 

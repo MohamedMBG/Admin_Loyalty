@@ -85,15 +85,15 @@ public class CreateCashierFragment extends Fragment {
         String pass = etPassword.getText().toString().trim();
 
         if (TextUtils.isEmpty(name)) {
-            etName.setError("Name required");
+            etName.setError(getString(R.string.error_name_required));
             return;
         }
         if (TextUtils.isEmpty(email)) {
-            etEmail.setError("Email required");
+            etEmail.setError(getString(R.string.error_email_required));
             return;
         }
         if (TextUtils.isEmpty(pass) || pass.length() < 6) {
-            etPassword.setError("Password must be 6+ chars");
+            etPassword.setError(getString(R.string.error_password_short));
             return;
         }
 

@@ -53,7 +53,7 @@
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-medium"
                     android:letterSpacing="-0.01"
-                    android:text="BeanLoyal"
+                    android:text="@string/brand_name"
                     android:textColor="@color/colorOnSurface"
                     android:textSize="18sp" />
 
@@ -61,16 +61,32 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="1dp"
-                    android:text="Admin workspace"
+                    android:text="@string/admin_workspace_short"
                     android:textAppearance="@style/TextAppearance.BeanLoyal.Label" />
             </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnHelp"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:contentDescription="@string/content_desc_replay_tour"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                android:text=""
+                app:backgroundTint="@android:color/transparent"
+                app:icon="@drawable/ic_help"
+                app:iconPadding="0dp"
+                app:iconTint="@color/colorOnSurfaceVariant" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnNotifications"
                 style="@style/Widget.Material3.Button.IconButton"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:contentDescription="Notifications"
+                android:contentDescription="@string/notifications"
                 android:insetLeft="0dp"
                 android:insetTop="0dp"
                 android:insetRight="0dp"
@@ -86,7 +102,7 @@
                 style="@style/Widget.Material3.Button.IconButton"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:contentDescription="Sign out"
+                android:contentDescription="@string/content_desc_sign_out"
                 android:insetLeft="0dp"
                 android:insetTop="0dp"
                 android:insetRight="0dp"
@@ -104,7 +120,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="20dp"
             android:layout_marginTop="22dp"
-            android:text="Today at a glance"
+                android:text="@string/dashboard_overview_title"
             android:textAppearance="@style/TextAppearance.BeanLoyal.Body" />
 
         <TextView
@@ -113,7 +129,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="20dp"
             android:layout_marginTop="2dp"
-            android:text="Business overview"
+                android:text="@string/dashboard_overview_subtitle"
             android:textAppearance="@style/TextAppearance.BeanLoyal.Display" />
 
         <HorizontalScrollView
@@ -140,21 +156,21 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:checked="true"
-                    android:text="Today" />
+                        android:text="@string/today" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipWeek"
                     style="@style/Widget.BeanLoyal.Chip.Filter"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="This week" />
+                        android:text="@string/this_week" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipMonth"
                     style="@style/Widget.BeanLoyal.Chip.Filter"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="This month" />
+                        android:text="@string/this_month" />
             </com.google.android.material.chip.ChipGroup>
         </HorizontalScrollView>
 
@@ -182,7 +198,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Net revenue"
+                        android:text="@string/net_revenue"
                         android:textColor="#DDFDF8F5"
                         android:textSize="13sp" />
 
@@ -248,7 +264,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Reward cost"
+                        android:text="@string/reward_cost"
                         android:textColor="#CCFDF8F5"
                         android:textSize="13sp" />
 
@@ -271,7 +287,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="20dp"
             android:layout_marginTop="30dp"
-            android:text="At a glance"
+                android:text="@string/at_a_glance"
             android:textAppearance="@style/TextAppearance.BeanLoyal.Title" />
 
         <GridLayout
@@ -300,7 +316,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Unique visits"
+                        android:text="@string/unique_visits"
                         android:textAppearance="@style/TextAppearance.BeanLoyal.Label" />
 
                     <TextView
@@ -334,7 +350,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="New clients"
+                        android:text="@string/new_clients"
                         android:textAppearance="@style/TextAppearance.BeanLoyal.Label" />
 
                     <TextView
@@ -368,7 +384,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Points issued"
+                        android:text="@string/points_issued"
                         android:textAppearance="@style/TextAppearance.BeanLoyal.Label" />
 
                     <TextView
@@ -402,7 +418,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Rewards claimed"
+                        android:text="@string/rewards_claimed"
                         android:textAppearance="@style/TextAppearance.BeanLoyal.Label" />
 
                     <TextView
@@ -425,7 +441,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="20dp"
             android:layout_marginTop="30dp"
-            android:text="Quick actions"
+                android:text="@string/quick_actions"
             android:textAppearance="@style/TextAppearance.BeanLoyal.Title" />
 
         <TextView
@@ -433,7 +449,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="20dp"
             android:layout_marginTop="4dp"
-            android:text="Common tasks, one tap away."
+                android:text="@string/quick_actions_subtitle"
             android:textAppearance="@style/TextAppearance.BeanLoyal.Body" />
 
         <GridLayout
@@ -474,7 +490,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="12dp"
-                        android:text="Clients"
+                        android:text="@string/clients"
                         android:textAppearance="@style/TextAppearance.BeanLoyal.Title" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -508,7 +524,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="12dp"
-                        android:text="Orders"
+                        android:text="@string/orders"
                         android:textAppearance="@style/TextAppearance.BeanLoyal.Title" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -542,7 +558,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="12dp"
-                        android:text="Redemptions"
+                        android:text="@string/redemptions"
                         android:textAppearance="@style/TextAppearance.BeanLoyal.Title" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -576,7 +592,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="12dp"
-                        android:text="Promotions"
+                        android:text="@string/promotions"
                         android:textAppearance="@style/TextAppearance.BeanLoyal.Title" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -587,7 +603,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="20dp"
             android:layout_marginTop="20dp"
-            android:text="More tools"
+                android:text="@string/more_tools"
             android:textAppearance="@style/TextAppearance.BeanLoyal.Label" />
 
         <com.google.android.material.card.MaterialCardView
@@ -626,7 +642,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="14dp"
                         android:layout_weight="1"
-                        android:text="Reward catalog"
+                        android:text="@string/rewards_catalog"
                         android:textAppearance="@style/TextAppearance.BeanLoyal.Title" />
 
                     <ImageView
@@ -666,7 +682,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="14dp"
                         android:layout_weight="1"
-                        android:text="Staff access"
+                        android:text="@string/staff_access"
                         android:textAppearance="@style/TextAppearance.BeanLoyal.Title" />
 
                     <ImageView
@@ -707,7 +723,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="14dp"
                         android:layout_weight="1"
-                        android:text="Export report"
+                        android:text="@string/export_report"
                         android:textAppearance="@style/TextAppearance.BeanLoyal.Title" />
 
                     <ImageView
@@ -741,14 +757,14 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Activity"
+                android:text="@string/activity"
                     android:textAppearance="@style/TextAppearance.BeanLoyal.Title" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="3dp"
-                    android:text="Visits across the selected period"
+                android:text="@string/activity_subtitle"
                     android:textAppearance="@style/TextAppearance.BeanLoyal.Body" />
 
                 <LinearLayout
@@ -843,7 +859,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="20dp"
             android:layout_marginTop="30dp"
-            android:text="Staff performance"
+                android:text="@string/staff_performance"
             android:textAppearance="@style/TextAppearance.BeanLoyal.Title" />
 
         <TextView
@@ -851,7 +867,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="20dp"
             android:layout_marginTop="4dp"
-            android:text="Top activity for this period"
+                android:text="@string/staff_performance_subtitle"
             android:textAppearance="@style/TextAppearance.BeanLoyal.Body" />
 
         <com.google.android.material.card.MaterialCardView
@@ -888,7 +904,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1.7"
-                        android:text="Staff member"
+                        android:text="@string/staff_member"
                         android:textAppearance="@style/TextAppearance.BeanLoyal.Label" />
 
                     <TextView
@@ -896,7 +912,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="0.8"
                         android:gravity="center"
-                        android:text="Scans"
+                        android:text="@string/scans"
                         android:textAppearance="@style/TextAppearance.BeanLoyal.Label" />
 
                     <TextView
@@ -904,7 +920,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="0.8"
                         android:gravity="center"
-                        android:text="Total"
+                        android:text="@string/total"
                         android:textAppearance="@style/TextAppearance.BeanLoyal.Label" />
                 </LinearLayout>
 
@@ -946,7 +962,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="14dp"
-                        android:text="No staff activity yet"
+                android:text="@string/no_staff_activity"
                         android:textAppearance="@style/TextAppearance.BeanLoyal.Title" />
 
                     <TextView
@@ -954,7 +970,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="5dp"
                         android:gravity="center"
-                        android:text="Activity will appear after the first scan or redemption."
+                android:text="@string/no_staff_activity_hint"
                         android:textAppearance="@style/TextAppearance.BeanLoyal.Body" />
                 </LinearLayout>
 
@@ -965,7 +981,7 @@
                     android:layout_height="48dp"
                     android:layout_marginHorizontal="8dp"
                     android:layout_marginTop="4dp"
-                    android:text="View all staff"
+                android:text="@string/view_all_staff"
                     android:visibility="gone" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>

@@ -42,8 +42,12 @@ Note: detailed business logic is intentionally not documented publicly.
 3. Sync Gradle dependencies.
 4. Build and run on an emulator/device (min SDK 24).
 
+## Languages
+
+French is the initial app language. English remains available in Android's system
+**App language** setting on Android 13 and later.
+
 ## Status
 
 Active development.  
 Public docs are intentionally brief to protect product strategy while still enabling collaboration and setup.
-

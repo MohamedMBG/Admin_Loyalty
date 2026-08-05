@@ -22,7 +22,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
         android:layout_marginTop="40dp"
-        android:text="Cashier Terminal"
+        android:text="@string/cashier_terminal"
         android:textColor="#FFFFFF"
         android:textSize="24sp"
         android:textStyle="bold"
@@ -33,7 +33,7 @@
         android:id="@+id/tvAppSubtitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Issue Points &amp; Process Payments"
+        android:text="@string/cashier_subtitle"
         android:textColor="@color/colorPrimaryContainer"
         android:textSize="14sp"
         app:layout_constraintStart_toStartOf="@id/tvAppTitle"
@@ -45,7 +45,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="24dp"
-        android:text="Online"
+        android:text="@string/online"
         android:textColor="?android:attr/textColorPrimary"
         app:chipBackgroundColor="#30FFFFFF"
         app:chipIcon="@android:drawable/presence_online"
@@ -79,7 +79,7 @@
                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Receipt Number"
+                android:hint="@string/receipt_number"
                 app:boxBackgroundColor="?android:attr/colorBackground"
                 app:boxCornerRadiusBottomEnd="12dp"
                 app:boxCornerRadiusBottomStart="12dp"
@@ -107,7 +107,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:hint="Total Amount"
+                android:hint="@string/total_amount"
                 app:boxBackgroundColor="?android:attr/colorBackground"
                 app:boxCornerRadiusBottomEnd="12dp"
                 app:boxCornerRadiusBottomStart="12dp"
@@ -145,7 +145,7 @@
                     android:layout_height="56dp"
                     android:layout_weight="1"
                     android:backgroundTint="@color/colorPrimary"
-                    android:text="Generate QR"
+                    android:text="@string/generate_qr"
                     android:textSize="12sp"
                     android:textColor="@color/colorOnPrimary"
                     app:cornerRadius="16dp"
@@ -163,7 +163,7 @@
                     android:layout_height="56dp"
                     android:layout_weight="1"
                     android:backgroundTint="?android:attr/colorBackground"
-                    android:text="Redeem"
+                    android:text="@string/redeem"
                     android:textColor="?android:attr/textColorPrimary"
                     app:cornerRadius="16dp"
                     app:icon="@android:drawable/ic_menu_gallery"
@@ -216,7 +216,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:text="Waiting for Input"
+                    android:text="@string/waiting_for_input"
                     android:gravity="center"
                     android:textColor="?android:attr/textColorSecondary" />
             </LinearLayout>
@@ -266,7 +266,7 @@
             android:id="@+id/chip_timer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Session: 00:00"
+            android:text="@string/session_time"
             android:textColor="?android:attr/textColorSecondary"
             app:chipBackgroundColor="?android:attr/colorBackground"
             app:chipIcon="@android:drawable/ic_lock_idle_alarm" />
@@ -281,7 +281,7 @@
             android:id="@+id/tv_status"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Ready"
+            android:text="@string/ready"
             android:layout_marginEnd="12dp"
             android:textColor="@color/colorSuccess"
             android:textStyle="bold" />
@@ -291,7 +291,7 @@
             style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Reset"
+            android:text="@string/reset"
             android:textColor="@color/colorError"
             app:icon="@android:drawable/ic_menu_revert"
             app:iconTint="@color/colorError" />
@@ -339,7 +339,7 @@
                         android:id="@+id/tvConfirmTitle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Payment Detected"
+                        android:text="@string/payment_detected"
                         android:textColor="@color/colorOnSuccessContainer"
                         android:textSize="18sp"
                         android:textStyle="bold" />
@@ -348,7 +348,7 @@
                         android:id="@+id/tv_confirm_details"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="RCP-8839 • 125.00 AED"
+                        android:text="@string/sample_payment_details"
                         android:textColor="@color/colorSuccess" />
                 </LinearLayout>
 
@@ -356,7 +356,7 @@
                     android:id="@+id/chip_confirm_timer"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="10s" />
+                    android:text="@string/seconds_short" />
             </LinearLayout>
 
             <LinearLayout
@@ -372,7 +372,7 @@
                     android:layout_height="56dp"
                     android:layout_weight="1"
                     android:layout_marginEnd="8dp"
-                    android:text="Cancel"
+                    android:text="@string/cancel"
                     android:textColor="@color/colorOnSuccessContainer"
                     app:strokeColor="@color/colorOnSuccessContainer" />
 
@@ -383,7 +383,7 @@
                     android:layout_weight="1"
                     android:layout_marginStart="8dp"
                     android:backgroundTint="@color/colorSuccess"
-                    android:text="Confirm"
+                    android:text="@string/confirm"
                     android:textColor="#FFFFFF" />
             </LinearLayout>
         </LinearLayout>

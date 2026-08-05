@@ -211,3 +211,47 @@ Status: implemented; compilation and feature-specific tests verified.
   `InboxRepositoryTest` passed. The full suite still has three unrelated pre-existing
   `DashboardViewModelTest` failures caused by Mockito inline initialization on Java 21. A staging
   FCM send is still required after backend deployment.
+
+---
+
+## Login recovery and diagnostics (2026-07-23)
+
+Status: implemented; debug build and feature-specific tests verified.
+
+- The captured Pixel 7 log shows Firebase Auth receiving the `admin@gmail.com` sign-in request and
+  returning an invalid-credential error. Network access, package configuration, and Firebase
+  initialization completed successfully before that response.
+- Staff sign-in and role-claim verification now run through `AuthenticationRepository` and
+  `LoginViewModel`, keeping Firebase access out of the Activity.
+- The login screen now offers Firebase password recovery and gives distinct, localized feedback
+  for invalid credentials, disabled accounts, rate limiting, network failure, missing role claims,
+  and role-token verification failure.
+- Password-reset completion uses an account-neutral message so the UI does not reveal whether an
+  email is registered.
+- Verification: `assembleDebug` passed and all three `LoginViewModelTest` cases passed. The full
+  suite passed 14 of 17 tests but remains blocked by the three pre-existing
+  `DashboardViewModelTest` Mockito/Java 21 failures. `lintDebug` reached analysis and found no
+  login/auth errors; it remains blocked by three pre-existing layout/theme errors.
+
+---
+
+## Redeeming screen UI/UX simplification (2026-07-24)
+
+Status: implemented; debug build passed and change verified on the emulator.
+
+- Root cause of the poor UX: the reward catalog (five expandable categories, item selection,
+  progress bar, eligibility chip, promo box, and the "Select a reward" bottom bar) fed nothing.
+  `RedeemingViewModel.completeRedeem` marks the customer's own pending redemption fulfilled from a
+  scanned QR — the cashier no longer picks a reward. The catalog buried the one real action.
+- Redesigned `activity_redeeming.xml` around that reality: on-brand brown header
+  (`bg_header_gradient`, replacing the off-brand blue `bg_redeem_header`), optional customer-lookup
+  card, and a single scan hero (`ic_qr_scan` + "Scan Reward QR"). Fixed the search-card/list overlap.
+- Slimmed `RedeemingActivity` to search + scan + result dialog and wired the previously-dead back
+  button. Removed the unused catalog load from `RedeemingViewModel` (drops a Firestore read on every
+  open). Deleted dead resources `bg_redeem_header.xml` and `item_reward_row.xml`.
+- Copy updated in `values` and `values-fr` (subtitle now describes the scan flow; added
+  `scan_reward_qr`, `redeem_ready_title`, `redeem_scan_hint`, `back`).
+- Verification: `assembleDebug` passed; installed on the Pixel 7 emulator and confirmed the new
+  layout renders correctly for a signed-in cashier. Scanner launch not exercised (would trigger the
+  camera-permission dialog). Unit tests not re-run — no ViewModel logic changed beyond removing the
+  unused catalog loader.

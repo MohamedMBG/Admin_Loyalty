@@ -39,7 +39,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Manage Active Campaigns"
+        android:text="@string/manage_active_campaigns"
                 android:textAppearance="?attr/textAppearanceBody2"
                 android:textColor="?android:attr/textColorSecondary"
                 android:layout_marginStart="4dp"/>
@@ -78,7 +78,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="No active promotions"
+        android:text="@string/no_active_promotions"
             android:layout_marginTop="12dp"
             android:textColor="?android:attr/textColorSecondary"/>
     </LinearLayout>
@@ -92,7 +92,7 @@
         android:layout_marginTop="24dp"
         android:layout_marginEnd="24dp"
         android:layout_marginStart="24dp"
-        android:text="New Promo"
+        android:text="@string/new_promo"
         android:textColor="?attr/colorOnPrimary"
         app:icon="@android:drawable/ic_input_add"
         app:iconTint="?attr/colorOnPrimary"

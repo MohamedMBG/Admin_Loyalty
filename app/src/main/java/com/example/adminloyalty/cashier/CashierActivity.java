@@ -135,20 +135,20 @@ public class CashierActivity extends AppCompatActivity {
         String orderNo = text(etReceipt);
         String amtStr  = text(etAmount);
 
-        if (orderNo.isEmpty()) { snack("Enter receipt number"); return; }
-        if (amtStr.isEmpty())  { snack("Enter total amount"); return; }
+        if (orderNo.isEmpty()) { snack(getString(R.string.error_enter_receipt)); return; }
+        if (amtStr.isEmpty())  { snack(getString(R.string.error_enter_total)); return; }
 
         double amountMAD;
         try { amountMAD = Double.parseDouble(amtStr); }
-        catch (NumberFormatException e) { snack("Invalid amount"); return; }
+        catch (NumberFormatException e) { snack(getString(R.string.error_invalid_amount)); return; }
 
-        tvConfirmTitle.setText("Confirm Sale");
-        tvConfirmDetails.setText("#" + orderNo + " · " + amountMAD + " MAD");
+        tvConfirmTitle.setText(R.string.confirm_sale);
+        tvConfirmDetails.setText(getString(R.string.sale_details, orderNo, amountMAD));
         cardConfirm.setVisibility(View.VISIBLE);
 
         cancelTimer(confirmCdt);
         confirmCdt = new CountDownTimer(10_000, 1_000) {
-            public void onTick(long left) { chipConfirmTimer.setText((left / 1000) + "s"); }
+            public void onTick(long left) { chipConfirmTimer.setText(getString(R.string.seconds_short, left / 1000)); }
             public void onFinish() { cardConfirm.setVisibility(View.GONE); }
         }.start();
     }
@@ -188,7 +188,7 @@ public class CashierActivity extends AppCompatActivity {
             imgQr.setImageBitmap(bmp);
 
         } catch (WriterException e) {
-            snack("QR generation failed: " + e.getMessage());
+            snack(getString(R.string.error_qr_generation, e.getMessage()));
         }
     }
 
