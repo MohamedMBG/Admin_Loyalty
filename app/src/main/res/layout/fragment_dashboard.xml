@@ -9,7 +9,6 @@
     android:background="@color/colorBackground"
     android:clipToPadding="false"
     android:fillViewport="true"
-    android:fitsSystemWindows="true"
     android:overScrollMode="never">
 
     <LinearLayout

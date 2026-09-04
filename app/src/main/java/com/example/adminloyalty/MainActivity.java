@@ -1,12 +1,14 @@
 package com.example.adminloyalty;
 
 import android.os.Bundle;
+import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
 import com.example.adminloyalty.fragments.DashboardFragment;
 import com.example.adminloyalty.databinding.ActivityMainBinding;
+import com.example.adminloyalty.utils.SystemBars;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -18,8 +20,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        SystemBars.applyInsetPadding(binding.getRoot());
 
         // Load the dashboard as the default (and only) fragment
         if (savedInstanceState == null) {

@@ -10,10 +10,12 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 
+import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.adminloyalty.R;
+import com.example.adminloyalty.utils.SystemBars;
 import com.example.adminloyalty.viewmodel.CashierViewModel;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
@@ -46,7 +48,9 @@ public class CashierActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_cashier);
+        SystemBars.applyInsetPadding(findViewById(R.id.cashier_main));
         bindViews();
         bindActions();
 
