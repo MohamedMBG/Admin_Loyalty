@@ -42,6 +42,26 @@ Note: detailed business logic is intentionally not documented publicly.
 3. Sync Gradle dependencies.
 4. Build and run on an emulator/device (min SDK 24).
 
+The app ships under the `com.beanloyal.admin` applicationId, so the Firebase project must
+have an Android app registered for that package — otherwise the Google Services plugin
+fails the build with `No matching client found for package name 'com.beanloyal.admin'`.
+
+## Release signing
+
+Release builds are signed from `keystore.properties` at the repo root. The file and the
+keystore itself are git-ignored; without them a release build still assembles, just unsigned.
+
+1. Generate a keystore once and store it somewhere durable — if it is lost, the app can
+   never be updated on Play under the same key:
+
+   ```
+   keytool -genkeypair -v -keystore beanloyal-admin-release.jks \
+     -alias beanloyal-admin -keyalg RSA -keysize 2048 -validity 10000
+   ```
+
+2. Copy `keystore.properties.example` to `keystore.properties` and fill in the passwords.
+3. Build the Play artifact: `./gradlew :app:bundleRelease` (Play requires an AAB).
+
 ## Status
 
 Active development.  

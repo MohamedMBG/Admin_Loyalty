@@ -16,3 +16,8 @@ local.properties
 
 # Firebase config — supplied out-of-band, never commit (contains API keys)
 /app/google-services.json
+
+# Release signing material — supplied out-of-band, never commit
+/keystore.properties
+*.jks
+*.keystore

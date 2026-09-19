@@ -1,12 +1,24 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.google.services)   // <- REQUIRED
     alias(libs.plugins.hilt)
 }
 
+// Release signing credentials live in keystore.properties at the repo root, which is
+// git-ignored (the keystore itself must never be committed). When the file is absent —
+// CI, a fresh clone — the release build still assembles, just unsigned.
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties().apply {
+    if (keystorePropertiesFile.exists()) {
+        keystorePropertiesFile.inputStream().use { load(it) }
+    }
+}
+
 android {
     namespace = "com.example.adminloyalty"
-    compileSdk = 34
+    compileSdk = 35
 
     buildFeatures {
         viewBinding = true
@@ -14,10 +26,14 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.adminloyalty"
+        // Play rejects com.example.*, and applicationId is immutable once published.
+        // Decoupled from `namespace` on purpose: the Java sources keep their original
+        // package, only the shipped identity changes.
+        applicationId = "com.beanloyal.admin"
         minSdk = 24
-        targetSdk = 34
-        versionCode = 1
+        targetSdk = 35
+        // Must increase on every Play upload; Play rejects a versionCode it has seen before.
+        versionCode = 2
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -26,8 +42,20 @@ android {
         buildConfigField("String", "API_BASE_URL", "\"https://bean-backend-ejzg.onrender.com/api/v1\"")
     }
 
+    signingConfigs {
+        if (keystorePropertiesFile.exists()) {
+            create("release") {
+                storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.findByName("release")
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -58,7 +86,6 @@ dependencies {
     implementation(libs.firebase.auth)
     testImplementation(libs.junit)
     testImplementation(libs.mockito.core)
-    testImplementation(libs.mockito.inline)
     testImplementation(libs.arch.core.testing)
     // Real org.json on the unit-test classpath — the android.jar stub throws "not mocked".
     testImplementation("org.json:json:20240303")

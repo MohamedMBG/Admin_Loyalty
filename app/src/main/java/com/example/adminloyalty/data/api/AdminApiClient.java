@@ -39,7 +39,10 @@ public class AdminApiClient {
         this.http = new OkHttpClient.Builder()
                 .addInterceptor(authInterceptor)
                 .connectTimeout(15, TimeUnit.SECONDS)
-                .readTimeout(30, TimeUnit.SECONDS)
+                // The backend instance sleeps when idle and needs up to ~80s to answer the first
+                // request after waking, so the first screen opened each morning timed out at 30s.
+                // Connect timeout stays short — an unreachable host still fails fast.
+                .readTimeout(90, TimeUnit.SECONDS)
                 .build();
     }
 

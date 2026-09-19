@@ -37,6 +37,24 @@ public class LoginActivity extends AppCompatActivity {
             }
             return false;
         });
+
+        resumeExistingSession();
+    }
+
+    /**
+     * Firebase keeps the sign-in across app restarts, so a staff member who is still signed in
+     * should land on their workspace instead of retyping a password every cold start. The cached
+     * ID token is enough to read the role here — a role change still propagates, because every
+     * backend call refreshes and retries on 401 (see AuthInterceptor). If the account has no role,
+     * routeByRole signs it out and leaves the form on screen.
+     */
+    private void resumeExistingSession() {
+        FirebaseUser user = auth.getCurrentUser();
+        if (user == null) return;
+
+        binding.loginButton.setEnabled(false);
+        binding.loginButton.setText("Signing in…");
+        routeByRole(user, false);
     }
 
     private void attemptLogin() {
@@ -80,34 +98,43 @@ public class LoginActivity extends AppCompatActivity {
                         return;
                     }
 
-                    user.getIdToken(true)
-                            .addOnSuccessListener(tokenResult -> {
-                                Object roleClaim = tokenResult.getClaims().get("role");
-                                String role = roleClaim instanceof String ? (String) roleClaim : "";
-
-                                Class<?> destination;
-                                if ("admin".equalsIgnoreCase(role)) {
-                                    destination = MainActivity.class;
-                                } else if ("cashier".equalsIgnoreCase(role)) {
-                                    destination = CashierActivity.class;
-                                } else {
-                                    showSnack("Account role is not configured. Contact admin.");
-                                    auth.signOut();
-                                    resetButton();
-                                    return;
-                                }
-
-                                startActivity(new Intent(LoginActivity.this, destination));
-                                finish();
-                            })
-                            .addOnFailureListener(e -> {
-                                showSnack("Could not verify account role: " + e.getMessage());
-                                resetButton();
-                            });
+                    routeByRole(user, true);
                 })
                 .addOnFailureListener(e -> {
                     binding.passwordLayout.setError("Email or password is incorrect");
                     showSnack("Could not sign in. Check your details and try again.");
+                    resetButton();
+                });
+    }
+
+    /**
+     * Sends the user to the screen their {@code role} custom claim allows. forceRefresh fetches a
+     * fresh token — needed right after a sign-in so a just-granted role is visible; a resumed
+     * session can read the cached claims instead.
+     */
+    private void routeByRole(FirebaseUser user, boolean forceRefresh) {
+        user.getIdToken(forceRefresh)
+                .addOnSuccessListener(tokenResult -> {
+                    Object roleClaim = tokenResult.getClaims().get("role");
+                    String role = roleClaim instanceof String ? (String) roleClaim : "";
+
+                    Class<?> destination;
+                    if ("admin".equalsIgnoreCase(role)) {
+                        destination = MainActivity.class;
+                    } else if ("cashier".equalsIgnoreCase(role)) {
+                        destination = CashierActivity.class;
+                    } else {
+                        showSnack("Account role is not configured. Contact admin.");
+                        auth.signOut();
+                        resetButton();
+                        return;
+                    }
+
+                    startActivity(new Intent(LoginActivity.this, destination));
+                    finish();
+                })
+                .addOnFailureListener(e -> {
+                    showSnack("Could not verify account role: " + e.getMessage());
                     resetButton();
                 });
     }
